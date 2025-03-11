@@ -1,5 +1,6 @@
 node_modules
 dist
-# .env # Uncomment this line
-# server.env # Uncomment this line
+.env 
+server.env 
 
+.qodo
