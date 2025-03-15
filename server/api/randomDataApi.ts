@@ -1,6 +1,5 @@
 import axios from "axios"
-import { Beer } from "../type/Beer.type"
-
+import { Beer } from "../type/Topic.type"
 const uri = "https://random-data-api.com/api/v2"
 
 export const randomDataApi = {
