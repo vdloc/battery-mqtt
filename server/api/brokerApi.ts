@@ -2,6 +2,7 @@ import axios from "axios"
 import { OPERATORS, SetIntervalResponse, SetIntervalRequest, SetupChannelRequest } from "../type/Topic.type"
 import { BROKER_URL, BROKER_PROTOCOL, BROKER_PASSWORD, BROKER_PORT, BROKER_USERNAME } from "../envConfigs"
 import mqtt, { MqttClient } from "mqtt"
+import WebSocket from "ws"
 
 interface SetIntervalParameters {
   imei: string
@@ -16,11 +17,13 @@ interface SetupChannelParameters {
 
 export class BrokerAPI {
   connectUrl: string
-  client: MqttClient
+  mqttClient: MqttClient
+  wsServer: WebSocket.Server
   subscribeTopics: string[]
   constructor() {
     this.connectUrl = this.getConnectionUrl()
-    this.client = this.createClient()
+    this.mqttClient = this.createClient()
+    this.wsServer = this.createWebSocketServer()
     this.subscribeTopics = [
       "mqtt/vnpt/response",
       "mqtt/vnpt/battery/status",
@@ -30,12 +33,12 @@ export class BrokerAPI {
   }
 
   init() {
-    this.client.on("connect", () => {
+    this.mqttClient.on("connect", () => {
       this.subscribeTopics.forEach((topic) => {
-        this.client.subscribe(topic, () => {
+        this.mqttClient.subscribe(topic, () => {
           console.log(`Subscribed to ${topic}`)
         })
-        this.client.on("message", (topic, message) => {
+        this.mqttClient.on("message", (topic, message) => {
           console.log(`Received message from ${topic}: ${message.toString()}`)
         })
       })
@@ -60,6 +63,10 @@ export class BrokerAPI {
       reconnectPeriod: 1000,
     })
   }
+
+  createWebSocketServer() {
+    return new WebSocket.Server({ port: 8080 })
+  }
   setInterval({ imei, batterStatusInterval, deviceStatusInterval }: SetIntervalParameters) {
     const message: SetIntervalRequest = {
       time: Date.now(),
@@ -71,7 +78,7 @@ export class BrokerAPI {
     }
     const topic = `mqtt/vnpt/request${imei}`
 
-    this.client.publish(topic, JSON.stringify(message))
+    this.mqttClient.publish(topic, JSON.stringify(message))
 
     return topic
   }
@@ -86,7 +93,7 @@ export class BrokerAPI {
     }
     const topic = `mqtt/vnpt/request${imei}`
 
-    this.client.publish(`mqtt/vnpt/request${imei}`, JSON.stringify(message))
+    this.mqttClient.publish(`mqtt/vnpt/request${imei}`, JSON.stringify(message))
     return topic
   }
 }

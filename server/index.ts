@@ -11,7 +11,7 @@ import beerRouter from "./router/beerRouter"
 import t from "./trpc"
 import createContext from "./context"
 import { CLIENT_URL } from "./envConfigs"
-
+import { BrokerAPI } from "./api/brokerApi"
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string
@@ -28,6 +28,8 @@ const fastify = Fastify({
   maxParamLength: 5000,
   logger: false,
 })
+const brokerApi = new BrokerAPI()
+brokerApi.init()
 
 const start = async () => {
   try {
