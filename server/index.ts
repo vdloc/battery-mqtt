@@ -7,11 +7,10 @@ import authRouter from "./router/authRouter"
 import userRouter from "./router/userRouter"
 import deviceRouter from "./router/deviceRouter"
 import healthRouter from "./router/healthRouter"
-import beerRouter from "./router/beerRouter"
 import t from "./trpc"
-import dotenv from "dotenv"
-dotenv.config({ path: "../server.env" })
 import createContext from "./context"
+import { CLIENT_URL } from "./envConfigs"
+import { BrokerAPI } from "./api/brokerApi"
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string
@@ -21,19 +20,21 @@ export interface UserIDJwtPayload extends jwt.JwtPayload {
 
 export const mergeRouters = t.mergeRouters
 
-const appRouter = mergeRouters(authRouter, userRouter, deviceRouter, healthRouter, beerRouter)
+const appRouter = mergeRouters(authRouter, userRouter, deviceRouter, healthRouter)
 export type AppRouter = typeof appRouter
 
 const fastify = Fastify({
   maxParamLength: 5000,
-  logger: true,
+  logger: false,
 })
+const brokerApi = new BrokerAPI()
+brokerApi.init()
 
 const start = async () => {
   try {
     await fastify.register(fastifyCors, {
       credentials: true,
-      origin: process.env.CLIENT_URL,
+      origin: CLIENT_URL,
     })
 
     await fastify.register(fastifyCookie)
