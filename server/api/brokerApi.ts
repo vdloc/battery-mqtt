@@ -1,8 +1,7 @@
-import axios from "axios"
 import { OPERATORS, SetIntervalResponse, SetIntervalRequest, SetupChannelRequest } from "../type/Topic.type"
 import { BROKER_URL, BROKER_PROTOCOL, BROKER_PASSWORD, BROKER_PORT, BROKER_USERNAME } from "../envConfigs"
 import mqtt, { MqttClient } from "mqtt"
-import WebSocket from "ws"
+import WebSocket, { WebSocketServer } from "ws"
 
 interface SetIntervalParameters {
   imei: string
@@ -18,7 +17,7 @@ interface SetupChannelParameters {
 export class BrokerAPI {
   connectUrl: string
   mqttClient: MqttClient
-  wsServer: WebSocket.Server
+  wsServer: WebSocketServer
   subscribeTopics: string[]
   constructor() {
     this.connectUrl = this.getConnectionUrl()
