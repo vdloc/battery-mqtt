@@ -28,20 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build client
-        run: npm run build:client
-
-      - name: Build server
-        run: npm run build:server
-
-      - name: Build Drizzle package
-        run: npm run build:drizzle
-
-      - name: Build Zod package
-        run: npm run build:zod
-
-      - name: Run end-to-end tests
-        run: npm run test:e2e
+      - name: Build
+        run: npm run build
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,6 +45,6 @@ jobs:
         run: |
           echo "$SSH_KEY"> key.pem
           chmod 600 key.pem
-          scp -i key.pem -r ./frontend/dist $USER@$HOST:/var/www/battery-mqtt/frontend
+          scp -i key.pem -r ./frontend/dist $USER@$HOST:/var/www/battery-mqtt/frontend/dist
           scp -i key.pem -r ./backend/dist $USER@$HOST:/var/www/battery-mqtt/backend/dist
           ssh -i key.pem $SSH_CONNECTION "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery-mqtt"
