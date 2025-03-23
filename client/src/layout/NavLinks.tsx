@@ -1,7 +1,7 @@
 import { useContext } from "react"
 import { NavLink } from "react-router"
 import { AppContext } from "../ContextProvider"
-import { House, Devices, Users, PencilLine, BeerStein } from "@phosphor-icons/react"
+import { House, Devices, Users, PencilLine } from "@phosphor-icons/react"
 
 type Props = {
   onClick: () => void
@@ -21,18 +21,6 @@ const NavLinks = (props: Props) => {
         <div className="flex items-center">
           <House className="mr-2" />
           Home
-        </div>
-      </NavLink>
-      <NavLink
-        onClick={props.onClick}
-        to="/beers"
-        className={({ isActive }) =>
-          `block py-2.5 px-4 rounded-sm transition ${isActive ? "bg-gray-200" : "hover:bg-gray-100"}`
-        }
-      >
-        <div className="flex items-center">
-          <BeerStein className="mr-2" />
-          Beers
         </div>
       </NavLink>
       {context.me && (
