@@ -1,6 +1,14 @@
 import { initUsersData } from "./initUsersData"
+import { devices, deviceStatusIntervals, deviceSetupChannels } from "./initDeviceData"
 import { drizzle } from "drizzle-orm/node-postgres"
-import { userTable, deviceTable, userCredentialTable } from "../db/schema"
+import {
+  userTable,
+  deviceTable,
+  userCredentialTable,
+  brokerDeviceTable,
+  deviceIntervalTable,
+  setupChannelTable,
+} from "../db/schema"
 import dotenv from "dotenv"
 dotenv.config({ path: "../../server.env" })
 const databaseUrl = process.env.DATABASE_URL!
@@ -11,12 +19,26 @@ const main = async () => {
   await db.delete(userCredentialTable)
   await db.delete(deviceTable)
   await db.delete(userTable)
+  await db.delete(brokerDeviceTable)
+  await db.delete(deviceIntervalTable)
   for (const user of initUsersData) {
     let users = await db.insert(userTable).values(user).returning({ id: userTable.id })
     await db.insert(userCredentialTable).values({
       userId: users[0].id,
       passwordHash: user.password,
     })
+  }
+
+  for (const device of devices) {
+    await db.insert(brokerDeviceTable).values(device)
+  }
+
+  for (const statusInverval of deviceStatusIntervals) {
+    await db.insert(deviceIntervalTable).values(statusInverval)
+  }
+
+  for (const setupChannel of deviceSetupChannels) {
+    await db.insert(setupChannelTable).values(setupChannel)
   }
 
   console.log(`Done!`)

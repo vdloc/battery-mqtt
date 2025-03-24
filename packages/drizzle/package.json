@@ -5,6 +5,7 @@
   "license": "ISC",
   "scripts": {
     "build": "tsc",
+    "generate": "npx drizzle-kit generate && npx drizzle-kit migrate",
     "push": "npx drizzle-kit push",
     "seed": "npx tsx src/seed/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
