@@ -1,9 +1,10 @@
 import { protectedProcedure, router } from "../trpc"
 import { z } from "zod"
-import { deviceTable } from "@fsb/drizzle"
+import { schema } from "@fsb/drizzle"
 import { drizzleOrm } from "@fsb/drizzle"
 const { count, desc, eq } = drizzleOrm
 
+const { deviceTable } = schema
 const deviceRouter = router({
   deleteDevice: protectedProcedure
     .input(

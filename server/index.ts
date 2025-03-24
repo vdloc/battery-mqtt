@@ -11,6 +11,7 @@ import t from "./trpc"
 import createContext from "./context"
 import { CLIENT_URL } from "./envConfigs"
 import { BrokerAPI } from "./api/brokerApi"
+import { cronjob } from "./cron"
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string
@@ -28,7 +29,6 @@ const fastify = Fastify({
   logger: false,
 })
 const brokerApi = new BrokerAPI()
-brokerApi.init()
 
 const start = async () => {
   try {
@@ -57,6 +57,9 @@ const start = async () => {
       host: "0.0.0.0",
     })
     console.log("Server is running on port " + port)
+
+    brokerApi.init()
+    cronjob.init()
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)
