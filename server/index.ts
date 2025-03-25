@@ -10,7 +10,7 @@ import healthRouter from "./router/healthRouter"
 import t from "./trpc"
 import createContext from "./context"
 import { CLIENT_URL } from "./envConfigs"
-import { BrokerAPI } from "./api/brokerApi"
+import { brokerApi } from "./api/brokerApi"
 import { cronjob } from "./cron"
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
@@ -28,7 +28,6 @@ const fastify = Fastify({
   maxParamLength: 5000,
   logger: false,
 })
-const brokerApi = new BrokerAPI()
 
 const start = async () => {
   try {
@@ -59,7 +58,7 @@ const start = async () => {
     console.log("Server is running on port " + port)
 
     brokerApi.init()
-    cronjob.init()
+    cronjob.init(brokerApi)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)

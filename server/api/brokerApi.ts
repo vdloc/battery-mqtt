@@ -14,26 +14,27 @@ interface SetupChannelParameters {
   usingChannel: string
 }
 
-export class BrokerAPI {
+export enum Topic {
+  RESPONSE = "mqtt/vnpt/response",
+  BATTERY_STATUS = "mqtt/vnpt/battery/status",
+  GATEWAY_STATUS = "mqtt/vnpt/gateway/status",
+  GATEWAY_ERROR = "mqtt/vnpt/gateway/error",
+}
+
+class BrokerAPI {
   connectUrl: string
   mqttClient: MqttClient
   wsServer: WebSocketServer
-  subscribeTopics: string[]
+  static subscribeTopics: Topic
   constructor() {
     this.connectUrl = this.getConnectionUrl()
     this.mqttClient = this.createClient()
     this.wsServer = this.createWebSocketServer()
-    this.subscribeTopics = [
-      "mqtt/vnpt/response",
-      "mqtt/vnpt/battery/status",
-      "mqtt/vnpt/gateway/status",
-      "mqtt/vnpt/gateway/error",
-    ]
   }
 
   init() {
     this.mqttClient.on("connect", () => {
-      this.subscribeTopics.forEach((topic) => {
+      Object.entries(Topic).forEach((topic) => {
         this.mqttClient.subscribe(topic, () => {
           console.log(`Subscribed to ${topic}`)
         })
@@ -95,4 +96,18 @@ export class BrokerAPI {
     this.mqttClient.publish(`mqtt/vnpt/request${imei}`, JSON.stringify(message))
     return topic
   }
+
+  publish(options: Record<string, any>, callback: () => void) {
+    const { topic, message } = options
+
+    if (topic && message) {
+      console.log(" message:", message)
+      console.log(" topic:", topic)
+      this.mqttClient.publish(topic, JSON.stringify(message))
+    }
+  }
 }
+
+export const brokerApi = new BrokerAPI()
+
+export type BrokerAPIType = typeof brokerApi
