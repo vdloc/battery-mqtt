@@ -38,9 +38,8 @@ class BrokerCronJob {
     this.publisher = publisher
     this.devices = await this.getDevices()
     let intervals = await this.getDevicesInterval(this.devices)
-    logger.info(" intervals:", intervals)
+    logger.info(" intervals:", JSON.stringify(intervals))
     this.tasks = this.sendFakeStatus(intervals)
-    logger.info(" this.tasks :", this.tasks)
   }
 
   async getDevices() {

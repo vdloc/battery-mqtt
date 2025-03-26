@@ -1,7 +1,14 @@
-import { OPERATORS, SetIntervalResponse, SetIntervalRequest, SetupChannelRequest } from "../type/Topic.type"
+import {
+  OPERATORS,
+  SetIntervalResponse,
+  SetIntervalRequest,
+  SetupChannelRequest,
+  BatteryStatusResponse,
+} from "../type/Topic.type"
 import { BROKER_URL, BROKER_PROTOCOL, BROKER_PASSWORD, BROKER_PORT, BROKER_USERNAME } from "../envConfigs"
 import mqtt, { MqttClient } from "mqtt"
 import WebSocket, { WebSocketServer } from "ws"
+import logger from "../logger"
 
 interface SetIntervalParameters {
   imei: string
@@ -26,6 +33,8 @@ class BrokerAPI {
   mqttClient: MqttClient
   wsServer: WebSocketServer
   static subscribeTopics: Topic
+  topicHandlerMap: Record<string, (message: string) => void>
+
   constructor() {
     this.connectUrl = this.getConnectionUrl()
     this.mqttClient = this.createClient()
@@ -36,10 +45,11 @@ class BrokerAPI {
     this.mqttClient.on("connect", () => {
       Object.entries(Topic).forEach((topic) => {
         this.mqttClient.subscribe(topic, () => {
-          console.log(`Subscribed to ${topic}`)
+          logger.info(`Subscribed to ${topic}`)
         })
         this.mqttClient.on("message", (topic, message) => {
-          console.log(`Received message from ${topic}: ${message.toString()}`)
+          logger.info(`Received message from ${topic}: ${message.toString()}`)
+          this.broadcast(message)
         })
       })
     })
@@ -67,6 +77,7 @@ class BrokerAPI {
   createWebSocketServer() {
     return new WebSocket.Server({ port: 8080 })
   }
+
   setInterval({ imei, batterStatusInterval, deviceStatusInterval }: SetIntervalParameters) {
     const message: SetIntervalRequest = {
       time: Date.now(),
@@ -105,6 +116,12 @@ class BrokerAPI {
       console.log(" topic:", topic)
       this.mqttClient.publish(topic, JSON.stringify(message))
     }
+  }
+
+  broadcast(data: any) {
+    this.wsServer.clients.forEach((client) => {
+      client.send(JSON.stringify(data))
+    })
   }
 }
 
