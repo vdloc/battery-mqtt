@@ -12,6 +12,47 @@ import createContext from "./context"
 import { CLIENT_URL } from "./envConfigs"
 import { brokerApi } from "./api/brokerApi"
 import { cronjob } from "./cron"
+import fastifySwagger from "@fastify/swagger"
+import fastifySwaggerUi from "@fastify/swagger-ui"
+
+const swaggerOptions = {
+  openapi: {
+    openapi: "3.0.0",
+    info: {
+      title: "Test swagger",
+      description: "Testing the Fastify swagger API",
+      version: "0.1.0",
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+        description: "Development server",
+      },
+    ],
+    tags: [
+      { name: "user", description: "User related end-points" },
+      { name: "code", description: "Code related end-points" },
+    ],
+    components: {
+      securitySchemes: {
+        apiKey: {
+          type: "apiKey",
+          name: "apiKey",
+          in: "header",
+        },
+      },
+    },
+    externalDocs: {
+      url: "https://swagger.io",
+      description: "Find more info here",
+    },
+  },
+}
+
+const swaggerUiOptions = {
+  routePrefix: "/docs",
+  exposeRoute: true,
+}
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string
@@ -31,6 +72,8 @@ const fastify = Fastify({
 
 const start = async () => {
   try {
+    await fastify.register(fastifySwagger, swaggerOptions)
+    await fastify.register(fastifySwaggerUi, swaggerUiOptions)
     await fastify.register(fastifyCors, {
       credentials: true,
       origin: CLIENT_URL,
@@ -53,10 +96,12 @@ const start = async () => {
     const port = Number(process.env.PORT) || 2022
     await fastify.listen({
       port,
-      host: "0.0.0.0",
     })
     console.log("Server is running on port " + port)
 
+    await fastify.ready()
+
+    fastify.swagger()
     brokerApi.init()
     cronjob.init(brokerApi)
   } catch (err) {
