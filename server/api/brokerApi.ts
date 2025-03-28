@@ -33,7 +33,6 @@ class BrokerAPI {
   mqttClient: MqttClient
   wsServer: WebSocketServer
   static subscribeTopics: Topic
-  topicHandlerMap: Record<string, (message: string) => void>
 
   constructor() {
     this.connectUrl = this.getConnectionUrl()

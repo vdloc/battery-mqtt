@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../trpc"
+import { protectedProcedure, publicProcedure, router } from "../trpc"
 import { z } from "zod"
 import { schema } from "@fsb/drizzle"
 import { drizzleOrm } from "@fsb/drizzle"
@@ -6,13 +6,13 @@ const { count, desc, eq } = drizzleOrm
 
 const { deviceTable } = schema
 const deviceRouter = router({
-  deleteDevice: protectedProcedure
+  deleteDevice: publicProcedure
     .input(
       z.object({
         deviceId: z.string(),
       })
     )
-    .mutation(async (opts) => {
+    .query(async (opts) => {
       const db = opts.ctx.db
       await db.delete(deviceTable).where(eq(deviceTable.id, opts.input.deviceId))
 

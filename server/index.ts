@@ -7,52 +7,14 @@ import authRouter from "./router/authRouter"
 import userRouter from "./router/userRouter"
 import deviceRouter from "./router/deviceRouter"
 import healthRouter from "./router/healthRouter"
+
 import t from "./trpc"
 import createContext from "./context"
 import { CLIENT_URL } from "./envConfigs"
 import { brokerApi } from "./api/brokerApi"
 import { cronjob } from "./cron"
-import fastifySwagger from "@fastify/swagger"
-import fastifySwaggerUi from "@fastify/swagger-ui"
-
-const swaggerOptions = {
-  openapi: {
-    openapi: "3.0.0",
-    info: {
-      title: "Test swagger",
-      description: "Testing the Fastify swagger API",
-      version: "0.1.0",
-    },
-    servers: [
-      {
-        url: "http://localhost:3000",
-        description: "Development server",
-      },
-    ],
-    tags: [
-      { name: "user", description: "User related end-points" },
-      { name: "code", description: "Code related end-points" },
-    ],
-    components: {
-      securitySchemes: {
-        apiKey: {
-          type: "apiKey",
-          name: "apiKey",
-          in: "header",
-        },
-      },
-    },
-    externalDocs: {
-      url: "https://swagger.io",
-      description: "Find more info here",
-    },
-  },
-}
-
-const swaggerUiOptions = {
-  routePrefix: "/docs",
-  exposeRoute: true,
-}
+import initSwagger from "./swagger"
+import brokerRouter from "./router/brokerRouter"
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string
@@ -62,7 +24,7 @@ export interface UserIDJwtPayload extends jwt.JwtPayload {
 
 export const mergeRouters = t.mergeRouters
 
-const appRouter = mergeRouters(authRouter, userRouter, deviceRouter, healthRouter)
+const appRouter = mergeRouters(authRouter, userRouter, deviceRouter, healthRouter, brokerRouter)
 export type AppRouter = typeof appRouter
 
 const fastify = Fastify({
@@ -72,8 +34,7 @@ const fastify = Fastify({
 
 const start = async () => {
   try {
-    await fastify.register(fastifySwagger, swaggerOptions)
-    await fastify.register(fastifySwaggerUi, swaggerUiOptions)
+    await initSwagger(fastify)
     await fastify.register(fastifyCors, {
       credentials: true,
       origin: CLIENT_URL,

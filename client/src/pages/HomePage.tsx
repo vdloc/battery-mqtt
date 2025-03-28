@@ -1,4 +1,12 @@
+import { trpc } from "../utils/trpc"
+
 const HomePage = () => {
-  return <iframe src="https://alan345.github.io/Fullstack-SaaS-Boilerplate" width="100%" height="100%" />
+  const deviceIntervals = trpc.requestInterval.useQuery({ imei: "351669057683473" })
+  return (
+    <div>
+      <h1>Home</h1>
+      {deviceIntervals.data}
+    </div>
+  )
 }
 export default HomePage

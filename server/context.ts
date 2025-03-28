@@ -4,8 +4,7 @@ import { drizzleOrm_NodePostgres } from "@fsb/drizzle"
 import { drizzleOrm } from "@fsb/drizzle"
 const { eq } = drizzleOrm
 const { drizzle } = drizzleOrm_NodePostgres
-import { userTable } from "@fsb/drizzle"
-import * as schema from "@fsb/drizzle"
+import { schema } from "@fsb/drizzle"
 import { cookieNameAuth, cookieNameDeviceIds } from "./configTer"
 import dotenv from "dotenv"
 dotenv.config({ path: "../server.env" })
@@ -13,6 +12,8 @@ import manageDevice from "./helper/manageDevice"
 
 const secretJwt = process.env.JWT_SECRET
 const databaseUrl = process.env.DATABASE_URL
+
+const { userTable } = schema
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string

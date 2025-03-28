@@ -23,6 +23,10 @@ enum ISP {
   FPT = "FPT",
 }
 
+interface QueryHelpers {
+  eq: <T>(a: T, b: T) => boolean // Define the type of 'eq'
+}
+
 class BrokerCronJob {
   devices: Devices
   tasks: ScheduledTask[]
@@ -34,11 +38,9 @@ class BrokerCronJob {
   }
 
   async init(publisher: BrokerAPIType) {
-    logger.info("Starting cron job")
     this.publisher = publisher
     this.devices = await this.getDevices()
     let intervals = await this.getDevicesInterval(this.devices)
-    logger.info(" intervals:", JSON.stringify(intervals))
     this.tasks = this.sendFakeStatus(intervals)
   }
 
@@ -58,7 +60,8 @@ class BrokerCronJob {
       devices.map(async (device) => {
         const imei = device.imei
         const interval = await db.query.deviceIntervalTable.findFirst({
-          where: (deviceInterval, { eq }) => eq(deviceInterval.imei, imei),
+          where: (deviceInterval: DeviceInterval, queryHelper: QueryHelpers) =>
+            queryHelper.eq(deviceInterval.imei, imei),
         })
 
         return interval
@@ -116,13 +119,13 @@ class BrokerCronJob {
       const gatewayStatus = this.createFakeGatewayStatusResponse(imei)
 
       const batteryStatusCronTask = schedule(`${deviceStatusInterval} * * * * *`, () => {
-        this.publisher.publish({ topic: Topic.BATTERY_STATUS, message: batteryStatus }, () => {
-          logger.info(`Sent battery status for ${imei} at ${Date.now()}`)
+        this.publisher?.publish({ topic: Topic.BATTERY_STATUS, message: batteryStatus }, () => {
+          // logger.info(`Sent battery status for ${imei} at ${Date.now()}`)
         })
       })
       const gatewayStatusCronTask = schedule(`${batteryStatusInterval} * * * * *`, () => {
-        this.publisher.publish({ topic: Topic.GATEWAY_STATUS, message: gatewayStatus }, () => {
-          logger.info(`Sent gateway status for ${imei} at ${Date.now()}`)
+        this.publisher?.publish({ topic: Topic.GATEWAY_STATUS, message: gatewayStatus }, () => {
+          // logger.info(`Sent gateway status for ${imei} at ${Date.now()}`)
         })
       })
       return [batteryStatusCronTask, gatewayStatusCronTask]

@@ -127,15 +127,18 @@ const authRouter = router({
     return true
   }),
   getAuth: publicProcedure.query((opts) => {
-    if (!opts.ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" })
+    // if (!opts.ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" })
+    // return {
+    //   user: {
+    //     id: opts.ctx.user.id,
+    //     name: opts.ctx.user.name,
+    //     image: opts.ctx.user.image,
+    //   },
+    //   deviceid: opts.ctx.device.id,
+    //   decoded: opts.ctx.decoded,
+    // }
     return {
-      user: {
-        id: opts.ctx.user.id,
-        name: opts.ctx.user.name,
-        image: opts.ctx.user.image,
-      },
-      deviceid: opts.ctx.device.id,
-      decoded: opts.ctx.decoded,
+      user: {},
     }
   }),
 })
