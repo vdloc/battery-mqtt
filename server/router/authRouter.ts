@@ -67,7 +67,7 @@ const authRouter = router({
 
     const me = opts.ctx.user
 
-    const token = jwt.sign({ id: me.id, exp: utils.getNewExp() }, secretJwt)
+    const token = jwt.sign({ id: me?.id, exp: utils.getNewExp() }, secretJwt)
 
     opts.ctx.res.cookie(cookieNameAuth, token, utils.getParamsCookies(timeSessionCookie))
     return true
@@ -78,7 +78,7 @@ const authRouter = router({
     await db
       .update(userCredentialTable)
       .set({ passwordHash: await bcrypt.hash(opts.input.password, 10) })
-      .where(eq(userCredentialTable.userId, me.id))
+      .where(eq(userCredentialTable.userId, me?.id ?? ""))
 
     return me
   }),

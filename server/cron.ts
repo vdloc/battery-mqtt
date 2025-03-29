@@ -9,7 +9,7 @@ import logger from "./logger"
 const { deviceIntervalTable, brokerDeviceTable } = schema
 let dbUrl = `${DATABASE_URL}`
 // Initialize a database connection (assuming opts.ctx.db is your database instance)
-const db = drizzle(dbUrl, { schema })
+const db = drizzle(dbUrl, { schema }) as any
 
 type Devices = (typeof brokerDeviceTable.$inferSelect)[]
 type DeviceInterval = (typeof deviceIntervalTable.$inferSelect)[]
@@ -68,7 +68,7 @@ class BrokerCronJob {
       devices.map(async (device) => {
         const imei = device.imei
         const interval = await db.query.deviceIntervalTable.findFirst({
-          where: (deviceInterval: DeviceInterval, queryHelper: QueryHelpers) =>
+          where: (deviceInterval: any, queryHelper: QueryHelpers) =>
             queryHelper.eq(deviceInterval.imei, imei),
         })
 

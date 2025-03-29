@@ -1,8 +1,7 @@
-import { deviceTable } from "@fsb/drizzle"
-import * as schema from "@fsb/drizzle"
+import { schema } from "@fsb/drizzle"
 import { drizzleOrm } from "@fsb/drizzle"
 const { eq, and, inArray } = drizzleOrm
-
+const { deviceTable } = schema
 import { NodePgDatabase } from "@fsb/drizzle"
 
 const manageDevice = {

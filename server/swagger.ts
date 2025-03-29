@@ -2,14 +2,20 @@ import fastifySwagger from "@fastify/swagger"
 import fastifySwaggerUi from "@fastify/swagger-ui"
 import { FastifyInstance } from "fastify"
 import { doc } from "./openapi"
+import { OpenAPIV2, OpenAPIV3 } from "openapi-types"
 
-const swaggerOptions = {
-  mode: "static", // Use 'static' mode to serve a static OpenAPI spec
+interface FastifySwaggerOptions {
+  mode?: "static"
   specification: {
-    document: doc, // Use the generated OpenAPI document
+    document: OpenAPIV2.Document | OpenAPIV3.Document
+  }
+}
+
+const swaggerOptions: FastifySwaggerOptions & { mode: "static" } = {
+  mode: "static",
+  specification: {
+    document: doc,
   },
-  exposeRoute: true, // Expose the Swagger UI
-  routePrefix: "/documentation",
 }
 
 const swaggerUiOptions = {
