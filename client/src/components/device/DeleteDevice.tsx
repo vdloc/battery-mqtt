@@ -7,7 +7,7 @@ type Props = {
   onDelete: () => void
 }
 const DeleteDevice = (props: Props) => {
-  const mutation = trpc.deleteDevice.useMutation()
+  const mutation = trpc.deleteUserDevice.useMutation()
   const logout = async () => {
     try {
       await mutation.mutateAsync({

@@ -22,6 +22,7 @@ interface SetupChannelParameters {
 }
 
 export enum Topic {
+  REQUEST = "mqtt/vnpt/request",
   RESPONSE = "mqtt/vnpt/response",
   BATTERY_STATUS = "mqtt/vnpt/battery/status",
   GATEWAY_STATUS = "mqtt/vnpt/gateway/status",
@@ -31,27 +32,31 @@ export enum Topic {
 class BrokerAPI {
   connectUrl: string
   mqttClient: MqttClient
-  wsServer: WebSocketServer
+  wsServer: WebSocketServer | null
   static subscribeTopics: Topic
 
   constructor() {
     this.connectUrl = this.getConnectionUrl()
     this.mqttClient = this.createClient()
-    this.wsServer = this.createWebSocketServer()
+    this.wsServer = null
   }
 
   init() {
     this.mqttClient.on("connect", () => {
-      Object.entries(Topic).forEach((topic) => {
-        this.mqttClient.subscribe(topic, () => {
-          logger.info(`Subscribed to ${topic}`)
+      Object.entries(Topic)
+        .filter(([key]) => key !== "REQUEST")
+        .forEach((topic) => {
+          this.mqttClient.subscribe(topic, () => {
+            logger.info(`Subscribed to ${topic}`)
+          })
+          this.mqttClient.on("message", (topic, message) => {
+            logger.info(`Received message from ${topic}: ${message.toString()}`)
+            this.broadcast(message)
+          })
         })
-        this.mqttClient.on("message", (topic, message) => {
-          logger.info(`Received message from ${topic}: ${message.toString()}`)
-          this.broadcast(message)
-        })
-      })
     })
+
+    this.wsServer = this.createWebSocketServer()
   }
 
   getConnectionUrl() {
@@ -74,7 +79,7 @@ class BrokerAPI {
   }
 
   createWebSocketServer() {
-    return new WebSocket.Server({ port: 8080 })
+    return new WebSocket.Server({ port: 7777 })
   }
 
   setInterval({ imei, batterStatusInterval, deviceStatusInterval }: SetIntervalParameters) {
@@ -107,19 +112,18 @@ class BrokerAPI {
     return topic
   }
 
-  publish(options: Record<string, any>, callback: () => void) {
+  publish(options: Record<string, any>) {
     const { topic, message } = options
 
     if (topic && message) {
-      console.log(" message:", message)
-      console.log(" topic:", topic)
       this.mqttClient.publish(topic, JSON.stringify(message))
     }
   }
 
-  broadcast(data: any) {
-    this.wsServer.clients.forEach((client) => {
-      client.send(JSON.stringify(data))
+  broadcast(data: Buffer<ArrayBufferLike>) {
+    console.log(" data:", data.toString())
+    this.wsServer?.clients.forEach((client) => {
+      client.send(data.toString())
     })
   }
 }

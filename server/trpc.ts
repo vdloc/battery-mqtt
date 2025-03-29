@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server"
+import { OperationMeta } from "openapi-trpc"
 import createContext from "./context"
-const t = initTRPC.context<Context>().create()
+const t = initTRPC.meta<OperationMeta>().context<Context>().create()
 export default t
 
 type Context = Awaited<ReturnType<typeof createContext>>

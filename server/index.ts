@@ -1,31 +1,23 @@
 import { fastifyTRPCPlugin, FastifyTRPCPluginOptions } from "@trpc/server/adapters/fastify"
 import Fastify, { FastifyRequest, FastifyReply } from "fastify"
+
 import fastifyCookie from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
 import jwt from "jsonwebtoken"
-import authRouter from "./router/authRouter"
-import userRouter from "./router/userRouter"
-import deviceRouter from "./router/deviceRouter"
-import healthRouter from "./router/healthRouter"
 
-import t from "./trpc"
 import createContext from "./context"
 import { CLIENT_URL } from "./envConfigs"
 import { brokerApi } from "./api/brokerApi"
 import { cronjob } from "./cron"
 import initSwagger from "./swagger"
-import brokerRouter from "./router/brokerRouter"
+
+import { appRouter, AppRouter } from "./appRouter"
 
 export interface UserIDJwtPayload extends jwt.JwtPayload {
   id: string
   exp: number
   iat: number
 }
-
-export const mergeRouters = t.mergeRouters
-
-const appRouter = mergeRouters(authRouter, userRouter, deviceRouter, healthRouter, brokerRouter)
-export type AppRouter = typeof appRouter
 
 const fastify = Fastify({
   maxParamLength: 5000,
@@ -51,6 +43,7 @@ const start = async () => {
       trpcOptions: {
         router: appRouter,
         createContext,
+        allowMethodOverride: true,
       } as FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
     })
 

@@ -5,8 +5,8 @@ import { drizzleOrm } from "@fsb/drizzle"
 const { count, desc, eq } = drizzleOrm
 
 const { deviceTable } = schema
-const deviceRouter = router({
-  deleteDevice: publicProcedure
+const userDeviceRouter = router({
+  deleteUserDevice: publicProcedure
     .input(
       z.object({
         deviceId: z.string(),
@@ -19,7 +19,7 @@ const deviceRouter = router({
       return true
     }),
 
-  getDevices: protectedProcedure
+  getUserDevices: protectedProcedure
     .input(
       z.object({
         page: z.number(),
@@ -57,4 +57,4 @@ const deviceRouter = router({
     }),
 })
 
-export default deviceRouter
+export default userDeviceRouter

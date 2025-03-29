@@ -1,0 +1,202 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "tRPC HTTP-RPC",
+    "version": ""
+  },
+  "paths": {
+    "/trpc/request": {
+      "get": {
+        "tags": [],
+        "operationId": "request",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "imei": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            },
+                            "infor": {
+                              "type": "object",
+                              "properties": {
+                                "BatteryStatusInterval": {
+                                  "type": "number"
+                                },
+                                "DeviceStatusInterval": {
+                                  "type": "number"
+                                },
+                                "usingChannel": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "time": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "imei",
+                            "operator",
+                            "infor",
+                            "time"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imei": {
+                      "type": "string"
+                    },
+                    "operator": {
+                      "type": "string"
+                    },
+                    "infor": {
+                      "type": "object",
+                      "properties": {
+                        "BatteryStatusInterval": {
+                          "type": "number"
+                        },
+                        "DeviceStatusInterval": {
+                          "type": "number"
+                        },
+                        "usingChannel": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "time": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "imei",
+                    "operator",
+                    "infor",
+                    "time"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/trpc/getDevice": {
+      "get": {
+        "tags": [],
+        "operationId": "getDevice",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/trpc/getDeviceIntervals": {
+      "get": {
+        "tags": [],
+        "operationId": "getDeviceIntervals",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/trpc/getDeviceSetupChannels": {
+      "get": {
+        "tags": [],
+        "operationId": "getDeviceSetupChannels",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

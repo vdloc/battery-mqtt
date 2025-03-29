@@ -2,7 +2,7 @@ import { publicProcedure, protectedProcedure, router } from "../trpc"
 import bcrypt from "bcrypt"
 import { TRPCError } from "@trpc/server"
 import jwt from "jsonwebtoken"
-import { userTable, userCredentialTable } from "@fsb/drizzle"
+import { schema } from "@fsb/drizzle"
 import { drizzleOrm } from "@fsb/drizzle"
 import { zod } from "@fsb/shared"
 import { utils } from "../utils"
@@ -10,6 +10,7 @@ import { timeSessionCookie, cookieNameAuth, cookieNameDeviceIds, timeDeviceCooki
 import manageDevice from "../helper/manageDevice"
 
 const { eq } = drizzleOrm
+const { userTable, userCredentialTable } = schema
 
 const authRouter = router({
   login: publicProcedure.input(zod.zodLogin).mutation(async (opts) => {

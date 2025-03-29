@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { httpBatchLink } from "@trpc/client"
+import { httpBatchLink, httpLink } from "@trpc/client"
 import { useState } from "react"
 import { trpc } from "./utils/trpc"
 import { BrowserRouter } from "react-router"
@@ -45,6 +45,11 @@ const App = () => {
               credentials: "include",
             })
           },
+          methodOverride: "POST",
+        }),
+        httpLink({
+          url,
+          methodOverride: "POST", // all queries and mutations will be sent to the tRPC Server as POST requests.
         }),
       ],
     })

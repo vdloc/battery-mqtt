@@ -18,7 +18,7 @@ const DevicesPage = () => {
   const page = query.get("page")
   const search = query.get("search") || undefined
   const userId = query.get("userId") || undefined
-  const dataQuery = trpc.getDevices.useQuery({ page: utils.sanitizePage(page), search, userId })
+  const dataQuery = trpc.getUserDevices.useQuery({ page: utils.sanitizePage(page), search, userId })
   if (dataQuery.isError) return <ErrorTemplate message={dataQuery.error.message} />
   return (
     <div className="flex flex-col h-full">
