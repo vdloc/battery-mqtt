@@ -57,6 +57,7 @@ const start = async () => {
 
     fastify.swagger()
     brokerApi.init()
+    brokerApi.createWebSocketServer()
     cronjob.init(brokerApi)
   } catch (err) {
     fastify.log.error(err)

@@ -5,6 +5,7 @@ import { drizzleOrm } from "@fsb/drizzle"
 import { OPERATORS } from "../type/Topic.type"
 import { brokerApi, Topic } from "../api/brokerApi"
 import { brokerDeviceTable } from "@fsb/drizzle/src/db/schema"
+import { cronjob } from "../cron"
 const { count, desc, eq } = drizzleOrm
 
 const inputSchema = z.object({
@@ -54,6 +55,7 @@ const brokerRouter = router({
               },
             },
           })
+          cronjob.updateTask(imei, BatteryStatusInterval || 30, DeviceStatusInterval || 30)
           return input
         case OPERATORS.SETUP_CHANNEL:
           await db

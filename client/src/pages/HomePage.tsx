@@ -16,7 +16,7 @@ const HomePage = () => {
 
     socket.addEventListener("message", (event) => {
       console.log("Message from server:", event.data)
-      setMessages((prevMessages) => [...prevMessages, JSON.parse(event.data)].slice(0, 10))
+      setMessages((prevMessages) => [...prevMessages, JSON.parse(event.data)].slice(-10))
     })
 
     socket.addEventListener("error", (error) => {

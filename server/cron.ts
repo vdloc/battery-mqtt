@@ -27,9 +27,17 @@ interface QueryHelpers {
   eq: <T>(a: T, b: T) => boolean // Define the type of 'eq'
 }
 
+interface Task {
+  imei: string
+  tasks: {
+    battery: ScheduledTask
+    gateway: ScheduledTask
+  }
+}
+
 class BrokerCronJob {
   devices: Devices
-  tasks: ScheduledTask[]
+  tasks: Task[]
   publisher: BrokerAPIType | null
   constructor() {
     this.devices = []
@@ -110,25 +118,28 @@ class BrokerCronJob {
     }
   }
 
-  sendFakeStatus(intervals: DeviceInterval): ScheduledTask[] {
+  sendFakeStatus(intervals: DeviceInterval): Task[] {
     if (!this.publisher) return []
 
-    return intervals.flatMap((status) => {
+    return intervals.map((status) => {
       const { imei, batteryStatusInterval, deviceStatusInterval } = status
       const batteryStatus = this.createFakeBatteryStatusResponse(imei)
       const gatewayStatus = this.createFakeGatewayStatusResponse(imei)
 
       const batteryStatusCronTask = schedule(`${deviceStatusInterval} * * * * *`, () => {
-        this.publisher?.publish({ topic: Topic.BATTERY_STATUS, message: batteryStatus }, () => {
-          // logger.info(`Sent battery status for ${imei} at ${Date.now()}`)
-        })
+        this.publisher?.publish({ topic: Topic.BATTERY_STATUS, message: batteryStatus })
       })
       const gatewayStatusCronTask = schedule(`${batteryStatusInterval} * * * * *`, () => {
-        this.publisher?.publish({ topic: Topic.GATEWAY_STATUS, message: gatewayStatus }, () => {
-          // logger.info(`Sent gateway status for ${imei} at ${Date.now()}`)
-        })
+        this.publisher?.publish({ topic: Topic.GATEWAY_STATUS, message: gatewayStatus })
       })
-      return [batteryStatusCronTask, gatewayStatusCronTask]
+
+      return {
+        imei,
+        tasks: {
+          battery: batteryStatusCronTask,
+          gateway: gatewayStatusCronTask,
+        },
+      }
     })
   }
 
@@ -150,6 +161,21 @@ class BrokerCronJob {
 
   getRandomChannel() {
     return Array.from({ length: 4 }, () => faker.number.int({ min: 0, max: 1 })).join("")
+  }
+
+  updateTask(imei: string, batteryStatusInterval: number, deviceStatusInterval: number) {
+    let task = this.tasks.find((task) => task.imei === imei)
+
+    if (task) {
+      task.tasks.battery.stop()
+      task.tasks.gateway.stop()
+      task.tasks.battery = schedule(`${batteryStatusInterval} * * * * *`, () => {
+        this.publisher?.publish({ topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) })
+      })
+      task.tasks.gateway = schedule(`${deviceStatusInterval} * * * * *`, () => {
+        this.publisher?.publish({ topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) })
+      })
+    }
   }
 }
 

@@ -55,8 +55,6 @@ class BrokerAPI {
           })
         })
     })
-
-    this.wsServer = this.createWebSocketServer()
   }
 
   getConnectionUrl() {
@@ -79,7 +77,7 @@ class BrokerAPI {
   }
 
   createWebSocketServer() {
-    return new WebSocket.Server({ port: 7777 })
+    this.wsServer = new WebSocket.Server({ port: 7777 })
   }
 
   setInterval({ imei, batterStatusInterval, deviceStatusInterval }: SetIntervalParameters) {
@@ -129,5 +127,7 @@ class BrokerAPI {
 }
 
 export const brokerApi = new BrokerAPI()
+
+brokerApi.init()
 
 export type BrokerAPIType = typeof brokerApi
