@@ -23,7 +23,7 @@ export const deviceSetupChannels = devices.map(({ imei }) => ({
   id: randomUUID(),
   imei,
   usingChannel: Array.from({ length: 4 })
-    .map(() => Math.random)
+    .map(() => Math.round(Math.random()))
     .join(""),
   lastUpdate: new Date(),
 }))

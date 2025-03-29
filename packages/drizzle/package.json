@@ -5,7 +5,7 @@
   "license": "ISC",
   "scripts": {
     "build": "tsc",
-    "generate": "npx drizzle-kit generate && npx drizzle-kit migrate",
+    "generate": "npx drizzle-kit generate:pg && npx drizzle-kit migrate",
     "push": "npx drizzle-kit push",
     "seed": "npx tsx src/seed/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,12 +14,12 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.39.1",
+    "drizzle-orm": "^0.41.0",
     "pg": "^8.13.1"
   },
   "devDependencies": {
     "@types/pg": "^8.11.11",
-    "drizzle-kit": "^0.19.1",
+    "drizzle-kit": "^0.30.6",
     "tsx": "^4.19.2"
   }
 }
