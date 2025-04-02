@@ -80,33 +80,28 @@ const brokerRouter = router({
           throw new Error("Invalid operator")
       }
     }),
-  getDevices: publicProcedure.input(z.object({ imei: z.string().optional() })).query(async ({ ctx, input }) => {
+  getDevices: publicProcedure.query(async ({ ctx }) => {
     const db = ctx.db
     return await db.query.brokerDeviceTable.findMany({
-      where: input.imei ? eq(brokerDeviceTable.imei, input.imei) : undefined,
       limit: 100,
     })
   }),
-  getIntervals: publicProcedure.input(z.object({ imei: z.string().optional() })).query(async ({ ctx, input }) => {
+  getIntervals: publicProcedure.query(async ({ ctx }) => {
     const db = ctx.db
 
     return await db.query.deviceIntervalTable.findMany({
-      where: input.imei ? eq(deviceIntervalTable.imei, input.imei) : undefined,
       orderBy: [desc(deviceIntervalTable.lastUpdate)],
       limit: 100,
     })
   }),
-  getDeviceSetupChannels: publicProcedure
-    .input(z.object({ imei: z.string().optional() }))
-    .query(async ({ ctx, input }) => {
-      const db = ctx.db
+  getDeviceSetupChannels: publicProcedure.query(async ({ ctx, input }) => {
+    const db = ctx.db
 
-      return await db.query.setupChannelTable.findMany({
-        where: input.imei ? eq(setupChannelTable.imei, input.imei) : undefined,
-        orderBy: [desc(deviceIntervalTable.lastUpdate)],
-        limit: 100,
-      })
-    }),
+    return await db.query.setupChannelTable.findMany({
+      orderBy: [desc(deviceIntervalTable.lastUpdate)],
+      limit: 100,
+    })
+  }),
 })
 
 export default brokerRouter
