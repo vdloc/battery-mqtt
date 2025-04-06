@@ -1,0 +1,141 @@
+import { faker } from "@faker-js/faker"
+import { schedule, ScheduledTask } from "node-cron"
+import { Topic } from "../types/Topic"
+import { mqttService, MqttService } from "./mqtt"
+import { databaseService, DevicesFromDB, DeviceIntervalsFromDB } from "./database"
+
+enum ISP {
+  VNPT = "VNPT",
+  VTC = "VTC",
+  MOBIFONE = "MOBIFONE",
+  VIETTEL = "VIETTEL",
+  GMOBILE = "GMOBILE",
+  FPT = "FPT",
+}
+
+interface Task {
+  imei: string
+  tasks: {
+    battery: ScheduledTask
+    gateway: ScheduledTask
+  }
+}
+
+class CronJobService {
+  devices: DevicesFromDB
+  tasks: Task[]
+  mqttService: MqttService = mqttService
+  constructor() {
+    this.devices = []
+    this.tasks = []
+  }
+
+  async init() {
+    this.devices = await databaseService.getDevices()
+    let intervals = await databaseService.getDevicesInterval(this.devices)
+    this.tasks = this.sendFakeStatus(intervals)
+  }
+
+  createFakeBatteryStatusResponse(imei: string) {
+    return {
+      imei,
+      operator: "SendBatteryStatus",
+      infor: {
+        CH1: {
+          Voltage: this.getRandomInRange(30.15, 90.54),
+          Ampere: this.getRandomInRange(30.15, 200),
+        },
+        CH2: {
+          Voltage: this.getRandomInRange(30.15, 90.54),
+          Ampere: this.getRandomInRange(30.15, 200),
+        },
+        CH3: {
+          Voltage: this.getRandomInRange(30.15, 90.54),
+          Ampere: this.getRandomInRange(30.15, 200),
+        },
+        CH4: {
+          Voltage: this.getRandomInRange(30.15, 90.54),
+          Ampere: this.getRandomInRange(30.15, 200),
+        },
+      },
+      time: `${Date.now()}`,
+    }
+  }
+
+  createFakeGatewayStatusResponse(imei: string) {
+    return {
+      imei,
+      operator: "SendStatus",
+      info: {
+        operator: this.getRandomISP(),
+        RSSI: this.getRandomInRange(30.15, 90.54),
+        IP: this.getRandomIp(),
+        usingChannel: this.getRandomChannel(),
+        fwVersion: 1.0,
+      },
+      time: `${Date.now()}`,
+    }
+  }
+
+  sendFakeStatus(intervals: DeviceIntervalsFromDB): Task[] {
+    if (!this.mqttService) return []
+
+    return intervals.map((status) => {
+      const { imei, batteryStatusInterval, deviceStatusInterval } = status
+      const batteryStatus = this.createFakeBatteryStatusResponse(imei)
+      const gatewayStatus = this.createFakeGatewayStatusResponse(imei)
+
+      const batteryStatusCronTask = schedule(`${deviceStatusInterval} * * * * *`, () => {
+        this.mqttService?.publish({ topic: Topic.BATTERY_STATUS, message: batteryStatus })
+      })
+      const gatewayStatusCronTask = schedule(`${batteryStatusInterval} * * * * *`, () => {
+        this.mqttService?.publish({ topic: Topic.GATEWAY_STATUS, message: gatewayStatus })
+      })
+
+      return {
+        imei,
+        tasks: {
+          battery: batteryStatusCronTask,
+          gateway: gatewayStatusCronTask,
+        },
+      }
+    })
+  }
+
+  getRandomInRange(min: number, max: number) {
+    let randomValue = Math.random() * (max - min) + min
+    return randomValue.toFixed(2)
+  }
+
+  getRandomISP(): ISP {
+    let keys = Object.keys(ISP)
+    let randomKey = Math.floor(Math.random() * keys.length)
+
+    return ISP[keys[randomKey] as keyof typeof ISP]
+  }
+
+  getRandomIp() {
+    return Array.from({ length: 4 }, () => faker.number.int({ min: 1, max: 254 })).join(".")
+  }
+
+  getRandomChannel() {
+    return Array.from({ length: 4 }, () => faker.number.int({ min: 0, max: 1 })).join("")
+  }
+
+  updateTask(imei: string, batteryStatusInterval: number, deviceStatusInterval: number) {
+    let task = this.tasks.find((task) => task.imei === imei)
+
+    if (task) {
+      task.tasks.battery.stop()
+      task.tasks.gateway.stop()
+      task.tasks.battery = schedule(`${batteryStatusInterval} * * * * *`, () => {
+        this.mqttService?.publish({ topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) })
+      })
+      task.tasks.gateway = schedule(`${deviceStatusInterval} * * * * *`, () => {
+        this.mqttService?.publish({ topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) })
+      })
+    }
+  }
+}
+
+export const cronjobService = new CronJobService()

@@ -2,11 +2,12 @@ import { protectedProcedure, publicProcedure, router } from "../trpc"
 import { z } from "zod"
 import { schema } from "@fsb/drizzle"
 import { drizzleOrm } from "@fsb/drizzle"
-import { OPERATORS } from "../type/Topic.type"
-import { brokerApi, Topic } from "../api/brokerApi"
-import { brokerDeviceTable } from "@fsb/drizzle/src/db/schema"
-import { cronjob } from "../cron"
-const { count, desc, eq } = drizzleOrm
+import { OPERATORS, Topic } from "../types/Topic"
+
+import { cronjobService } from "../services/cron"
+import { mqttService } from "../services/mqtt"
+
+const { desc, eq } = drizzleOrm
 
 const inputSchema = z.object({
   imei: z.string(),
@@ -26,7 +27,6 @@ const brokerRouter = router({
     .output(inputSchema)
     .meta({ summary: "Gui request den gateway" })
     .query(async ({ ctx, input }) => {
-      console.log(" input:", input)
       const {
         imei,
         operator,
@@ -36,15 +36,17 @@ const brokerRouter = router({
       const db = ctx.db
       switch (operator) {
         case OPERATORS.SET_INTERVAL:
+          // Update vao DB
           await db
             .update(deviceIntervalTable)
             .set({
               batteryStatusInterval: BatteryStatusInterval,
               deviceStatusInterval: DeviceStatusInterval,
-              lastUpdate: new Date(time),
+              time,
             })
             .where(eq(deviceIntervalTable.imei, imei))
-          brokerApi.publish({
+          // Update vao mqtt
+          mqttService.publish({
             topic: `${Topic.REQUEST}/${imei}`,
             message: {
               time: Date.now(),
@@ -55,17 +57,18 @@ const brokerRouter = router({
               },
             },
           })
-          cronjob.updateTask(imei, BatteryStatusInterval || 30, DeviceStatusInterval || 30)
+          // Update  cronjob
+          cronjobService.updateTask(imei, BatteryStatusInterval || 30, DeviceStatusInterval || 30)
           return input
         case OPERATORS.SETUP_CHANNEL:
           await db
             .update(setupChannelTable)
             .set({
               usingChannel: usingChannel,
-              lastUpdate: new Date(time),
+              time,
             })
             .where(eq(setupChannelTable.imei, imei))
-          brokerApi.publish({
+          mqttService.publish({
             topic: `${Topic.REQUEST}/${imei}`,
             message: {
               time: Date.now(),
@@ -90,7 +93,7 @@ const brokerRouter = router({
     const db = ctx.db
 
     return await db.query.deviceIntervalTable.findMany({
-      orderBy: [desc(deviceIntervalTable.lastUpdate)],
+      orderBy: [desc(deviceIntervalTable.time)],
       limit: 100,
     })
   }),
@@ -98,7 +101,7 @@ const brokerRouter = router({
     const db = ctx.db
 
     return await db.query.setupChannelTable.findMany({
-      orderBy: [desc(deviceIntervalTable.lastUpdate)],
+      orderBy: [desc(deviceIntervalTable.time)],
       limit: 100,
     })
   }),

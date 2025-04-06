@@ -8,6 +8,8 @@ import {
   brokerDeviceTable,
   deviceIntervalTable,
   setupChannelTable,
+  batteryStatusTable,
+  gatewayStatusTable,
 } from "../db/schema"
 import dotenv from "dotenv"
 dotenv.config({ path: "../../server.env" })
@@ -19,8 +21,11 @@ const main = async () => {
   await db.delete(userCredentialTable)
   await db.delete(deviceTable)
   await db.delete(userTable)
-  await db.delete(brokerDeviceTable)
   await db.delete(deviceIntervalTable)
+  await db.delete(setupChannelTable)
+  await db.delete(batteryStatusTable)
+  await db.delete(gatewayStatusTable)
+  await db.delete(brokerDeviceTable)
   for (const user of initUsersData) {
     let users = await db.insert(userTable).values(user).returning({ id: userTable.id })
     await db.insert(userCredentialTable).values({

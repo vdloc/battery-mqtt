@@ -5,7 +5,7 @@ const HomePage = () => {
   const [connectionStatus, setConnectionStatus] = useState("Disconnected")
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:7777")
+    const socket = new WebSocket("ws://localhost:8080")
 
     socket.addEventListener("open", () => {
       console.log("WebSocket connection opened")
@@ -16,7 +16,7 @@ const HomePage = () => {
 
     socket.addEventListener("message", (event) => {
       console.log("Message from server:", event.data)
-      setMessages((prevMessages) => [...prevMessages, JSON.parse(event.data)].slice(-10))
+      setMessages(JSON.parse(event.data).slice(-10))
     })
 
     socket.addEventListener("error", (error) => {

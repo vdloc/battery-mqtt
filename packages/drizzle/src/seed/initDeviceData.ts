@@ -16,7 +16,7 @@ export const deviceStatusIntervals = devices.map(({ imei }) => ({
   imei,
   batteryStatusInterval: 30,
   deviceStatusInterval: 30,
-  lastUpdate: new Date(),
+  time: Date.now(),
 }))
 
 export const deviceSetupChannels = devices.map(({ imei }) => ({
@@ -25,5 +25,5 @@ export const deviceSetupChannels = devices.map(({ imei }) => ({
   usingChannel: Array.from({ length: 4 })
     .map(() => Math.round(Math.random()))
     .join(""),
-  lastUpdate: new Date(),
+  time: Date.now(),
 }))
