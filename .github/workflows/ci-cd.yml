@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "$SSH_KEY"> key.pem
           chmod 600 key.pem
-          ls -la
+          cd client && ls -la
           scp -i key.pem -r ./client/dist $USER@$HOST:/var/www/battery-mqtt/client/dist
           scp -i key.pem -r ./server/dist $USER@$HOST:/var/www/battery-mqtt/server/dist
           scp -i key.pem -r ./packages/drizzle/dist $USER@$HOST:/var/www/battery-mqtt/packages/drizzle/dist
