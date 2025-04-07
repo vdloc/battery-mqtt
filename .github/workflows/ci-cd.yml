@@ -38,9 +38,8 @@ jobs:
         run: |
           echo "$SSH_KEY"> key.pem
           chmod 600 key.pem                
-          echo "$SSH_KEY"
-          # scp -i key.pem -r ./client/dist $USER@$HOST:/var/www/battery-mqtt/client/dist
-          # scp -i key.pem -r ./server/dist $USER@$HOST:/var/www/battery-mqtt/server/dist
-          # scp -i key.pem -r ./packages/drizzle/dist $USER@$HOST:/var/www/battery-mqtt/packages/drizzle/dist
-          # scp -i key.pem -r ./packages/zod/dist $USER@$HOST:/var/www/battery-mqtt/packages/zod/dist
-          # ssh -i key.pem $SSH_CONNECTION "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery"
+          scp -i key.pem -r ./client/dist $USER@$HOST:/var/www/battery-mqtt/client/dist
+          scp -i key.pem -r ./server/dist $USER@$HOST:/var/www/battery-mqtt/server/dist
+          scp -i key.pem -r ./packages/drizzle/dist $USER@$HOST:/var/www/battery-mqtt/packages/drizzle/dist
+          scp -i key.pem -r ./packages/zod/dist $USER@$HOST:/var/www/battery-mqtt/packages/zod/dist
+          ssh -i key.pem $SSH_CONNECTION "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery"
