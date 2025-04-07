@@ -5,6 +5,7 @@ export const {
   DATABASE_URL,
   JWT_SECRET,
   CLIENT_URL,
+  CLIENT_API_URL,
   NODE_ENV,
   PORT,
   BROKER_URL,

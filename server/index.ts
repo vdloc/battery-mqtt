@@ -3,7 +3,7 @@ import Fastify, { FastifyRequest, FastifyReply } from "fastify"
 import fastifyCookie from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
 import createContext from "./context"
-import { CLIENT_URL, PORT } from "./envConfigs"
+import { CLIENT_API_URL, CLIENT_URL, PORT } from "./envConfigs"
 import initSwagger from "./swagger"
 import { appRouter, AppRouter } from "./router/appRouter"
 import { appService } from "./services/app"
@@ -15,7 +15,7 @@ const fastify = Fastify({
 
 const corsOptions = {
   credentials: true,
-  origin: CLIENT_URL,
+  origin: [CLIENT_URL, CLIENT_API_URL],
 }
 
 const start = async () => {

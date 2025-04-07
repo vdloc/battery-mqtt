@@ -3,7 +3,7 @@ import { trpc } from "../utils/trpc"
 import useWebSocket from "../hooks/useWebSocket"
 
 const HomePage = () => {
-  const wsUrl = import.meta.env.WS_URL
+  const wsUrl = import.meta.env.VITE_WS_URL
   const { messages, sendMessage, connected, disconnected, error } = useWebSocket(wsUrl)
 
   const devices = trpc.getDevices.useQuery()
