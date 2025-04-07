@@ -10,8 +10,8 @@ export const publicProcedure = t.procedure
 export const router = t.router
 
 export const protectedProcedure = t.procedure.use(async function isAuthed(opts) {
-  // if (!opts.ctx.user) {
-  //   throw new TRPCError({ code: "UNAUTHORIZED" })
-  // }
+  if (!opts.ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" })
+  }
   return opts.next({ ctx: {} })
 })

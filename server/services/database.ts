@@ -2,10 +2,9 @@ import { schema } from "@fsb/drizzle"
 import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
-import { batteryStatusTable, gatewayStatusTable } from "@fsb/drizzle/src/db/schema"
 import { eq } from "drizzle-orm"
 
-const { deviceIntervalTable, brokerDeviceTable } = schema
+const { deviceIntervalTable, brokerDeviceTable, batteryStatusTable, gatewayStatusTable } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
 
