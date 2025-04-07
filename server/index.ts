@@ -15,7 +15,7 @@ const fastify = Fastify({
 
 const corsOptions = {
   credentials: true,
-  origin: /battery\.work\.gd$/,
+  origin: [/battery\.work\.gd$/, /^localhost$/],
 }
 
 const start = async () => {
