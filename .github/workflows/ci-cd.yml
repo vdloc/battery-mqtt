@@ -47,4 +47,4 @@ jobs:
           chmod 600 key.pem
           scp -i key.pem -r ./frontend/dist $USER@$HOST:/var/www/battery-mqtt/frontend/dist
           scp -i key.pem -r ./backend/dist $USER@$HOST:/var/www/battery-mqtt/backend/dist
-          ssh -i key.pem $SSH_CONNECTION "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery-mqtt"
+          ssh -i key.pem $SSH_CONNECTION "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery"
