@@ -3,7 +3,8 @@ import { trpc } from "../utils/trpc"
 import useWebSocket from "../hooks/useWebSocket"
 
 const HomePage = () => {
-  const { messages, sendMessage, connected, disconnected, error } = useWebSocket("ws://localhost:8080")
+  const wsUrl = import.meta.env.WS_URL
+  const { messages, sendMessage, connected, disconnected, error } = useWebSocket(wsUrl)
 
   const devices = trpc.getDevices.useQuery()
   const listenDevice = useMemo(() => (devices.data || []).at(0), [devices])
