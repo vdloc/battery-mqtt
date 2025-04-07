@@ -40,7 +40,13 @@ jobs:
         run: |
           # echo ${SSH_KEY}
           # echo ${SSH_CONNECTION}
-          echo "$SSH_KEY"> key.pem
-          chmod 600 key.pem    
-          ssh-keygen -R $SSH_HOST;             
+          echo "$SSH_KEY"> key.pem                             
           ssh -i key.pem $SSH_USER:$SSH_HOST "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery"
+      - name: ssh-action-deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: cd /var/www/battery-mqtt && git pull && npm install && npm run build && pm2 restart battery
