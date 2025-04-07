@@ -15,19 +15,7 @@ const fastify = Fastify({
 
 const corsOptions = {
   credentials: true,
-  origin: (origin: any, callback: Function) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true)
-
-    // Allow specific origin
-    const allowedOrigins = [CLIENT_URL, CLIENT_API_URL]
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error("Not allowed by CORS"))
-    }
-  },
-  preflightContinue: false,
+  origin: "*",
 }
 
 const start = async () => {
