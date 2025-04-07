@@ -36,8 +36,8 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_CONNECTION: ${{ secrets.SSH_CONNECTION }}
         run: |
-          echo ${#SSH_KEY}
-          echo ${#SSH_CONNECTION}
+          echo ${SSH_KEY}
+          echo ${SSH_CONNECTION}
           # echo "$SSH_KEY"> key.pem
           # chmod 600 key.pem                
           # scp -i key.pem -r ./client/dist $USER@$HOST:/var/www/battery-mqtt/client/dist
