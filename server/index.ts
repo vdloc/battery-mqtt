@@ -14,7 +14,6 @@ const fastify = Fastify({
 })
 
 const corsOptions = {
-  credentials: true,
   origin: "*",
 }
 
