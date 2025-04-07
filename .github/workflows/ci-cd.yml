@@ -33,11 +33,14 @@ jobs:
 
       - name: Deploy to Server
         env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_CONNECTION: ${{ secrets.SSH_CONNECTION }}
         run: |
           # echo ${SSH_KEY}
           # echo ${SSH_CONNECTION}
           echo "$SSH_KEY"> key.pem
-          chmod 600 key.pem                
-          ssh -i key.pem $SSH_CONNECTION "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery"
+          chmod 600 key.pem    
+          ssh-keygen -R $SSH_HOST;             
+          ssh -i key.pem $SSH_USER:$SSH_HOST "cd /var/www/battery-mqtt && npm install && npm run build && pm2 restart battery"
