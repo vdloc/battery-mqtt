@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -36,7 +36,7 @@ jobs:
     needs: build-and-test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Deploy to Server
         env:
@@ -45,6 +45,7 @@ jobs:
         run: |
           echo "$SSH_KEY"> key.pem
           chmod 600 key.pem
+          ls -la
           scp -i key.pem -r ./client/dist $USER@$HOST:/var/www/battery-mqtt/client/dist
           scp -i key.pem -r ./server/dist $USER@$HOST:/var/www/battery-mqtt/server/dist
           scp -i key.pem -r ./packages/drizzle/dist $USER@$HOST:/var/www/battery-mqtt/packages/drizzle/dist
