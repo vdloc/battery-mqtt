@@ -1,49 +1,26 @@
-import React, { useState, useEffect } from "react"
+import { useEffect, useMemo } from "react"
+import { trpc } from "../utils/trpc"
+import useWebSocket from "../hooks/useWebSocket"
 
 const HomePage = () => {
-  const [messages, setMessages] = useState([])
-  const [connectionStatus, setConnectionStatus] = useState("Disconnected")
+  const { messages, sendMessage, connected, disconnected, error } = useWebSocket("ws://localhost:8080")
+
+  const devices = trpc.getDevices.useQuery()
+  const listenDevice = useMemo(() => (devices.data || []).at(0), [devices])
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080")
-
-    socket.addEventListener("open", () => {
-      console.log("WebSocket connection opened")
-      setConnectionStatus("Connected")
-
-      socket.send(JSON.stringify({ message: "Hello, Server!" }))
-    })
-
-    socket.addEventListener("message", (event) => {
-      console.log("Message from server:", event.data)
-      setMessages(JSON.parse(event.data).slice(-10))
-    })
-
-    socket.addEventListener("error", (error) => {
-      console.error("WebSocket error:", error)
-      setConnectionStatus("Error")
-    })
-
-    socket.addEventListener("close", () => {
-      console.log("WebSocket connection closed")
-      setConnectionStatus("Disconnected")
-    })
-
-    return () => {
-      socket.close()
+    if (listenDevice) {
+      sendMessage(JSON.stringify({ operator: "SET_LISTEN_DEVICE", device: listenDevice }))
     }
-  }, [])
+  }, [listenDevice])
 
   return (
     <div>
-      <h1>WebSocket Connection Status: {connectionStatus}</h1>
-      <ul>
-        {messages.map((message, index) => (
-          <li key={index}>
-            <p>{JSON.stringify(message)}</p>
-          </li>
-        ))}
-      </ul>
+      <h1>WebSocket Connection Status: {connected ? "Conneted" : disconnected ? "Disconnected" : "Connecting"}</h1>
+      {error && <p>Error: {error}</p>}
+      {listenDevice && <p>Listening data for device {listenDevice.imei}</p>}
+      <p>Messages:</p>
+      <div>{JSON.stringify(messages)}</div>
     </div>
   )
 }
