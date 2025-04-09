@@ -21,7 +21,7 @@ const inputSchema = z.object({
 })
 
 const { deviceIntervalTable, setupChannelTable } = schema
-const brokerRouter = router({
+const mqttRouter = router({
   request: publicProcedure
     .input(inputSchema)
     .output(inputSchema)
@@ -107,4 +107,4 @@ const brokerRouter = router({
   }),
 })
 
-export default brokerRouter
+export default mqttRouter
