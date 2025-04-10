@@ -2,7 +2,7 @@ import { schema } from "@fsb/drizzle"
 import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
-import { eq } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 
 const { deviceIntervalTable, brokerDeviceTable, batteryStatusTable, gatewayStatusTable } = schema
 const dbUrl = `${DATABASE_URL}`
@@ -13,6 +13,9 @@ export type DeviceIntervalsFromDB = (typeof deviceIntervalTable.$inferSelect)[]
 
 interface QueryHelpers {
   eq: <T>(a: T, b: T) => boolean // Define the type of 'eq'
+  gte: <T>(a: T, b: T) => boolean // Define the type of 'gte'
+  lte: <T>(a: T, b: T) => boolean // Define the type of 'lte'
+  and: <T>(...args: T[]) => boolean // Define the type of 'and'
 }
 
 class DatabaseService {
@@ -40,6 +43,20 @@ class DatabaseService {
         return interval
       })
     )
+  }
+  async updateDeviceInterval({ imei, batteryStatusInterval, deviceStatusInterval, time }: any) {
+    try {
+      return await db
+        .update(deviceIntervalTable)
+        .set({
+          batteryStatusInterval,
+          deviceStatusInterval,
+          time,
+        })
+        .where(eq(deviceIntervalTable.imei as any, imei))
+    } catch (error) {
+      console.log("Error in updateDeviceInterval", error)
+    }
   }
 
   async saveBatteryStatus(data: BatteryStatusResponse) {
@@ -74,6 +91,33 @@ class DatabaseService {
       ])
     } catch (error) {
       console.log("Error in saveGatewayStatus", error)
+    }
+  }
+
+  async getDeviceStatus(data: any) {
+    try {
+      const sortParams = { time: true }
+      const { imei, timeStart, timeEnd, sort = {}, limit = 50 } = data
+
+      Object.assign(sort, sortParams)
+
+      const batteryStatuses = db.query.batteryStatusTable.findMany({
+        where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
+          return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
+        },
+        limit,
+      })
+      const gatewayStatuses = db.query.gatewayStatusTable.findMany({
+        where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
+          return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
+        },
+        limit,
+      })
+
+      return await Promise.all([batteryStatuses, gatewayStatuses])
+    } catch (error) {
+      console.log("Error in getDeviceStatus", error)
+      return []
     }
   }
 }

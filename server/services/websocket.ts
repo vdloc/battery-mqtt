@@ -69,12 +69,6 @@ export class WebSocketService {
   getClientsMap() {
     return this.clientsMap
   }
-
-  // broadcast(data: any) {
-  //   this.server.clients.forEach((client) => {
-  //     client.send(data)
-  //   })
-  // }
 }
 
 export const webSocketService = new WebSocketService()
