@@ -58,7 +58,7 @@ class CronJobService {
           Ampere: this.getRandomInRange(97, 354.52),
         },
       },
-      time: `${performance.now()}`,
+      time: `${this.getRandomTime()}`,
     }
   }
 
@@ -73,7 +73,7 @@ class CronJobService {
         usingChannel: this.getRandomChannel(),
         fwVersion: 1.0,
       },
-      time: `${performance.now()}`,
+      time: `${this.getRandomTime()}`,
     }
   }
 
@@ -120,6 +120,10 @@ class CronJobService {
 
   getRandomChannel() {
     return Array.from({ length: 4 }, () => faker.number.int({ min: 0, max: 1 })).join("")
+  }
+
+  getRandomTime() {
+    return Date.now() + Math.floor(Math.random() * 500)
   }
 
   updateTask(imei: string, batteryStatusInterval: number, deviceStatusInterval: number) {
