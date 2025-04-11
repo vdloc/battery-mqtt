@@ -1,28 +1,84 @@
-import { useEffect, useMemo } from "react"
-import { trpc } from "../utils/trpc"
-import useWebSocket from "../hooks/useWebSocket"
-
-const HomePage = () => {
-  const wsUrl = import.meta.env.VITE_WS_URL
-  const { messages, sendMessage, connected, disconnected, error } = useWebSocket(wsUrl)
-
-  const devices = trpc.getDevices.useQuery()
-  const listenDevice = useMemo(() => (devices.data || []).at(0), [devices])
-
-  useEffect(() => {
-    if (listenDevice) {
-      sendMessage(JSON.stringify({ operator: "SET_LISTEN_DEVICE", device: listenDevice }))
+import useGetDevices from "@/hooks/useGetDevices"
+import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
+import useGetIntervals from "@/hooks/useGetIntervals"
+import { Button, Card, Table } from "antd"
+import { Link, useNavigate } from "react-router"
+export type DeviceType = {
+  id: string
+  imei: string
+  lastBatteryStatus: {
+    CH1: {
+      Voltage: string
+      Ampere: string
     }
-  }, [listenDevice])
+    CH2: {
+      Voltage: string
+      Ampere: string
+    }
+    CH3: {
+      Voltage: string
+      Ampere: string
+    }
+    CH4: {
+      Voltage: string
+      Ampere: string
+    }
+  }
+  lastGatewayStatus: {
+    operator: string
+    RSSI: string
+    IP: string
+    usingChannel: string
+    fwVersion: string
+  }
+}
 
+const columns = ["Imei", "Operator", "Ip", "Channel", "RSSI", "Volt", "Ampe", "Action"]
+const HomePage = () => {
+  const navigate = useNavigate()
+  const { data: devices } = useGetDevices()
+  const { data: intervals } = useGetIntervals()
+  const { data: deviceSetupChannels } = useGetDeviceSetupChannels()
+  console.log("devices", devices)
+  console.log("intervals", intervals)
+  console.log("deviceSetupChannels", deviceSetupChannels)
   return (
-    <div>
-      <h1>WebSocket Connection Status: {connected ? "Conneted" : disconnected ? "Disconnected" : "Connecting"}</h1>
-      {error && <p>Error: {error}</p>}
-      {listenDevice && <p>Listening data for device {listenDevice.imei}</p>}
-      <p>Messages:</p>
-      <div>{JSON.stringify(messages)}</div>
-    </div>
+    <Card title={<p className="text-2xl font-bold">List Devices</p>}>
+      <Table
+        // pagination={{
+        //   pageSize: 50,
+        // }}
+        dataSource={devices?.base?.map((item: any, index: number) => {
+          return {
+            key: index,
+            Imei: item.imei,
+            Operator: item.lastGatewayStatus?.operator,
+            Ip: item.lastGatewayStatus.IP,
+            Channel: item.lastGatewayStatus.usingChannel,
+            RSSI: item.lastGatewayStatus.RSSI,
+            Volt: (
+              <>
+                <b> {item.lastBatteryStatus.CH1.Voltage}</b>/<b>{item.lastBatteryStatus.CH2.Voltage}</b>/
+                <b>{item.lastBatteryStatus.CH3.Voltage}</b>/<b>{item.lastBatteryStatus.CH4.Voltage}</b>
+              </>
+            ),
+            Ampe: (
+              <>
+                {" "}
+                <b>{item.lastBatteryStatus.CH1.Ampere}</b>/<b>{item.lastBatteryStatus.CH2.Ampere}</b>/
+                <b>{item.lastBatteryStatus.CH3.Ampere}</b>/<b>{item.lastBatteryStatus.CH4.Ampere}</b>
+              </>
+            ),
+            Action: <Button onClick={() => navigate(`/device/${item.imei}`)}>Detail</Button>,
+          }
+        })}
+        columns={columns.map((item) => ({
+          title: item,
+          dataIndex: item,
+          key: item,
+        }))}
+      />
+    </Card>
   )
 }
 
