@@ -5,7 +5,7 @@ import { randomUUID, UUID } from "crypto"
 
 type ClientData = {
   id: UUID
-  imei: string | null
+  devices: string[] | string
 }
 
 export class WebSocketService {
@@ -23,7 +23,7 @@ export class WebSocketService {
     this.server.on("connection", (ws) => {
       this.clientsMap.set(ws, {
         id: randomUUID(),
-        imei: null,
+        devices: [],
       })
       ws.on("message", (message) => {
         try {
@@ -53,11 +53,11 @@ export class WebSocketService {
   }
 
   handleSetListenDevice = (client: WebSocket, data: SetListenDeviceData) => {
-    const { imei } = data.device
+    const { devices } = data
     const clientData = this.clientsMap.get(client)
 
     if (clientData) {
-      clientData.imei = imei
+      clientData.devices = devices
       this.clientsMap.set(client, clientData)
     }
   }

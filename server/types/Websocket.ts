@@ -6,5 +6,5 @@ export enum WS_OPERATORS {
 
 export interface SetListenDeviceData {
   operator: WS_OPERATORS.SET_LISTEN_DEVICE
-  device: DevicesFromDB[0]
+  devices: string[]
 }

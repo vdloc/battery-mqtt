@@ -2,7 +2,8 @@ import { schema } from "@fsb/drizzle"
 import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
-import { desc, eq } from "drizzle-orm"
+import { desc, eq, and, exists } from "drizzle-orm"
+import { setupChannelTable } from "@fsb/drizzle/src/db/mqtt"
 
 const { deviceIntervalTable, brokerDeviceTable, batteryStatusTable, gatewayStatusTable } = schema
 const dbUrl = `${DATABASE_URL}`
@@ -59,19 +60,42 @@ class DatabaseService {
     }
   }
 
+  async updateSetupChannel({ imei, usingChannel, time }: any) {
+    try {
+      return await db
+        .update(setupChannelTable)
+        .set({
+          usingChannel,
+          time,
+        })
+        .where(eq(setupChannelTable.imei as any, imei))
+    } catch (error) {
+      console.log("Error in updateSetupChannel", error)
+    }
+  }
   async saveBatteryStatus(data: BatteryStatusResponse) {
     const { imei, infor, time } = data
 
     try {
-      return await Promise.all([
-        db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
-        db
-          .update(brokerDeviceTable)
-          .set({
-            lastBatteryStatus: JSON.stringify(infor),
-          })
-          .where(eq(brokerDeviceTable.imei as any, imei)),
-      ])
+      let existedTimeRecords = await db.query.batteryStatusTable.findFirst({
+        where: (batteryStatus: any, { eq, and }: QueryHelpers) => {
+          return and(eq(batteryStatus.imei, imei), eq(batteryStatus.time, time))
+        },
+      })
+
+      if (!existedTimeRecords) {
+        return await Promise.all([
+          db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
+          db
+            .update(brokerDeviceTable)
+            .set({
+              lastBatteryStatus: JSON.stringify(infor),
+            })
+            .where(eq(brokerDeviceTable.imei as any, imei)),
+        ])
+      }
+
+      return []
     } catch (error) {
       console.log("Error in saveBatteryStatus", error)
     }
@@ -79,16 +103,26 @@ class DatabaseService {
 
   async saveGatewayStatus(data: GatewayStatusResponse) {
     const { imei, info, time } = data
+
     try {
-      return await Promise.all([
-        db.insert(gatewayStatusTable).values({ imei, infor: JSON.stringify(info), time }),
-        db
-          .update(brokerDeviceTable)
-          .set({
-            lastGatewayStatus: JSON.stringify(info),
-          })
-          .where(eq(brokerDeviceTable.imei as any, imei)),
-      ])
+      let existedTimeRecords = await db.query.batteryStatusTable.findFirst({
+        where: (batteryStatus: any, { eq, and }: QueryHelpers) => {
+          return and(eq(batteryStatus.imei, imei), eq(batteryStatus.time, time))
+        },
+      })
+      if (!existedTimeRecords) {
+        return await Promise.all([
+          db.insert(gatewayStatusTable).values({ imei, infor: JSON.stringify(info), time }),
+          db
+            .update(brokerDeviceTable)
+            .set({
+              lastGatewayStatus: JSON.stringify(info),
+            })
+            .where(and(eq(brokerDeviceTable.imei as any, imei))),
+        ])
+      }
+
+      return []
     } catch (error) {
       console.log("Error in saveGatewayStatus", error)
     }

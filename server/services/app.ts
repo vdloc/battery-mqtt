@@ -1,5 +1,6 @@
 import {
   BatteryStatusResponse,
+  GatewayErrorResponse,
   GatewayStatusResponse,
   SetIntervalResponse,
   SetupChannelResponse,
@@ -29,9 +30,10 @@ class AppService {
       [OPERATORS.SEND_GATEWAY_STATUS]: this.handleGatewayStatusMessage,
       [OPERATORS.SET_INTERVAL]: this.handleSetIntervalMessage,
       [OPERATORS.SETUP_CHANNEL]: this.handleSetupChannelMessage,
+      default: this.handleErrorGatewayMessage,
     }
 
-    const handler = handlersMap[operator as keyof typeof handlersMap]
+    const handler = handlersMap[operator as keyof typeof handlersMap] || handlersMap.default
 
     if (typeof handler === "function") {
       handler(messageData)
@@ -46,28 +48,59 @@ class AppService {
     let clientsMap = this.webSocketService.getClientsMap()
 
     clients.forEach((client) => {
-      let imei = clientsMap.get(client)?.imei
-      console.log(" imei:", imei)
-      console.log(" message.imei:", message.imei)
-      if (imei && imei == message.imei) {
+      let imeis = clientsMap.get(client)?.devices
+      if (
+        (typeof imeis === "string" && imeis === message.imei) ||
+        (Array.isArray(imeis) && imeis.includes(message.imei))
+      ) {
         client.send(JSON.stringify(message))
       }
     })
   }
   handleGatewayStatusMessage = (message: GatewayStatusResponse) => {
     databaseService.saveGatewayStatus(message)
+    this.sendMessageToClients(message)
+  }
+  handleSetIntervalMessage = (message: SetIntervalResponse) => {
+    databaseService.updateDeviceInterval({
+      imei: message.imei,
+      batteryStatusInterval: message.infor.BatteryStatusInterval,
+      deviceStatusInterval: message.infor.DeviceStatusInterval,
+      time: message.time,
+    })
+    this.sendMessageToClients(message)
+  }
+  handleSetupChannelMessage = (message: SetupChannelResponse) => {
+    databaseService.updateSetupChannel({
+      imei: message.imei,
+      usingChannel: message.infor.usingChannel,
+      time: message.time,
+    })
+    this.sendMessageToClients(message)
+  }
+  handleErrorGatewayMessage = (message: GatewayErrorResponse) => {
+    // databaseService.updateSetupChannel({
+    //   imei: message.imei,
+    //   usingChannel: message.infor.usingChannel,
+    //   time: message.time,
+    // })
+    this.sendMessageToClients(message)
+  }
+
+  sendMessageToClients = (message: any) => {
     let clients = this.webSocketService.getClients()
     let clientsMap = this.webSocketService.getClientsMap()
 
     clients.forEach((client) => {
-      let imei = clientsMap.get(client)?.imei
-      if (imei === message.imei) {
+      let imeis = clientsMap.get(client)?.devices
+      if (
+        (typeof imeis === "string" && imeis === message.imei) ||
+        (Array.isArray(imeis) && imeis.includes(message.imei))
+      ) {
         client.send(JSON.stringify(message))
       }
     })
   }
-  handleSetIntervalMessage = (message: SetIntervalResponse) => {}
-  handleSetupChannelMessage = (message: SetupChannelResponse) => {}
 }
 
 export const appService = new AppService()
