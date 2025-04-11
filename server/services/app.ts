@@ -44,18 +44,7 @@ class AppService {
 
   handleBatteryStatusMessage = (message: BatteryStatusResponse) => {
     databaseService.saveBatteryStatus(message)
-    let clients = this.webSocketService.getClients()
-    let clientsMap = this.webSocketService.getClientsMap()
-
-    clients.forEach((client) => {
-      let imeis = clientsMap.get(client)?.devices
-      if (
-        (typeof imeis === "string" && imeis === message.imei) ||
-        (Array.isArray(imeis) && imeis.includes(message.imei))
-      ) {
-        client.send(JSON.stringify(message))
-      }
-    })
+    this.sendMessageToClients(message)
   }
   handleGatewayStatusMessage = (message: GatewayStatusResponse) => {
     databaseService.saveGatewayStatus(message)
