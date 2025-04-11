@@ -3,9 +3,8 @@ import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
 import { desc, eq, and, exists } from "drizzle-orm"
-import { setupChannelTable } from "@fsb/drizzle/src/db/mqtt"
 
-const { deviceIntervalTable, brokerDeviceTable, batteryStatusTable, gatewayStatusTable } = schema
+const { deviceIntervalTable, brokerDeviceTable, batteryStatusTable, gatewayStatusTable, setupChannelTable } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
 
