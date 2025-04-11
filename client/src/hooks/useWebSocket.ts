@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 
 const useWebSocket = (url: string) => {
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState<any>([])
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState("")
   const [disconnected, setDisconnected] = useState(false)
@@ -28,7 +28,11 @@ const useWebSocket = (url: string) => {
     socket.addEventListener("message", (event) => {
       console.log("Message from server:", event.data)
       let messages = event.data.length ? event.data : [event.data]
-      setMessages(messages)
+      setMessages((mesagesPrev: any[]) => {
+        const result = [...mesagesPrev]
+        result.push(JSON.parse(messages))
+        return result
+      })
     })
 
     socket.addEventListener("error", (error) => {

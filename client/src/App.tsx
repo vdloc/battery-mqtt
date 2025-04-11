@@ -1,71 +1,70 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { httpBatchLink, httpLink } from "@trpc/client"
-import { useState } from "react"
-import { trpc } from "./utils/trpc"
-import { BrowserRouter } from "react-router"
-import ContextProvider from "./ContextProvider"
-import LayoutApp from "./layout/LayoutApp"
-import MyIdle from "./MyIdle"
-import LogoApp from "./layout/LogoApp"
+import React, { useMemo } from "react"
+import { AppstoreOutlined, LineChartOutlined, SettingOutlined } from "@ant-design/icons"
+import type { MenuProps } from "antd"
+import { Layout, Menu, theme } from "antd"
+import { Toaster } from "react-hot-toast"
+import { Route, Routes, useNavigate } from "react-router"
+import HomePage from "./pages/HomePage"
+import Details from "./pages/Details"
+import Settings from "./pages/Settings"
+
+const { Header, Content, Footer, Sider } = Layout
+const siderStyle: React.CSSProperties = {
+  overflow: "auto",
+  height: "100vh",
+  position: "sticky",
+  insetInlineStart: 0,
+  top: 0,
+  bottom: 0,
+  scrollbarWidth: "thin",
+  scrollbarGutter: "stable",
+}
 
 const App = () => {
-  const url = import.meta.env.VITE_URL_BACKEND
-  if (!url)
-    return (
-      <div className="p-6">
-        <LogoApp />
-        <div className="flex flex-col items-center mt-12">
-          <h1>Error</h1>
-          <p>URL_BACKEND not set in env file</p>
-        </div>
-      </div>
-    )
-
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            refetchOnWindowFocus: false,
-            retry: false,
-            gcTime: 1000 * 60 * 60 * 24 * 7,
-          },
-        },
-      })
-  )
-
-  const [trpcClient] = useState(() =>
-    trpc.createClient({
-      links: [
-        httpBatchLink({
-          url,
-          fetch(url, options) {
-            return fetch(url, {
-              ...options,
-              credentials: "include",
-            })
-          },
-          methodOverride: "POST",
-        }),
-        httpLink({
-          url,
-          methodOverride: "POST", // all queries and mutations will be sent to the tRPC Server as POST requests.
-        }),
-      ],
-    })
-  )
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken()
+  const navigate = useNavigate()
+  const items: MenuProps["items"] = useMemo(() => {
+    return [
+      {
+        key: 1,
+        icon: React.createElement(AppstoreOutlined),
+        label: "Home",
+        onClick: () => navigate("/"),
+      },
+      {
+        key: 2,
+        icon: React.createElement(SettingOutlined),
+        label: "Settings",
+        onClick: () => navigate("/settings"),
+      },
+    ]
+  }, [])
   return (
-    <BrowserRouter>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <ContextProvider>
-          <QueryClientProvider client={queryClient}>
-            <MyIdle>
-              <LayoutApp />
-            </MyIdle>
-          </QueryClientProvider>
-        </ContextProvider>
-      </trpc.Provider>
-    </BrowserRouter>
+    <Layout hasSider>
+      <Sider style={siderStyle}>
+        <div className="demo-logo-vertical" />
+        <Menu theme="dark" mode="inline" defaultSelectedKeys={["4"]} items={items} />
+      </Sider>
+      <Layout>
+        <Header style={{ padding: 0, background: colorBgContainer }} />
+        <Content style={{ margin: "24px 16px 0", overflow: "initial" }}>
+          <Routes>
+            <Route index element={<HomePage />} />
+            <Route path="/device/:imei" element={<Details />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Content>
+        <Footer style={{ textAlign: "center" }}> ©{new Date().getFullYear()}</Footer>
+      </Layout>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+        }}
+      />
+    </Layout>
   )
 }
 

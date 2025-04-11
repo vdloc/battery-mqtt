@@ -1,9 +1,8 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
   --text-xxs: 0.625rem;
 }
-
 
 @layer base {
   *,
@@ -63,7 +62,7 @@ td {
 }
 
 table {
-  @apply min-w-full table-fixed w-full;
+  @apply min-w-full  w-full;
 }
 
 thead {
@@ -73,7 +72,7 @@ tr {
   @apply border-b border-neutral-200 dark:border-white/10;
 }
 tbody tr {
-  @apply hover:bg-gray-50 h-20;
+  @apply hover:bg-gray-50 h-10;
 }
 
 .move-right {
