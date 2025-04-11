@@ -43,22 +43,22 @@ class CronJobService {
       infor: {
         CH1: {
           Voltage: this.getRandomInRange(30.15, 90.54),
-          Ampere: this.getRandomInRange(30.15, 200),
+          Ampere: this.getRandomInRange(13, 123),
         },
         CH2: {
-          Voltage: this.getRandomInRange(30.15, 90.54),
-          Ampere: this.getRandomInRange(30.15, 200),
+          Voltage: this.getRandomInRange(12.23, 156.87),
+          Ampere: this.getRandomInRange(17.12, 321),
         },
         CH3: {
-          Voltage: this.getRandomInRange(30.15, 90.54),
-          Ampere: this.getRandomInRange(30.15, 200),
+          Voltage: this.getRandomInRange(135, 500),
+          Ampere: this.getRandomInRange(123, 197),
         },
         CH4: {
-          Voltage: this.getRandomInRange(30.15, 90.54),
-          Ampere: this.getRandomInRange(30.15, 200),
+          Voltage: this.getRandomInRange(23.21, 78.52),
+          Ampere: this.getRandomInRange(97, 354.52),
         },
       },
-      time: `${Date.now()}`,
+      time: `${performance.now()}`,
     }
   }
 
@@ -73,7 +73,7 @@ class CronJobService {
         usingChannel: this.getRandomChannel(),
         fwVersion: 1.0,
       },
-      time: `${Date.now()}`,
+      time: `${performance.now()}`,
     }
   }
 
