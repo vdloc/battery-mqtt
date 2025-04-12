@@ -22,6 +22,7 @@ export class MqttService {
   private mqttClient: MqttClient
   private static subscribeTopics: Topic
   private messageHandlers: OnMessageCallback[]
+  static initialized: boolean = false
   constructor() {
     this.connectUrl = this.getConnectionUrl()
     this.mqttClient = this.createClient()
@@ -29,20 +30,21 @@ export class MqttService {
   }
 
   init() {
-    this.mqttClient.on("connect", () => {
-      let subscribeTopics = [Topic.RESPONSE, Topic.BATTERY_STATUS, Topic.GATEWAY_STATUS, Topic.GATEWAY_ERROR]
+    if (!MqttService.initialized) {
+      this.mqttClient.on("connect", () => {
+        let subscribeTopics = [Topic.RESPONSE, Topic.BATTERY_STATUS, Topic.GATEWAY_STATUS, Topic.GATEWAY_ERROR]
 
-      subscribeTopics.forEach((topic) => {
-        this.mqttClient.subscribe(topic, () => {
-          logger.info(`Subscribed to ${topic}`)
+        subscribeTopics.forEach((topic) => {
+          this.mqttClient.subscribe(topic, () => {})
         })
 
         this.mqttClient.on("message", (topic, message) => {
-          logger.info(`Received message from ${topic}: ${message.toString()}`)
           this.messageHandlers.forEach((handler) => handler(topic, message))
         })
       })
-    })
+    }
+
+    MqttService.initialized = true
   }
 
   getConnectionUrl() {
