@@ -19,7 +19,7 @@ class AppService {
 
   init() {
     mqttService.onMessage(this.handleMqttMessage)
-    cronjobService.init()
+    // cronjobService.init()
   }
 
   handleMqttMessage: OnMessageCallback = (topic, message) => {
