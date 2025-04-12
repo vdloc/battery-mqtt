@@ -16,8 +16,8 @@ enum ISP {
 interface Task {
   imei: string
   tasks: {
-    battery: ScheduledTask
-    gateway: ScheduledTask
+    battery: NodeJS.Timeout
+    gateway: NodeJS.Timeout
   }
 }
 
@@ -82,11 +82,11 @@ class CronJobService {
 
     return intervals.map((status) => {
       const { imei, batteryStatusInterval, deviceStatusInterval } = status
-      const batteryStatusCronTask = schedule(`${deviceStatusInterval} * * * * *`, () => {
+      const batteryStatusCronTask = this.schedule(deviceStatusInterval, () => {
         const message = { topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) }
         this.mqttService?.publish(message)
       })
-      const gatewayStatusCronTask = schedule(`${batteryStatusInterval} * * * * *`, () => {
+      const gatewayStatusCronTask = this.schedule(batteryStatusInterval, () => {
         const message = { topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) }
         this.mqttService?.publish(message)
       })
@@ -129,15 +129,21 @@ class CronJobService {
     let task = this.tasks.find((task) => task.imei === imei)
 
     if (task) {
-      task.tasks.battery.stop()
-      task.tasks.gateway.stop()
-      task.tasks.battery = schedule(`${batteryStatusInterval} * * * * *`, () => {
+      clearInterval(task.tasks.battery)
+      clearInterval(task.tasks.gateway)
+      task.tasks.battery = this.schedule(batteryStatusInterval, () => {
         this.mqttService?.publish({ topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) })
       })
-      task.tasks.gateway = schedule(`${deviceStatusInterval} * * * * *`, () => {
+      task.tasks.gateway = this.schedule(deviceStatusInterval, () => {
         this.mqttService?.publish({ topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) })
       })
     }
+  }
+
+  schedule(seconds: number, callback: () => void): NodeJS.Timeout {
+    return setInterval(() => {
+      callback()
+    }, seconds * 1000)
   }
 }
 

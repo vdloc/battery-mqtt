@@ -37,10 +37,9 @@ export class MqttService {
         subscribeTopics.forEach((topic) => {
           this.mqttClient.subscribe(topic, () => {})
         })
-
-        this.mqttClient.on("message", (topic, message) => {
-          this.messageHandlers.forEach((handler) => handler(topic, message))
-        })
+      })
+      this.mqttClient.on("message", (topic, message) => {
+        this.messageHandlers.forEach((handler) => handler(topic, message))
       })
     }
 
