@@ -94,8 +94,8 @@ export default publicProcedure
             infor: {
               usingChannel: usingChannel,
             },
+            imei,
           },
-          imei,
         })
         return input
       default:
