@@ -83,6 +83,7 @@ class AppService {
     clients.forEach((client) => {
       let imeis = clientsMap.get(client)?.devices
       if (
+        !imeis ||
         (typeof imeis === "string" && imeis === message.imei) ||
         (Array.isArray(imeis) && imeis.includes(message.imei))
       ) {

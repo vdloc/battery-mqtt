@@ -32,7 +32,6 @@ export default publicProcedure
       time,
     } = input
     const db = ctx.db
-
     switch (operator) {
       case OPERATORS.SET_INTERVAL:
         databaseService.updateDeviceInterval({
@@ -52,6 +51,20 @@ export default publicProcedure
             },
           },
         })
+        // Demo only
+        mqttService.publish({
+          topic: Topic.RESPONSE,
+          message: {
+            time: Date.now(),
+            operator: OPERATORS.SET_INTERVAL,
+            infor: {
+              BatteryStatusInterval: BatteryStatusInterval,
+              DeviceStatusInterval: DeviceStatusInterval,
+            },
+            imei,
+          },
+        })
+        // Demo only
         cronjobService.updateTask(imei, BatteryStatusInterval || 30, DeviceStatusInterval || 30)
         return input
       case OPERATORS.SETUP_CHANNEL:
@@ -71,6 +84,18 @@ export default publicProcedure
               usingChannel: usingChannel,
             },
           },
+        })
+        // Demo only
+        mqttService.publish({
+          topic: Topic.RESPONSE,
+          message: {
+            time: Date.now(),
+            operator: OPERATORS.SETUP_CHANNEL,
+            infor: {
+              usingChannel: usingChannel,
+            },
+          },
+          imei,
         })
         return input
       default:
