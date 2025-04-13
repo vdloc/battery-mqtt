@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 const utils = {
   sanitizePage: (page: string | null) => {
     if (!page) return 1
@@ -18,5 +21,9 @@ const utils = {
 
     return ""
   },
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 export default utils

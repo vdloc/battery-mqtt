@@ -11,15 +11,25 @@ const useGetDevices = () => {
         method: "GET",
         url,
       })
-      const config = res?.data?.result?.data
+      let config = res?.data?.result?.data
       if (config) {
         const configObj: any = {}
-        config.forEach((element: any) => {
+        const lastGatewayStatus: any = {}
+        const lastBatteryStatus: any = {}
+        config = config.map((element: any, index: number) => {
           configObj[element.imei] = element
+          lastGatewayStatus[element.imei] = element.lastGatewayStatus
+          lastBatteryStatus[element.imei] = element.lastBatteryStatus
+          return {
+            ...element,
+            index,
+          }
         })
         return {
           base: config,
           configObj,
+          lastGatewayStatus,
+          lastBatteryStatus,
         }
       }
       return undefined

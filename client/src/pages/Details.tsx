@@ -1,25 +1,33 @@
 import { useEffect, useMemo, useState } from "react"
+import { Legend, Tooltip, ComposedChart, ResponsiveContainer, XAxis, YAxis, Area, Line } from "recharts"
 import { useParams } from "react-router"
 import { DeviceType } from "./HomePage"
-import useWebSocket from "@/hooks/useWebSocket"
 import useGetDevices from "@/hooks/useGetDevices"
-import { Card, DatePicker, DatePickerProps } from "antd"
+import { Button, Card, DatePicker, DatePickerProps } from "antd"
 import type { Dayjs } from "dayjs"
 import dayjs from "dayjs"
 import useGetDeviceStatus from "@/hooks/useGetDeviceStatus"
+import { useSocket } from "@/components/SocketProvider"
+import { formatNumber } from "@/utils/formatNumber"
+import { formatDateAxis } from "@/utils/formatDate"
+import useGetIntervals from "@/hooks/useGetIntervals"
+import { cn } from "@/utils/utils"
 
-const wsUrl = import.meta.env.VITE_WS_URL
 const Details = () => {
   const params = useParams()
-  const [date, setDate] = useState<Dayjs>(dayjs())
-  const { data: devices } = useGetDevices()
-  const { messages, sendMessage, connected, disconnected, error } = useWebSocket(wsUrl)
-  const { data } = useGetDeviceStatus({
+  const [lastGatewayStatus, setLastGatewayStatus] = useState<any>({})
+  const [batInterval, setBatInterval] = useState<any>({})
+  const [newData, setNewData] = useState<any>([])
+  const [tab, setTab] = useState<string[]>([])
+  const { data: intervals } = useGetIntervals()
+  const [date, setDate] = useState<Dayjs>(dayjs(new Date()))
+  const { data: devices, isLoading: isLoadingDevices } = useGetDevices()
+  const { messages, sendMessage, connected, setMessages } = useSocket()
+  const { data, isLoading } = useGetDeviceStatus({
     imei: params.imei,
     timeStart: date.startOf("day").toDate().getTime(),
     timeEnd: date.endOf("day").toDate().getTime(),
   })
-  console.log("data", data)
   const listenDevice: DeviceType | null = useMemo(() => {
     if (params && params.imei && devices && devices?.base.length > 0) {
       return devices?.base.find((item: DeviceType) => item.imei === params.imei)
@@ -28,66 +36,431 @@ const Details = () => {
   }, [params, devices])
 
   useEffect(() => {
-    if (listenDevice && connected) {
-      console.log("listenDevice", listenDevice)
-      sendMessage(JSON.stringify({ operator: "SET_LISTEN_DEVICE", device: listenDevice }))
+    if (params.imei && connected) {
+      sendMessage(JSON.stringify({ operator: "SET_LISTEN_DEVICE", device: [params.imei] }))
     }
-  }, [listenDevice, connected])
+    return () => {
+      setMessages(null)
+    }
+  }, [params.imei, connected])
   console.log("messages", messages)
-  console.log("connected", connected)
-  console.log("error", error)
+  console.log("data=============", data)
+
   const onChange: DatePickerProps["onChange"] = (value: Dayjs) => {
     setDate(value)
   }
 
+  useEffect(() => {
+    if (devices) {
+      setLastGatewayStatus((prevStatus: any) => ({
+        ...prevStatus,
+        ...devices.lastGatewayStatus,
+      }))
+    }
+  }, [devices])
+
+  useEffect(() => {
+    if (intervals) {
+      setBatInterval((prevStatus: any) => ({
+        ...prevStatus,
+        ...intervals.configObj,
+      }))
+    }
+  }, [intervals])
+
+  useEffect(() => {
+    if (messages && messages?.operator === "SendStatus") {
+      setLastGatewayStatus((prevStatus: any) => ({
+        ...prevStatus,
+        [messages.imei]: messages.info,
+      }))
+    }
+    if (messages && messages?.operator === "SetInterval") {
+      setBatInterval((prevStatus: any) => ({
+        ...prevStatus,
+        [messages.imei]: messages.info,
+      }))
+    }
+    if (
+      messages &&
+      messages?.operator === "SendBatteryStatus" &&
+      messages.infor?.CH1 &&
+      messages.infor?.CH2 &&
+      messages.infor?.CH3 &&
+      messages.infor?.CH4
+    ) {
+      setNewData((prevData: any) => {
+        const resultConfig = [...prevData]
+        const resultConfigLatest = resultConfig[resultConfig.length - 1]
+        if (!resultConfigLatest || (resultConfigLatest && resultConfigLatest.time !== messages.time)) {
+          resultConfig.push(messages)
+        }
+      })
+    }
+  }, [messages])
+
+  const dataMap = useMemo(() => {
+    if (data) {
+      return data
+        .sort((a, b) => a.time - b.time)
+        .filter((item) => item.infor?.CH1 && item.infor?.CH2 && item.infor?.CH3 && item.infor?.CH4)
+        .map((item) => {
+          return {
+            ch1Voltage: +item.infor?.CH1?.Voltage,
+            ch1Ampere: +item.infor?.CH1?.Ampere,
+            ch2Voltage: +item.infor?.CH2?.Voltage,
+            ch2Ampere: +item.infor?.CH2?.Ampere,
+            ch3Voltage: +item.infor?.CH3?.Voltage,
+            ch3Ampere: +item.infor?.CH3?.Ampere,
+            ch4Voltage: +item.infor?.CH4?.Voltage,
+            ch4Ampere: +item.infor?.CH4?.Ampere,
+            date: formatDateAxis(item.time),
+            time: item.time.toString(),
+          }
+        })
+    }
+    return []
+  }, [data])
+
+  const dataConfig = useMemo(() => {
+    return dataMap.concat(
+      newData.map((item: any) => ({
+        ch1Voltage: +item.infor?.CH1?.Voltage,
+        ch1Ampere: +item.infor?.CH1?.Ampere,
+        ch2Voltage: +item.infor?.CH2?.Voltage,
+        ch2Ampere: +item.infor?.CH2?.Ampere,
+        ch3Voltage: +item.infor?.CH3?.Voltage,
+        ch3Ampere: +item.infor?.CH3?.Ampere,
+        ch4Voltage: +item.infor?.CH4?.Voltage,
+        ch4Ampere: +item.infor?.CH4?.Ampere,
+        date: formatDateAxis(item.time),
+        time: item.time.toString(),
+      }))
+    )
+  }, [dataMap, newData])
+
+  console.log("dataConfig", dataConfig)
+  const ticks = useMemo(() => {
+    return dataConfig?.length > 5
+      ? [
+          dataConfig[dataConfig?.length > 5 ? 5 : 0].date,
+          dataConfig[Math.floor((dataConfig.length * 1) / 4)].date,
+          dataConfig[Math.floor((dataConfig.length * 2) / 4)].date,
+          dataConfig[Math.floor((dataConfig.length * 3) / 4)].date,
+          dataConfig[dataConfig.length - 1].date,
+        ]
+      : dataConfig.map((item) => item.date)
+  }, [dataConfig])
+  const selectTab = (type: string) => {
+    const tabClone = [...tab]
+    const index = tabClone.indexOf(type)
+    if (index >= 0) {
+      tabClone.splice(index, 1)
+    } else {
+      tabClone.push(type)
+    }
+    setTab(tabClone)
+  }
+
+  console.log("tab", tab.length)
   return (
     <div className="flex flex-col gap-5">
       <Card title={<p className="text-2xl font-bold">Information</p>}>
-        <ul className="flex gap-8 text-lg">
-          <li>
-            0perator: <b>{listenDevice?.lastGatewayStatus.operator}</b>
-          </li>
-          <li>
-            Imei: <b>{listenDevice?.imei}</b>
-          </li>
-          <li>
-            IP: <b>{listenDevice?.lastGatewayStatus.IP}</b>
-          </li>
-          <li>
-            RSSI: <b>{listenDevice?.lastGatewayStatus.RSSI}</b>
-          </li>
-          <li>
-            UsingChannel: <b>{listenDevice?.lastGatewayStatus.usingChannel}</b>
-          </li>
-          <li>
-            FwVersion: <b>{listenDevice?.lastGatewayStatus.fwVersion}</b>
-          </li>
-        </ul>
+        {isLoadingDevices ? (
+          <p>Loading...</p>
+        ) : (
+          <ul className="flex gap-8 text-lg">
+            <li>
+              0perator: <b>{listenDevice?.lastGatewayStatus.operator}</b>
+            </li>
+            <li>
+              Imei: <b>{listenDevice?.imei}</b>
+            </li>
+            <li>
+              IP: <b>{listenDevice?.lastGatewayStatus.IP}</b>
+            </li>
+            <li>
+              RSSI: <b>{listenDevice?.imei && lastGatewayStatus[listenDevice?.imei]?.RSSI}</b>
+            </li>
+            <li>
+              Battery interval: <b>{listenDevice?.imei && batInterval[listenDevice.imei]?.batteryStatusInterval}</b>
+            </li>
+            <li>
+              UsingChannel: <b>{listenDevice?.lastGatewayStatus.usingChannel}</b>
+            </li>
+            <li>
+              FwVersion: <b>{listenDevice?.lastGatewayStatus.fwVersion}</b>
+            </li>
+          </ul>
+        )}
       </Card>
-      <Card title={<p className="text-2xl font-bold">Chart</p>} extra={<DatePicker onChange={onChange} />}>
-        <ul className="flex gap-8 text-lg">
-          <li>
-            0perator: <b>{listenDevice?.lastGatewayStatus.operator}</b>
-          </li>
-          <li>
-            Imei: <b>{listenDevice?.imei}</b>
-          </li>
-          <li>
-            IP: <b>{listenDevice?.lastGatewayStatus.IP}</b>
-          </li>
-          <li>
-            RSSI: <b>{listenDevice?.lastGatewayStatus.RSSI}</b>
-          </li>
-          <li>
-            UsingChannel: <b>{listenDevice?.lastGatewayStatus.usingChannel}</b>
-          </li>
-          <li>
-            FwVersion: <b>{listenDevice?.lastGatewayStatus.fwVersion}</b>
-          </li>
-        </ul>
+      <Card
+        title={<p className="text-2xl font-bold">Chart</p>}
+        extra={
+          <div className="flex items-center gap-3">
+            <ul className="flex items-center gap-3">
+              <li>
+                <Button
+                  type="default"
+                  className={cn("!font-bold", [tab.includes("CH1") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
+                  onClick={() => selectTab("CH1")}
+                >
+                  CH1
+                </Button>
+              </li>
+              <li>
+                <Button
+                  type="default"
+                  className={cn("!font-bold", [tab.includes("CH2") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
+                  onClick={() => selectTab("CH2")}
+                >
+                  CH2
+                </Button>
+              </li>
+              <li>
+                <Button
+                  type="default"
+                  className={cn("!font-bold", [tab.includes("CH3") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
+                  onClick={() => selectTab("CH3")}
+                >
+                  CH3
+                </Button>
+              </li>
+              <li>
+                <Button
+                  type="default"
+                  className={cn("!font-bold", [tab.includes("CH4") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
+                  onClick={() => selectTab("CH4")}
+                >
+                  CH4
+                </Button>
+              </li>
+            </ul>
+            <DatePicker value={date} onChange={onChange} />
+          </div>
+        }
+      >
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : (
+          <div className="grid grid-cols-1">
+            <div>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={dataConfig}
+                    // margin={{
+                    //   right: width > 500 ? 30 : 10,
+                    //   top: width > 500 ? 20 : 10,
+                    //   bottom: 10,
+                    // }}
+                  >
+                    <defs>
+                      <linearGradient id="gradientColor3" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#82ca9d" stopOpacity={0.8} />
+                        <stop offset="20%" stopColor="#82ca9d" stopOpacity={0} />
+                        <stop offset="100%" stopColor="#82ca9d" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <defs>
+                      <linearGradient id="gradientColor4" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="orange" stopOpacity={0.8} />
+                        <stop offset="20%" stopColor="orange" stopOpacity={0} />
+                        <stop offset="100%" stopColor="orange" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="date"
+                      ticks={ticks}
+                      fontSize={13}
+                      tickMargin={5}
+                      tickLine={false}
+                      padding="gap"
+                      tick={formatXAxis}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      orientation="left"
+                      fontSize={13}
+                      axisLine={true}
+                      tickFormatter={formatYAxis}
+                      tickLine={false}
+                      padding={{
+                        top: 10,
+                      }}
+                      // yAxisId="right" orientation="left" axisLine={false} tickFormatter={(value) => `$${value}`}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      fontSize={13}
+                      axisLine={true}
+                      tickFormatter={formatYAxis}
+                      tickLine={false}
+                      padding={{
+                        top: 10,
+                      }}
+                      // yAxisId="right" orientation="left" axisLine={false} tickFormatter={(value) => `$${value}`}
+                    />
+                    <Legend />
+
+                    {(tab.includes("CH1") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch1Voltage"
+                        stroke="#00c951"
+                        name="CH1 Voltage"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH1") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch1Ampere"
+                        stroke="#ff6900"
+                        name="CH1 Ampere"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH2") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch1Voltage"
+                        stroke="#00c951"
+                        name="CH1 Voltage"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH2") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch2Ampere"
+                        stroke="#f54a00"
+                        name="CH2 Ampere"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH3") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch3Voltage"
+                        stroke="#008236"
+                        name="CH3 Voltage"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH3") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch3Ampere"
+                        stroke="#ca3500"
+                        name="CH3 Ampere"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH4") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch4Voltage"
+                        stroke="#016630"
+                        name="CH4 Voltage"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {(tab.includes("CH4") || tab.length === 0) && (
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch4Ampere"
+                        stroke="#9f2d00"
+                        name="CH4 Ampere"
+                        dot={false}
+                        strokeWidth={2}
+                      />
+                    )}
+
+                    {/* <Area
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ch1Ampere"
+                        stroke="#82ca9d"
+                        name="CH1 Ampere"
+                        strokeWidth={2}
+                        fill="url(#gradientColor3)"
+                      /> */}
+
+                    <Tooltip
+                      content={(props) => {
+                        const { active, payload, label } = props
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className=" bg-[#fff] rounded-[8px] border p-3">
+                              <p className="font-bold text-black">Time: {label}</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                {payload.map((item, index: number) => {
+                                  return (
+                                    <p
+                                      className=""
+                                      key={index}
+                                      style={{
+                                        color: item.color,
+                                      }}
+                                    >
+                                      {item.name}: <b className="">{formatNumber(item.value, 0)}</b>
+                                    </p>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        }
+
+                        return null
+                      }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   )
 }
 
 export default Details
+
+const formatYAxis = (tick: any) => {
+  if (tick >= 1e9) return `$${tick / 1e9}B` // Billions
+  if (tick >= 1e6) return `$${tick / 1e6}M` // Millions
+  if (tick >= 1e3) return `$${tick / 1e3}K` // Thousands
+  if (tick <= -1e9) return `-$${(tick * -1) / 1e9}B` // Billions
+  if (tick <= -1e6) return `-$${(tick * -1) / 1e6}M` // Millions
+  if (tick <= -1e3) return `-$${(tick * -1) / 1e3}K` // Thousands
+  return tick
+}
+
+const formatXAxis = ({ x, y, payload }: any) => {
+  return (
+    <g transform={`translate(${0},${0})`}>
+      <text x={x} y={y} dy={8} dx={20} fontSize={13} textAnchor="end" fill="#666">
+        {payload.value}
+      </text>
+    </g>
+  )
+}

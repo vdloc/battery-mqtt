@@ -1,7 +1,9 @@
+import { useSocket } from "@/components/SocketProvider"
 import useGetDevices from "@/hooks/useGetDevices"
 import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
 import useGetIntervals from "@/hooks/useGetIntervals"
 import { Button, Card, Table } from "antd"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router"
 export type DeviceType = {
   id: string
@@ -33,15 +35,71 @@ export type DeviceType = {
   }
 }
 
-const columns = ["Imei", "Operator", "Ip", "Channel", "RSSI", "Volt", "Ampe", "Action"]
+const columns = [
+  "Stt",
+  "Đơn vị",
+  "Mã trạm",
+  "Tên gợi nhớ",
+  "Trạng thái gateway",
+  "Volt",
+  "Ampe",
+  "Bat_interval",
+  "Imei",
+  "Operator",
+  "Số sim",
+  "RSSI",
+  ,
+  "Action",
+]
 const HomePage = () => {
   const navigate = useNavigate()
+  const { messages, sendMessage, connected, setMessages } = useSocket()
+  const [lastGatewayStatus, setLastGatewayStatus] = useState<any>({})
+  const [batInterval, setBatInterval] = useState<any>({})
   const { data: devices } = useGetDevices()
   const { data: intervals } = useGetIntervals()
-  const { data: deviceSetupChannels } = useGetDeviceSetupChannels()
-  console.log("devices", devices)
-  console.log("intervals", intervals)
-  console.log("deviceSetupChannels", deviceSetupChannels)
+  useEffect(() => {
+    if (devices && connected) {
+      sendMessage(JSON.stringify({ operator: "SET_LISTEN_DEVICE", device: devices.base.map((item: any) => item.imei) }))
+    }
+    return () => {
+      setMessages(null)
+    }
+  }, [connected, sendMessage, devices])
+
+  useEffect(() => {
+    if (devices) {
+      setLastGatewayStatus((prevStatus: any) => ({
+        ...prevStatus,
+        ...devices.lastGatewayStatus,
+      }))
+    }
+  }, [devices])
+
+  useEffect(() => {
+    if (intervals) {
+      setBatInterval((prevStatus: any) => ({
+        ...prevStatus,
+        ...intervals.configObj,
+      }))
+    }
+  }, [intervals])
+
+  useEffect(() => {
+    if (messages && messages?.operator === "SendStatus") {
+      setLastGatewayStatus((prevStatus: any) => ({
+        ...prevStatus,
+        [messages.imei]: messages.info,
+      }))
+    }
+    if (messages && messages?.operator === "SetInterval") {
+      setBatInterval((prevStatus: any) => ({
+        ...prevStatus,
+        [messages.imei]: messages.info,
+      }))
+    }
+  }, [messages])
+
   return (
     <Card title={<p className="text-2xl font-bold">List Devices</p>}>
       <Table
@@ -50,12 +108,12 @@ const HomePage = () => {
         // }}
         dataSource={devices?.base?.map((item: any, index: number) => {
           return {
-            key: index,
-            Imei: item.imei,
-            Operator: item.lastGatewayStatus?.operator,
-            Ip: item.lastGatewayStatus.IP,
-            Channel: item.lastGatewayStatus.usingChannel,
-            RSSI: item.lastGatewayStatus.RSSI,
+            key: index + 1,
+            Stt: item.index,
+            "Đơn vị": "--",
+            "Mã trạm": "--",
+            "Tên gợi nhớ": "--",
+            "Trạng thái gateway": lastGatewayStatus[item.imei]?.RSSI,
             Volt: (
               <>
                 <b> {item.lastBatteryStatus.CH1.Voltage}</b>/<b>{item.lastBatteryStatus.CH2.Voltage}</b>/
@@ -69,6 +127,11 @@ const HomePage = () => {
                 <b>{item.lastBatteryStatus.CH3.Ampere}</b>/<b>{item.lastBatteryStatus.CH4.Ampere}</b>
               </>
             ),
+            Bat_interval: batInterval[item.imei]?.batteryStatusInterval,
+            Imei: item.imei,
+            Operator: item.lastGatewayStatus?.operator,
+            "Số sim": "--",
+            RSSI: item.lastGatewayStatus.RSSI,
             Action: <Button onClick={() => navigate(`/device/${item.imei}`)}>Detail</Button>,
           }
         })}
