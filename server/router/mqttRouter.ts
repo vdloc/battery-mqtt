@@ -5,6 +5,8 @@ import getIntervalsRoute from "./mqtt/getIntervals"
 import getDeviceSetupChannelsRoute from "./mqtt/getDeviceSetupChannels"
 import getDeviceStatusRoute from "./mqtt/getDeviceStatus"
 import updateDeviceRoute from "./mqtt/updateDevice"
+import getManageUnitsRoute from "./mqtt/getManageUnits"
+import updateManageUnitRoute from "./mqtt/updateManageUnit"
 
 const mqttRouter = router({
   request: requestRoute,
@@ -12,6 +14,8 @@ const mqttRouter = router({
   getDeviceStatus: getDeviceStatusRoute,
   getIntervals: getIntervalsRoute,
   getDeviceSetupChannels: getDeviceSetupChannelsRoute,
+  getManageUnits: getManageUnitsRoute,
+  updateManageUnit: updateManageUnitRoute,
   updateDevice: updateDeviceRoute,
 })
 
