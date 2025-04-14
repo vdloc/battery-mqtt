@@ -18,6 +18,14 @@ interface QueryHelpers {
   and: <T>(...args: T[]) => boolean // Define the type of 'and'
 }
 
+interface UpdateDeviceParams {
+  imei: string
+  manageUnitId?: string
+  aliasName?: string
+  stationCode?: string
+  simNumber?: string
+}
+
 class DatabaseService {
   private db: any
   constructor() {}
@@ -30,6 +38,23 @@ class DatabaseService {
     } catch (error) {
       console.log("Error in getDevices", error)
       return []
+    }
+  }
+
+  async updateDevice({ imei, manageUnitId, aliasName, stationCode, simNumber }: UpdateDeviceParams) {
+    try {
+      const updateData: Record<string, string> = {}
+      if (manageUnitId) updateData.manageUnitId = manageUnitId
+      if (aliasName) updateData.aliasName = aliasName
+      if (stationCode) updateData.stationCode = stationCode
+      if (simNumber) updateData.simNumber = simNumber
+
+      return await db
+        .update(brokerDeviceTable)
+        .set(updateData)
+        .where(eq(brokerDeviceTable.imei as any, imei))
+    } catch (error) {
+      console.log("Error in updateDevice", error)
     }
   }
 
@@ -76,23 +101,15 @@ class DatabaseService {
     const { imei, infor, time } = data
 
     try {
-      let existedTimeRecords = await db.query.batteryStatusTable.findFirst({
-        where: (batteryStatus: any, { eq, and }: QueryHelpers) => {
-          return and(eq(batteryStatus.imei, imei), eq(batteryStatus.time, time))
-        },
-      })
-
-      if (!existedTimeRecords) {
-        return await Promise.all([
-          db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
-          db
-            .update(brokerDeviceTable)
-            .set({
-              lastBatteryStatus: JSON.stringify(infor),
-            })
-            .where(eq(brokerDeviceTable.imei as any, imei)),
-        ])
-      }
+      return await Promise.all([
+        db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
+        db
+          .update(brokerDeviceTable)
+          .set({
+            lastBatteryStatus: JSON.stringify(infor),
+          })
+          .where(eq(brokerDeviceTable.imei as any, imei)),
+      ])
 
       return []
     } catch (error) {
