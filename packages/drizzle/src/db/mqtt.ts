@@ -6,6 +6,11 @@ export const brokerDeviceTable = pgTable("mqtt_device", {
   imei: varchar({ length: 50 }).notNull().unique(),
   lastBatteryStatus: jsonb(),
   lastGatewayStatus: jsonb(),
+  aliasName: varchar({ length: 200 }),
+  stationCode: varchar({ length: 50 }),
+  manageUnitId: uuid().references(() => manageUnitTable.id),
+  manageUnitName: varchar({ length: 100 }),
+  simNumber: varchar({ length: 15 }),
 })
 
 export const deviceIntervalTable = pgTable("mqtt_device_interval", {
@@ -43,6 +48,11 @@ export const gatewayStatusTable = pgTable("mqtt_gateway_status", {
     .notNull(),
   infor: jsonb("infor").notNull(),
   time: bigint({ mode: "number" }).notNull(),
+})
+
+export const manageUnitTable = pgTable("mqtt_manage_unit", {
+  id: uuid().defaultRandom().primaryKey(),
+  name: varchar({ length: 100 }).notNull(),
 })
 
 export const deviceIntervalRelations = relations(brokerDeviceTable, ({ one }) => ({
