@@ -4,7 +4,14 @@ import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
 import { desc, eq, and, exists } from "drizzle-orm"
 
-const { deviceIntervalTable, brokerDeviceTable, batteryStatusTable, gatewayStatusTable, setupChannelTable } = schema
+const {
+  deviceIntervalTable,
+  brokerDeviceTable,
+  batteryStatusTable,
+  gatewayStatusTable,
+  setupChannelTable,
+  manageUnitTable,
+} = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
 
@@ -186,7 +193,20 @@ class DatabaseService {
 
   async updateManageUnit({ name }: { name: string }) {
     try {
-      return await db.insert(schema.manageUnitTable).values({ name })
+      const existed = await db.query.manageUnitTable.findFirst({
+        where: (manageUnit: any, queryHelper: QueryHelpers) => queryHelper.eq(manageUnit.name, name),
+      })
+
+      if (existed) {
+        return await db
+          .update(manageUnitTable)
+          .set({
+            name,
+          })
+          .where(eq(manageUnitTable.name as any, name))
+      } else {
+        return await db.insert(manageUnitTable).values({ name })
+      }
     } catch (error) {
       console.log("Error in updateManageUnit", error)
     }
