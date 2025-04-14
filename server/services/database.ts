@@ -170,6 +170,27 @@ class DatabaseService {
       return []
     }
   }
+
+  async getManageUnits() {
+    try {
+      const manageUnits = await db.query.manageUnitTable.findMany({
+        limit: 100,
+      })
+
+      return manageUnits
+    } catch (error) {
+      console.log("Error in getManageUnits", error)
+      return []
+    }
+  }
+
+  async updateManageUnit({ name }: { name: string }) {
+    try {
+      return await db.insert(schema.manageUnitTable).values({ name })
+    } catch (error) {
+      console.log("Error in updateManageUnit", error)
+    }
+  }
 }
 
 export const databaseService = new DatabaseService()
