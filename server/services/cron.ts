@@ -32,6 +32,7 @@ class CronJobService {
 
   async init() {
     this.devices = await databaseService.getDevices()
+    console.log(" this.devices :", this.devices)
     let intervals = await databaseService.getDevicesInterval(this.devices)
     this.tasks = this.sendFakeStatus(intervals)
   }

@@ -1,22 +1,24 @@
 import { router } from "../trpc"
-import requestRoute from "./mqtt/request"
-import getDevicesRoute from "./mqtt/getDevices"
-import getIntervalsRoute from "./mqtt/getIntervals"
-import getDeviceSetupChannelsRoute from "./mqtt/getDeviceSetupChannels"
-import getDeviceStatusRoute from "./mqtt/getDeviceStatus"
-import updateDeviceRoute from "./mqtt/updateDevice"
-import getManageUnitsRoute from "./mqtt/getManageUnits"
-import updateManageUnitRoute from "./mqtt/updateManageUnit"
+import request from "./mqtt/request"
+import getDevices from "./mqtt/getDevices"
+import getIntervals from "./mqtt/getIntervals"
+import getDeviceSetupChannels from "./mqtt/getDeviceSetupChannels"
+import getDeviceStatus from "./mqtt/getDeviceStatus"
+import updateDevice from "./mqtt/updateDevice"
+import getManageUnits from "./mqtt/getManageUnits"
+import updateManageUnit from "./mqtt/updateManageUnit"
+import deleteManageUnit from "./mqtt/deleteManageUnit"
 
 const mqttRouter = router({
-  request: requestRoute,
-  getDevices: getDevicesRoute,
-  getDeviceStatus: getDeviceStatusRoute,
-  getIntervals: getIntervalsRoute,
-  getDeviceSetupChannels: getDeviceSetupChannelsRoute,
-  getManageUnits: getManageUnitsRoute,
-  updateManageUnit: updateManageUnitRoute,
-  updateDevice: updateDeviceRoute,
+  request,
+  getDevices,
+  getDeviceStatus,
+  getIntervals,
+  getDeviceSetupChannels,
+  getManageUnits,
+  updateManageUnit,
+  updateDevice,
+  deleteManageUnit,
 })
 
 export default mqttRouter

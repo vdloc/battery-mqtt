@@ -180,10 +180,7 @@ class DatabaseService {
 
   async getManageUnits() {
     try {
-      const manageUnits = await db.query.manageUnitTable.findMany({
-        limit: 100,
-      })
-
+      const manageUnits = await db.query.manageUnitTable.findMany({})
       return manageUnits
     } catch (error) {
       console.log("Error in getManageUnits", error)
@@ -191,10 +188,10 @@ class DatabaseService {
     }
   }
 
-  async updateManageUnit({ name }: { name: string }) {
+  async updateManageUnit({ name, id }: { name: string; id: string }) {
     try {
       const existed = await db.query.manageUnitTable.findFirst({
-        where: (manageUnit: any, queryHelper: QueryHelpers) => queryHelper.eq(manageUnit.name, name),
+        where: (manageUnit: Record<string, string>, queryHelper: QueryHelpers) => queryHelper.eq(manageUnit.id, id),
       })
 
       if (existed) {
@@ -203,12 +200,28 @@ class DatabaseService {
           .set({
             name,
           })
-          .where(eq(manageUnitTable.name as any, name))
+          .where(eq(manageUnitTable.id as any, id))
       } else {
         return await db.insert(manageUnitTable).values({ name })
       }
     } catch (error) {
       console.log("Error in updateManageUnit", error)
+    }
+  }
+
+  async deleteManageUnit({ id }: { id: string }) {
+    try {
+      await db.delete(manageUnitTable).where(eq(manageUnitTable.id as any, id))
+    } catch (error) {
+      console.log("Error in updateManageUnit", error)
+    }
+  }
+
+  async createManageUnit({ name }: { name: string }) {
+    try {
+      return await db.insert(manageUnitTable).values({ name })
+    } catch (error) {
+      console.log("Error in createManageUnit", error)
     }
   }
 }

@@ -1,16 +1,25 @@
 import { fastifyTRPCPlugin, FastifyTRPCPluginOptions } from "@trpc/server/adapters/fastify"
-import Fastify, { FastifyRequest, FastifyReply } from "fastify"
+import Fastify, { FastifyReply } from "fastify"
 import fastifyCookie from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
 import createContext from "./context"
-import { CLIENT_API_URL, CLIENT_URL, PORT } from "./envConfigs"
+import { PORT } from "./envConfigs"
 import initSwagger from "./swagger"
 import { appRouter, AppRouter } from "./router/appRouter"
 import { appService } from "./services/app"
 
 const fastify = Fastify({
   maxParamLength: 5000,
-  logger: false,
+  logger: {
+    transport: {
+      target: "pino-pretty",
+      options: {
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
+      },
+    },
+    file: "./application.log",
+  },
 })
 
 const corsOptions = {
@@ -40,7 +49,6 @@ const start = async () => {
     await fastify.listen({
       port: Number(PORT) || 4000,
     })
-
     await fastify.ready()
     fastify.swagger()
     appService.init()

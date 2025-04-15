@@ -2,7 +2,6 @@ import { OPERATORS, Topic } from "../types/Topic"
 import type { SetIntervalRequest, SetupChannelRequest } from "../types/Request"
 import { BROKER_URL, BROKER_PROTOCOL, BROKER_PASSWORD, BROKER_PORT, BROKER_USERNAME } from "../envConfigs"
 import mqtt, { MqttClient } from "mqtt"
-import logger from "../logger"
 
 type SetIntervalParams = {
   imei: string
