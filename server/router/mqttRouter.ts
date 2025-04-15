@@ -8,6 +8,7 @@ import updateDevice from "./mqtt/updateDevice"
 import getManageUnits from "./mqtt/getManageUnits"
 import updateManageUnit from "./mqtt/updateManageUnit"
 import deleteManageUnit from "./mqtt/deleteManageUnit"
+import createManageUnit from "./mqtt/createManageUnit"
 
 const mqttRouter = router({
   request,
@@ -19,6 +20,7 @@ const mqttRouter = router({
   updateManageUnit,
   updateDevice,
   deleteManageUnit,
+  createManageUnit,
 })
 
 export default mqttRouter
