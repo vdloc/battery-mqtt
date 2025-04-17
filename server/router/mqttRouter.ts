@@ -9,18 +9,30 @@ import getManageUnits from "./mqtt/getManageUnits"
 import updateManageUnit from "./mqtt/updateManageUnit"
 import deleteManageUnit from "./mqtt/deleteManageUnit"
 import createManageUnit from "./mqtt/createManageUnit"
+import createDevice from "./mqtt/createDevice"
+import deleteDevice from "./mqtt/deleteDevice"
+
+const deviceRoutes = {
+  getDevices,
+  createDevice,
+  updateDevice,
+  deleteDevice,
+}
+
+const manageUnitRoutes = {
+  getManageUnits,
+  createManageUnit,
+  updateManageUnit,
+  deleteManageUnit,
+}
 
 const mqttRouter = router({
   request,
-  getDevices,
   getDeviceStatus,
   getIntervals,
   getDeviceSetupChannels,
-  getManageUnits,
-  updateManageUnit,
-  updateDevice,
-  deleteManageUnit,
-  createManageUnit,
+  ...deviceRoutes,
+  ...manageUnitRoutes,
 })
 
 export default mqttRouter
