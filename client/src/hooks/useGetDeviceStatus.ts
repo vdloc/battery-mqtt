@@ -3,7 +3,7 @@ import API_URL from "@/utils/api/url"
 import { useQuery } from "@tanstack/react-query"
 
 const url = API_URL.GET_DEVICES_STATUS
-const useGetDeviceStatus = (params: { imei: string | undefined; timeStart: number; timeEnd: number }) => {
+const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart: number; timeEnd: number }) => {
   return useQuery({
     queryKey: [url, params],
     queryFn: async () => {
