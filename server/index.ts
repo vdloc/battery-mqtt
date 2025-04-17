@@ -42,7 +42,6 @@ const start = async () => {
       trpcOptions: {
         router: appRouter,
         createContext,
-        allowMethodOverride: true,
       } as FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
     })
 

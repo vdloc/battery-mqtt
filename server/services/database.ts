@@ -2,7 +2,8 @@ import { schema } from "@fsb/drizzle"
 import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
-import { desc, eq, and, exists } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
+import { DeviceExistedError, DeviceNotFoundError, ManageUnitNotFoundError } from "../helper/errors"
 
 const {
   deviceIntervalTable,
@@ -25,7 +26,7 @@ interface QueryHelpers {
   and: <T>(...args: T[]) => boolean // Define the type of 'and'
 }
 
-interface UpdateDeviceParams {
+interface DeviceInput {
   imei: string
   manageUnitId?: string
   aliasName?: string
@@ -33,10 +34,20 @@ interface UpdateDeviceParams {
   simNumber?: string
 }
 
-class DatabaseService {
-  private db: any
-  constructor() {}
+interface DeviceIntervalInput {
+  imei: string
+  batteryStatusInterval: number | undefined
+  deviceStatusInterval: number | undefined
+  time: number
+}
 
+interface SetupChannelInput {
+  imei: string
+  usingChannel: string | undefined
+  time: number
+}
+
+class DatabaseService {
   async getDevices(): Promise<DevicesFromDB> {
     try {
       const devices = await db.query.brokerDeviceTable.findMany()
@@ -48,21 +59,42 @@ class DatabaseService {
     }
   }
 
-  async updateDevice({ imei, manageUnitId, aliasName, stationCode, simNumber }: UpdateDeviceParams) {
+  async createDevice(input: DeviceInput) {
+    const { imei } = input
     try {
-      const updateData: Record<string, string> = {}
-      if (manageUnitId) updateData.manageUnitId = manageUnitId
-      if (aliasName) updateData.aliasName = aliasName
-      if (stationCode) updateData.stationCode = stationCode
-      if (simNumber) updateData.simNumber = simNumber
+      const existedDevice = db.query.brokerDeviceTable.findFirst({
+        where: eq(brokerDeviceTable.imei as any, imei),
+      })
 
-      return await db
-        .update(brokerDeviceTable)
-        .set(updateData)
-        .where(eq(brokerDeviceTable.imei as any, imei))
+      if (!existedDevice) {
+        return await db.insert(brokerDeviceTable).values(input)
+      }
+
+      throw new Error("Device already exists")
     } catch (error) {
       console.log("Error in updateDevice", error)
     }
+  }
+
+  async updateDevice({ imei, manageUnitId, aliasName, stationCode, simNumber }: DeviceInput) {
+    const updateData: Record<string, string> = {}
+    if (manageUnitId) updateData.manageUnitId = manageUnitId
+    if (aliasName) updateData.aliasName = aliasName
+    if (stationCode) updateData.stationCode = stationCode
+    if (simNumber) updateData.simNumber = simNumber
+
+    const result = await db
+      .update(brokerDeviceTable)
+      .set(updateData)
+      .where(eq(brokerDeviceTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
+  }
+
+  async deleteDevice(imei: string) {
+    let result = await db.delete(brokerDeviceTable).where(eq(brokerDeviceTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
   }
 
   async getDevicesInterval(devices: DevicesFromDB): Promise<DeviceIntervalsFromDB> {
@@ -76,153 +108,135 @@ class DatabaseService {
       })
     )
   }
-  async updateDeviceInterval({ imei, batteryStatusInterval, deviceStatusInterval, time }: any) {
-    try {
-      return await db
-        .update(deviceIntervalTable)
-        .set({
-          batteryStatusInterval,
-          deviceStatusInterval,
-          time,
-        })
-        .where(eq(deviceIntervalTable.imei as any, imei))
-    } catch (error) {
-      console.log("Error in updateDeviceInterval", error)
-    }
+  async updateDeviceInterval({ imei, batteryStatusInterval, deviceStatusInterval, time }: DeviceIntervalInput) {
+    let result = await db
+      .update(deviceIntervalTable)
+      .set({
+        batteryStatusInterval,
+        deviceStatusInterval,
+        time,
+      })
+      .where(eq(deviceIntervalTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
+  }
+
+  async createDeviceInterval(input: DeviceIntervalInput) {
+    const { imei } = input
+    const result = await db.insert(deviceIntervalTable).values(input).onConflictDoNothing().returning({
+      id: deviceIntervalTable.id,
+    })
+    if (result.rowCount > 0) return result
+    throw new DeviceExistedError(imei)
+  }
+
+  async deleteDeviceInterval(imei: string) {
+    const result = await db.delete(deviceIntervalTable).where(eq(deviceIntervalTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
   }
 
   async updateSetupChannel({ imei, usingChannel, time }: any) {
-    try {
-      return await db
-        .update(setupChannelTable)
-        .set({
-          usingChannel,
-          time,
-        })
-        .where(eq(setupChannelTable.imei as any, imei))
-    } catch (error) {
-      console.log("Error in updateSetupChannel", error)
-    }
+    let result = await db
+      .update(setupChannelTable)
+      .set({
+        usingChannel,
+        time,
+      })
+      .where(eq(setupChannelTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
   }
+
+  async createSetupChannel(input: SetupChannelInput) {
+    const { imei } = input
+    const result = await db.insert(setupChannelTable).values(input).onConflictDoNothing().returning({
+      id: setupChannelTable.id,
+    })
+    if (result.rowCount > 0) return result
+    throw new DeviceExistedError(imei)
+  }
+
+  async deleteSetupChannel(imei: string) {
+    const result = await db.delete(setupChannelTable).where(eq(setupChannelTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
+  }
+
   async saveBatteryStatus(data: BatteryStatusResponse) {
     const { imei, infor, time } = data
 
-    try {
-      return await Promise.all([
-        db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
-        db
-          .update(brokerDeviceTable)
-          .set({
-            lastBatteryStatus: JSON.stringify(infor),
-          })
-          .where(eq(brokerDeviceTable.imei as any, imei)),
-      ])
-
-      return []
-    } catch (error) {
-      console.log("Error in saveBatteryStatus", error)
-    }
+    return await Promise.all([
+      db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
+      db
+        .update(brokerDeviceTable)
+        .set({
+          lastBatteryStatus: JSON.stringify(infor),
+        })
+        .where(eq(brokerDeviceTable.imei as any, imei)),
+    ])
   }
 
   async saveGatewayStatus(data: GatewayStatusResponse) {
     const { imei, info, time } = data
 
-    try {
-      let existedTimeRecords = await db.query.batteryStatusTable.findFirst({
-        where: (batteryStatus: any, { eq, and }: QueryHelpers) => {
-          return and(eq(batteryStatus.imei, imei), eq(batteryStatus.time, time))
-        },
-      })
-      if (!existedTimeRecords) {
-        return await Promise.all([
-          db.insert(gatewayStatusTable).values({ imei, infor: JSON.stringify(info), time }),
-          db
-            .update(brokerDeviceTable)
-            .set({
-              lastGatewayStatus: JSON.stringify(info),
-            })
-            .where(and(eq(brokerDeviceTable.imei as any, imei))),
-        ])
-      }
-
-      return []
-    } catch (error) {
-      console.log("Error in saveGatewayStatus", error)
-    }
+    return await Promise.all([
+      db.insert(gatewayStatusTable).values({ imei, infor: JSON.stringify(info), time }),
+      db
+        .update(brokerDeviceTable)
+        .set({
+          lastGatewayStatus: JSON.stringify(info),
+        })
+        .where(and(eq(brokerDeviceTable.imei as any, imei))),
+    ])
   }
 
   async getDeviceStatus(data: any) {
-    try {
-      const sortParams = { time: true }
-      const { imei, timeStart, timeEnd, sort = {}, limit = 50 } = data
+    const sortParams = { time: true }
+    const { imei, timeStart, timeEnd, sort = {}, limit = 50 } = data
 
-      Object.assign(sort, sortParams)
+    Object.assign(sort, sortParams)
 
-      const batteryStatuses = db.query.batteryStatusTable.findMany({
-        where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
-          return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
-        },
-        limit,
-      })
-      const gatewayStatuses = db.query.gatewayStatusTable.findMany({
-        where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
-          return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
-        },
-        limit,
-      })
+    const batteryStatuses = db.query.batteryStatusTable.findMany({
+      where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
+        return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
+      },
+      limit,
+    })
+    const gatewayStatuses = db.query.gatewayStatusTable.findMany({
+      where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
+        return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
+      },
+      limit,
+    })
 
-      return await Promise.all([batteryStatuses, gatewayStatuses])
-    } catch (error) {
-      console.log("Error in getDeviceStatus", error)
-      return []
-    }
+    return await Promise.all([batteryStatuses, gatewayStatuses])
   }
 
   async getManageUnits() {
-    try {
-      const manageUnits = await db.query.manageUnitTable.findMany({})
-      return manageUnits
-    } catch (error) {
-      console.log("Error in getManageUnits", error)
-      return []
-    }
+    const manageUnits = await db.query.manageUnitTable.findMany({})
+    return manageUnits
   }
 
   async updateManageUnit({ name, id }: { name: string; id: string }) {
-    try {
-      const existed = await db.query.manageUnitTable.findFirst({
-        where: (manageUnit: Record<string, string>, queryHelper: QueryHelpers) => queryHelper.eq(manageUnit.id, id),
+    const result = await db
+      .update(manageUnitTable)
+      .set({
+        name,
       })
-
-      if (existed) {
-        return await db
-          .update(manageUnitTable)
-          .set({
-            name,
-          })
-          .where(eq(manageUnitTable.id as any, id))
-      } else {
-        return await db.insert(manageUnitTable).values({ name })
-      }
-    } catch (error) {
-      console.log("Error in updateManageUnit", error)
-    }
+      .where(eq(manageUnitTable.id as any, id))
+    if (result.rowCount > 0) return result
+    throw new ManageUnitNotFoundError(id)
   }
 
   async deleteManageUnit({ id }: { id: string }) {
-    try {
-      await db.delete(manageUnitTable).where(eq(manageUnitTable.id as any, id))
-    } catch (error) {
-      console.log("Error in updateManageUnit", error)
-    }
+    let result = await db.delete(manageUnitTable).where(eq(manageUnitTable.id as any, id))
+    if (result.rowCount > 0) return result
+    throw new ManageUnitNotFoundError(id)
   }
 
   async createManageUnit({ name }: { name: string }) {
-    try {
-      return await db.insert(manageUnitTable).values({ name })
-    } catch (error) {
-      console.log("Error in createManageUnit", error)
-    }
+    return await db.insert(manageUnitTable).values({ name })
   }
 }
 

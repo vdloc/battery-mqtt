@@ -7,7 +7,7 @@ const inputSchema = z.object({
   id: z.string(),
 })
 
-export default publicProcedure.input(inputSchema).query(async ({ ctx, input }) => {
+export default publicProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {
   await databaseService.updateManageUnit(input)
   return input
 })

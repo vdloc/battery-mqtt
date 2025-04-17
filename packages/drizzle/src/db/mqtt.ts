@@ -17,7 +17,8 @@ export const deviceIntervalTable = pgTable("mqtt_device_interval", {
   id: uuid().defaultRandom().primaryKey(),
   imei: varchar()
     .references(() => brokerDeviceTable.imei)
-    .notNull(),
+    .notNull()
+    .unique(),
   batteryStatusInterval: integer().notNull(),
   deviceStatusInterval: integer().notNull(),
   time: bigint({ mode: "number" }).notNull(),
@@ -27,7 +28,8 @@ export const setupChannelTable = pgTable("mqtt_setup_channel", {
   id: uuid().defaultRandom().primaryKey(),
   imei: varchar()
     .references(() => brokerDeviceTable.imei)
-    .notNull(),
+    .notNull()
+    .unique(),
   usingChannel: varchar({ length: 4 }).notNull(),
   time: bigint({ mode: "number" }).notNull(),
 })

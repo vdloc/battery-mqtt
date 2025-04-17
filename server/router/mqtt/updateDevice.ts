@@ -10,7 +10,6 @@ const inputSchema = z.object({
   simNumber: z.string().optional(),
 })
 
-export default publicProcedure.input(inputSchema).query(async ({ ctx, input }) => {
+export default publicProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {
   await databaseService.updateDevice(input)
-  return input
 })

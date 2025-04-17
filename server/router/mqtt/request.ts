@@ -24,7 +24,7 @@ export default publicProcedure
   .input(inputSchema)
   .output(inputSchema)
   .meta({ summary: "Gui request den gateway" })
-  .query(async ({ ctx, input }) => {
+  .mutation(async ({ ctx, input }) => {
     const {
       imei,
       operator,

@@ -3,11 +3,14 @@ import { publicProcedure } from "../../trpc"
 import { databaseService } from "../../services/database"
 
 const inputSchema = z.object({
-  name: z.string(),
-  id: z.string(),
+  imei: z.string(),
 })
 
 export default publicProcedure.input(inputSchema).mutation(async ({ input }) => {
-  await databaseService.updateManageUnit(input)
-  return input
+  const { imei } = input
+  await Promise.all([
+    databaseService.deleteDevice(imei),
+    databaseService.deleteDeviceInterval(imei),
+    databaseService.deleteSetupChannel(imei),
+  ])
 })
