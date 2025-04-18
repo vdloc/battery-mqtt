@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosRequestConfig } from "axios"
 
-export const VITE_BASE_URL = "http://api.battery.work.gd"
+export const VITE_BASE_URL = import.meta.env.VITE_URL_BACKEND
 
 const instanceAxios = {
   baseURL: VITE_BASE_URL,

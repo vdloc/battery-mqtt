@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
-import { Legend, Tooltip, ComposedChart, ResponsiveContainer, XAxis, YAxis, Area, Line, Brush } from "recharts"
+import React, { useLayoutEffect, useRef } from "react"
+import * as am5 from "@amcharts/amcharts5"
+import * as am5xy from "@amcharts/amcharts5/xy"
+import am5themes_Animated from "@amcharts/amcharts5/themes/Animated"
 import { useParams } from "react-router"
 import { DeviceType } from "./HomePage"
 import useGetDevices from "@/hooks/useGetDevices"
@@ -8,19 +11,18 @@ import type { Dayjs } from "dayjs"
 import dayjs from "dayjs"
 import useGetDeviceStatus from "@/hooks/useGetDeviceStatus"
 import { useSocket } from "@/components/SocketProvider"
-import { formatNumber } from "@/utils/formatNumber"
+
 import { formatDateAxis } from "@/utils/formatDate"
 import useGetIntervals from "@/hooks/useGetIntervals"
 import { cn } from "@/utils/utils"
 import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
 
 const Details = () => {
-  const [zoomDomain, setZoomDomain] = useState({ startIndex: 0, endIndex: 20 })
   const params = useParams()
   const [lastGatewayStatus, setLastGatewayStatus] = useState<any>({})
   const [batInterval, setBatInterval] = useState<any>({})
   const [deviceSetupChannelsStatus, setDeviceSetupChannelsStatus] = useState<any>({})
-  const [newData, setNewData] = useState<any>([])
+  const [newData, setNewData] = useState<any>(null)
   const [tab, setTab] = useState<string[]>([])
   const { data: intervals } = useGetIntervals()
   const [date, setDate] = useState<Dayjs>(dayjs(new Date()))
@@ -37,7 +39,7 @@ const Details = () => {
   useEffect(() => {
     if (params && params.imei) {
       setImei(params.imei)
-      setNewData([])
+      setNewData(null)
     }
   }, [params])
   const listenDevice: any | null = useMemo(() => {
@@ -115,20 +117,18 @@ const Details = () => {
       messages.infor?.CH4
     ) {
       setNewData((prevData: any) => {
-        const resultConfig = [...prevData]
-        const resultConfigLatest = resultConfig[resultConfig.length - 1]
-        if (!resultConfigLatest || (resultConfigLatest && resultConfigLatest.time !== messages.time)) {
-          resultConfig.push(messages)
+        if (!prevData || prevData.time !== messages.time) {
+          return messages
         }
-        return resultConfig
+        return prevData
       })
     }
   }, [messages])
 
-  const dataMap = useMemo(() => {
+  const dataConfig = useMemo(() => {
     if (data) {
       return data
-        ?.sort((a, b) => a.time - b.time)
+
         ?.filter((item) => item.infor?.CH1 && item.infor?.CH2 && item.infor?.CH3 && item.infor?.CH4)
         ?.map((item) => {
           return {
@@ -140,7 +140,7 @@ const Details = () => {
             ch3Ampere: +item.infor?.CH3?.Ampere,
             ch4Voltage: +item.infor?.CH4?.Voltage,
             ch4Ampere: +item.infor?.CH4?.Ampere,
-            date: formatDateAxis(+item.time),
+            label: formatDateAxis(+item.time),
             time: item.time.toString(),
           }
         })
@@ -148,37 +148,6 @@ const Details = () => {
     return []
   }, [data])
 
-  const dataConfig = useMemo(() => {
-    if (newData) {
-      return dataMap.concat(
-        newData?.map((item: any) => ({
-          ch1Voltage: +item.infor?.CH1?.Voltage,
-          ch1Ampere: +item.infor?.CH1?.Ampere,
-          ch2Voltage: +item.infor?.CH2?.Voltage,
-          ch2Ampere: +item.infor?.CH2?.Ampere,
-          ch3Voltage: +item.infor?.CH3?.Voltage,
-          ch3Ampere: +item.infor?.CH3?.Ampere,
-          ch4Voltage: +item.infor?.CH4?.Voltage,
-          ch4Ampere: +item.infor?.CH4?.Ampere,
-          date: formatDateAxis(+item.time),
-          time: item.time.toString(),
-        }))
-      )
-    }
-    return []
-  }, [dataMap, newData])
-
-  const ticks = useMemo(() => {
-    return dataConfig?.length > 5
-      ? [
-          dataConfig[dataConfig?.length > 5 ? 5 : 0].date,
-          dataConfig[Math.floor((dataConfig.length * 1) / 4)].date,
-          dataConfig[Math.floor((dataConfig.length * 2) / 4)].date,
-          dataConfig[Math.floor((dataConfig.length * 3) / 4)].date,
-          dataConfig[dataConfig?.length - 1]?.date,
-        ]
-      : undefined
-  }, [dataConfig])
   const selectTab = (type: string) => {
     const tabClone = [...tab]
     const index = tabClone.indexOf(type)
@@ -190,17 +159,6 @@ const Details = () => {
     setTab(tabClone)
   }
 
-  // useEffect(() => {
-  //   if (dataConfig.length > 0) {
-  //     setZoomDomain((prevZoom) => {
-  //       return {
-  //         ...prevZoom,
-  //         endIndex: dataConfig.length,
-  //       }
-  //     })
-  //   }
-  // }, [dataConfig])
-
   const channelStatus = useMemo(() => {
     if (imei && deviceSetupChannelsStatus) {
       return deviceSetupChannelsStatus[imei]?.usingChannel
@@ -208,13 +166,6 @@ const Details = () => {
     return null
   }, [deviceSetupChannelsStatus, imei])
 
-  console.log("channelStatus", channelStatus)
-  const handleBrushChange = (e: any) => {
-    if (e?.startIndex != null && e?.endIndex != null) {
-      setZoomDomain({ startIndex: e.startIndex, endIndex: e.endIndex })
-    }
-  }
-  console.log("zoomDomain", zoomDomain)
   return (
     <div className="flex flex-col gap-5">
       <Card
@@ -327,202 +278,7 @@ const Details = () => {
           <div className="grid grid-cols-1">
             <div>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart
-                    data={[...dataConfig]}
-                    // margin={{
-                    //   right: width > 500 ? 30 : 10,
-                    //   top: width > 500 ? 20 : 10,
-                    //   bottom: 10,
-                    // }}
-                  >
-                    <defs>
-                      <linearGradient id="gradientColor3" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#82ca9d" stopOpacity={0.8} />
-                        <stop offset="20%" stopColor="#82ca9d" stopOpacity={0} />
-                        <stop offset="100%" stopColor="#82ca9d" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <defs>
-                      <linearGradient id="gradientColor4" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="orange" stopOpacity={0.8} />
-                        <stop offset="20%" stopColor="orange" stopOpacity={0} />
-                        <stop offset="100%" stopColor="orange" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="date"
-                      ticks={ticks}
-                      fontSize={13}
-                      tickMargin={5}
-                      tickLine={false}
-                      padding="gap"
-                      tick={formatXAxis}
-                    />
-                    <YAxis
-                      yAxisId="left"
-                      orientation="left"
-                      fontSize={13}
-                      axisLine={true}
-                      tickFormatter={formatYAxis}
-                      tickLine={false}
-                      padding={{
-                        top: 10,
-                      }}
-                      // yAxisId="right" orientation="left" axisLine={false} tickFormatter={(value) => `$${value}`}
-                    />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      fontSize={13}
-                      axisLine={true}
-                      tickFormatter={formatYAxis}
-                      tickLine={false}
-                      padding={{
-                        top: 10,
-                      }}
-                      // yAxisId="right" orientation="left" axisLine={false} tickFormatter={(value) => `$${value}`}
-                    />
-                    <Legend />
-
-                    {(tab.includes("CH1") || tab.length === 0) && channelStatus?.[0] === "1" && (
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ch1Voltage"
-                        stroke="#00c951"
-                        name="CH1 Voltage"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH1") || tab.length === 0) && channelStatus?.[0] === "1" && (
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="ch1Ampere"
-                        stroke="#ff6900"
-                        name="CH1 Ampere"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH2") || tab.length === 0) && channelStatus?.[1] === "1" && (
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ch1Voltage"
-                        stroke="#00c951"
-                        name="CH1 Voltage"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH2") || tab.length === 0) && channelStatus?.[1] === "1" && (
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="ch2Ampere"
-                        stroke="#f54a00"
-                        name="CH2 Ampere"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH3") || tab.length === 0) && channelStatus?.[2] === "1" && (
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ch3Voltage"
-                        stroke="#008236"
-                        name="CH3 Voltage"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH3") || tab.length === 0) && channelStatus?.[2] === "1" && (
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="ch3Ampere"
-                        stroke="#ca3500"
-                        name="CH3 Ampere"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH4") || tab.length === 0) && channelStatus?.[3] === "1" && (
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ch4Voltage"
-                        stroke="#016630"
-                        name="CH4 Voltage"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {(tab.includes("CH4") || tab.length === 0) && channelStatus?.[3] === "1" && (
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="ch4Ampere"
-                        stroke="#9f2d00"
-                        name="CH4 Ampere"
-                        dot={false}
-                        strokeWidth={2}
-                      />
-                    )}
-
-                    {/* <Area
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ch1Ampere"
-                        stroke="#82ca9d"
-                        name="CH1 Ampere"
-                        strokeWidth={2}
-                        fill="url(#gradientColor3)"
-                      /> */}
-                    {/* <Brush
-                      dataKey="name"
-                      height={20}
-                      stroke="#8884d8"
-                      startIndex={zoomDomain.startIndex}
-                      endIndex={zoomDomain.endIndex}
-                      onChange={handleBrushChange}
-                      travellerWidth={10}
-                    /> */}
-                    <Tooltip
-                      content={(props) => {
-                        const { active, payload, label } = props
-                        if (active && payload && payload?.length) {
-                          return (
-                            <div className=" bg-[#fff] rounded-[8px] border p-3">
-                              <p className="font-bold text-black">Time: {label}</p>
-                              <div className="grid grid-cols-2 gap-1">
-                                {payload?.map((item, index: number) => {
-                                  return (
-                                    <p
-                                      className=""
-                                      key={index}
-                                      style={{
-                                        color: item.color,
-                                      }}
-                                    >
-                                      {item.name}: <b className="">{formatNumber(item.value, 0)}</b>
-                                    </p>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )
-                        }
-
-                        return null
-                      }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <Chart data={dataConfig} newData={newData} />
               </div>
             </div>
           </div>
@@ -534,22 +290,234 @@ const Details = () => {
 
 export default Details
 
-const formatYAxis = (tick: any) => {
-  if (tick >= 1e9) return `$${tick / 1e9}B` // Billions
-  if (tick >= 1e6) return `$${tick / 1e6}M` // Millions
-  if (tick >= 1e3) return `$${tick / 1e3}K` // Thousands
-  if (tick <= -1e9) return `-$${(tick * -1) / 1e9}B` // Billions
-  if (tick <= -1e6) return `-$${(tick * -1) / 1e6}M` // Millions
-  if (tick <= -1e3) return `-$${(tick * -1) / 1e3}K` // Thousands
-  return tick
-}
+const Chart = ({ data, newData }: any) => {
+  const chartRef = useRef<any>(null)
 
-const formatXAxis = ({ x, y, payload }: any) => {
-  return (
-    <g transform={`translate(${0},${0})`}>
-      <text x={x} y={y} dy={8} dx={20} fontSize={13} textAnchor="end" fill="#666">
-        {payload.value}
-      </text>
-    </g>
-  )
+  const seriesV1 = useRef<any>(null)
+  const seriesV2 = useRef<any>(null)
+  const seriesV3 = useRef<any>(null)
+  const seriesV4 = useRef<any>(null)
+  const seriesA1 = useRef<any>(null)
+  const seriesA2 = useRef<any>(null)
+  const seriesA3 = useRef<any>(null)
+  const seriesA4 = useRef<any>(null)
+
+  console.log("data", data)
+
+  useEffect(() => {
+    const root = am5.Root.new(chartRef.current)
+    root?._logo?.dispose()
+
+    const myTheme = am5.Theme.new(root)
+
+    myTheme.rule("AxisLabel", ["minor"]).setAll({
+      dy: 1,
+    })
+
+    myTheme.rule("Grid", ["x"]).setAll({
+      strokeOpacity: 0.05,
+    })
+
+    myTheme.rule("Grid", ["x", "minor"]).setAll({
+      strokeOpacity: 0.05,
+    })
+
+    // Set themes
+    // https://www.amcharts.com/docs/v5/concepts/themes/
+    root.setThemes([am5themes_Animated.new(root), myTheme])
+
+    // Create chart
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/
+    let chart = root.container.children.push(
+      am5xy.XYChart.new(root, {
+        panX: true,
+        panY: true,
+        wheelX: "panX",
+        wheelY: "zoomX",
+        maxTooltipDistance: 0,
+        pinchZoomX: true,
+      })
+    )
+
+    let date = new Date()
+    date.setHours(0, 0, 0, 0)
+    let value = 100
+
+    function generateData() {
+      value = Math.round(Math.random() * 10 - 4.2 + value)
+      am5.time.add(date, "day", 1)
+      return {
+        date: date.getTime(),
+        value: value,
+      }
+    }
+
+    function generateDatas(count: any) {
+      let data = []
+      for (var i = 0; i < count; ++i) {
+        data.push(generateData())
+      }
+      return data
+    }
+
+    // Create axes
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+    let xAxis = chart.xAxes.push(
+      am5xy.DateAxis.new(root, {
+        maxDeviation: 0.2,
+        baseInterval: {
+          timeUnit: "day",
+          count: 1,
+        },
+        renderer: am5xy.AxisRendererX.new(root, {
+          minorGridEnabled: true,
+        }),
+        tooltip: am5.Tooltip.new(root, {}),
+      })
+    )
+
+    let yAxis = chart.yAxes.push(
+      am5xy.ValueAxis.new(root, {
+        renderer: am5xy.AxisRendererY.new(root, {}),
+      })
+    )
+
+    // Add series
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+    for (var i = 0; i < 10; i++) {
+      let series = chart.series.push(
+        am5xy.LineSeries.new(root, {
+          name: "Series " + i,
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: "value",
+          valueXField: "date",
+          legendValueText: "{valueY}",
+          tooltip: am5.Tooltip.new(root, {
+            pointerOrientation: "horizontal",
+            labelText: "{valueY}",
+          }),
+        })
+      )
+
+      date = new Date()
+      date.setHours(0, 0, 0, 0)
+      value = 0
+
+      let data = generateDatas(100)
+      series.data.setAll(data)
+
+      // Make stuff animate on load
+      // https://www.amcharts.com/docs/v5/concepts/animations/
+      series.appear()
+    }
+
+    // Add cursor
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
+    let cursor = chart.set(
+      "cursor",
+      am5xy.XYCursor.new(root, {
+        behavior: "none",
+      })
+    )
+    cursor.lineY.set("visible", false)
+
+    // Add scrollbar
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/scrollbars/
+    chart.set(
+      "scrollbarX",
+      am5.Scrollbar.new(root, {
+        orientation: "horizontal",
+      })
+    )
+
+    chart.set(
+      "scrollbarY",
+      am5.Scrollbar.new(root, {
+        orientation: "vertical",
+      })
+    )
+
+    // Add legend
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/legend-xy-series/
+    let legend = chart.rightAxesContainer.children.push(
+      am5.Legend.new(root, {
+        width: 200,
+        paddingLeft: 15,
+        height: am5.percent(100),
+      })
+    )
+
+    // When legend item container is hovered, dim all the series except the hovered one
+    legend.itemContainers.template.events.on("pointerover", function (e) {
+      let itemContainer = e.target
+
+      // As series list is data of a legend, dataContext is series
+      let series = itemContainer?.dataItem?.dataContext
+
+      chart.series.each(function (chartSeries: any) {
+        if (chartSeries != series) {
+          chartSeries?.strokes?.template.setAll({
+            strokeOpacity: 0.15,
+            stroke: am5.color(0x000000),
+          })
+        } else {
+          chartSeries?.strokes?.template.setAll({
+            strokeWidth: 3,
+          })
+        }
+      })
+    })
+
+    // When legend item container is unhovered, make all series as they are
+    legend.itemContainers.template.events.on("pointerout", function (e) {
+      let itemContainer = e.target
+      let series = itemContainer?.dataItem?.dataContext
+
+      chart.series.each(function (chartSeries: any) {
+        chartSeries?.strokes?.template.setAll({
+          strokeOpacity: 1,
+          strokeWidth: 1,
+          stroke: chartSeries.get("fill"),
+        })
+      })
+    })
+
+    legend.itemContainers.template.set("width", am5.p100)
+    legend.valueLabels.template.setAll({
+      width: am5.p100,
+      textAlign: "right",
+    })
+
+    // It's is important to set legend data after all the events are set on template, otherwise events won't be copied
+    legend.data.setAll(chart.series.values)
+
+    // Make stuff animate on load
+    // https://www.amcharts.com/docs/v5/concepts/animations/
+    chart.appear(1000, 100)
+    return () => {
+      root.dispose()
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (newData) {
+      const dataPush = {
+        ch1Voltage: +newData.infor?.CH1?.Voltage,
+        ch1Ampere: +newData.infor?.CH1?.Ampere,
+        ch2Voltage: +newData.infor?.CH2?.Voltage,
+        ch2Ampere: +newData.infor?.CH2?.Ampere,
+        ch3Voltage: +newData.infor?.CH3?.Voltage,
+        ch3Ampere: +newData.infor?.CH3?.Ampere,
+        ch4Voltage: +newData.infor?.CH4?.Voltage,
+        ch4Ampere: +newData.infor?.CH4?.Ampere,
+        label: formatDateAxis(+newData.time),
+        time: newData.time.toString(),
+      }
+      seriesV1.current?.data.push(dataPush)
+      seriesA1.current?.data.push(dataPush)
+    }
+  }, [newData])
+
+  return <div id="chartdiv" ref={chartRef} style={{ width: "100%", height: "400px" }} />
 }

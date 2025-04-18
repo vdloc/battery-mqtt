@@ -25,7 +25,11 @@
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'package-lock.json' -type f -delete && find . -name 'dist' -type d -prune -exec rm -rf '{}' +"
   },
   "dependencies": {
-    "drizzle-orm": "^0.36.1"
+    "@amcharts/amcharts5": "^5.12.1",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.36.1",
+    "recharts": "^2.15.2",
+    "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",

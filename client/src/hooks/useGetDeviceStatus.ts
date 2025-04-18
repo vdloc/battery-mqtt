@@ -8,9 +8,9 @@ const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart
     queryKey: [url, params],
     queryFn: async () => {
       const res = await request({
-        method: "POST",
+        method: "GET",
         url,
-        data: {
+        params: {
           ...params,
           limit: 100000,
         },

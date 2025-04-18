@@ -27,24 +27,25 @@ export default publicProcedure.input(inputSchema).mutation(async ({ input }) => 
     time,
   } = input
 
-  await Promise.all([
-    databaseService.createDevice({
-      imei,
-      manageUnitId,
-      aliasName,
-      stationCode,
-      simNumber,
-    }),
-    databaseService.createDeviceInterval({
-      imei,
-      batteryStatusInterval,
-      deviceStatusInterval,
-      time: time ?? Date.now(),
-    }),
-    databaseService.createSetupChannel({
-      imei,
-      usingChannel,
-      time: time ?? Date.now(),
-    }),
-  ])
+  await databaseService.createDevice({
+    imei,
+    manageUnitId,
+    aliasName,
+    stationCode,
+    simNumber,
+  })
+
+  // await Promise.all([
+  //   databaseService.createDeviceInterval({
+  //     imei,
+  //     batteryStatusInterval,
+  //     deviceStatusInterval,
+  //     time: time ?? Date.now(),
+  //   }),
+  //   databaseService.createSetupChannel({
+  //     imei,
+  //     usingChannel,
+  //     time: time ?? Date.now(),
+  //   }),
+  // ])
 })
