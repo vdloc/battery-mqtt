@@ -22,7 +22,7 @@ export class ManageUnitNotFoundError extends TRPCError {
   constructor(manageUnitId: string) {
     super({
       code: "NOT_FOUND",
-      message: `Manage unit with ${manageUnitId} not found`,
+      message: `Manage unit with id ${manageUnitId} not found`,
     })
   }
 }

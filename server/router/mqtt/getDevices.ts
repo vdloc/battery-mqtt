@@ -1,8 +1,6 @@
+import { databaseService } from "../../services/database"
 import { protectedProcedure } from "../../trpc"
 
 export default protectedProcedure.query(async ({ ctx }) => {
-  const db = ctx.db
-  return await db.query.brokerDeviceTable.findMany({
-    limit: 100,
-  })
+  return await databaseService.getDevices()
 })

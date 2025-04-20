@@ -11,6 +11,7 @@ export const brokerDeviceTable = pgTable("mqtt_device", {
   manageUnitId: uuid().references(() => manageUnitTable.id),
   manageUnitName: varchar({ length: 100 }),
   simNumber: varchar({ length: 15 }),
+  createdAt: timestamp().defaultNow().notNull(),
 })
 
 export const deviceIntervalTable = pgTable("mqtt_device_interval", {

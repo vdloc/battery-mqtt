@@ -1,10 +1,11 @@
-import { schema } from "@fsb/drizzle"
+import { schema, drizzleOrm } from "@fsb/drizzle"
 import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
 import { eq, and } from "drizzle-orm"
 import { DeviceExistedError, DeviceNotFoundError, ManageUnitNotFoundError } from "../helper/errors"
 
+const { asc } = drizzleOrm
 const {
   deviceIntervalTable,
   brokerDeviceTable,
@@ -23,7 +24,8 @@ interface QueryHelpers {
   eq: <T>(a: T, b: T) => boolean // Define the type of 'eq'
   gte: <T>(a: T, b: T) => boolean // Define the type of 'gte'
   lte: <T>(a: T, b: T) => boolean // Define the type of 'lte'
-  and: <T>(...args: T[]) => boolean // Define the type of 'and'
+  and: <T>(...args: T[]) => boolean // Define the type of 'and',
+  asc: <T>(a: T) => boolean
 }
 
 interface DeviceInput {
@@ -50,7 +52,10 @@ interface SetupChannelInput {
 class DatabaseService {
   async getDevices(): Promise<DevicesFromDB> {
     try {
-      const devices = await db.query.brokerDeviceTable.findMany()
+      const devices = await db.query.brokerDeviceTable.findMany({
+        orderBy: (device: any, queryHelper: QueryHelpers) => queryHelper.asc(device.id),
+      })
+      console.log(" devices:", devices)
 
       return devices
     } catch (error) {
@@ -233,7 +238,7 @@ class DatabaseService {
     const manageUnit = await db.query.manageUnitTable.findFirst({
       where: eq(manageUnitTable.id as any, id),
     })
-    if (manageUnit.rowCount > 0) return manageUnit?.name
+    if (manageUnit) return manageUnit?.name
     throw new ManageUnitNotFoundError(id)
   }
 
