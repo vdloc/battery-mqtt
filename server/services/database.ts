@@ -61,19 +61,14 @@ class DatabaseService {
 
   async createDevice(input: DeviceInput) {
     const { imei } = input
-    try {
-      const existedDevice = db.query.brokerDeviceTable.findFirst({
-        where: eq(brokerDeviceTable.imei as any, imei),
-      })
+    const existedDevice = await db.query.brokerDeviceTable.findFirst({
+      where: eq(brokerDeviceTable.imei as any, imei),
+    })
 
-      if (!existedDevice) {
-        return await db.insert(brokerDeviceTable).values(input)
-      }
-
-      throw new Error("Device already exists")
-    } catch (error) {
-      console.log("Error in updateDevice", error)
+    if (!existedDevice) {
+      return await db.insert(brokerDeviceTable).values(input)
     }
+    throw new DeviceExistedError(imei)
   }
 
   async updateDevice({ imei, manageUnitId, aliasName, stationCode, simNumber }: DeviceInput) {
@@ -126,7 +121,7 @@ class DatabaseService {
     const result = await db.insert(deviceIntervalTable).values(input).onConflictDoNothing().returning({
       id: deviceIntervalTable.id,
     })
-    if (result.rowCount > 0) return result
+    if (result.length > 0) return result
     throw new DeviceExistedError(imei)
   }
 
@@ -153,7 +148,7 @@ class DatabaseService {
     const result = await db.insert(setupChannelTable).values(input).onConflictDoNothing().returning({
       id: setupChannelTable.id,
     })
-    if (result.rowCount > 0) return result
+    if (result.length > 0) return result
     throw new DeviceExistedError(imei)
   }
 
@@ -176,6 +171,11 @@ class DatabaseService {
         .where(eq(brokerDeviceTable.imei as any, imei)),
     ])
   }
+  async deleteBatteryStatusByImei(imei: string) {
+    const result = await db.delete(batteryStatusTable).where(eq(batteryStatusTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
+  }
 
   async saveGatewayStatus(data: GatewayStatusResponse) {
     const { imei, info, time } = data
@@ -189,6 +189,11 @@ class DatabaseService {
         })
         .where(and(eq(brokerDeviceTable.imei as any, imei))),
     ])
+  }
+  async deleteGatewayStatusByImei(imei: string) {
+    const result = await db.delete(gatewayStatusTable).where(eq(gatewayStatusTable.imei as any, imei))
+    if (result.rowCount > 0) return result
+    throw new DeviceNotFoundError(imei)
   }
 
   async getDeviceStatus(data: any) {

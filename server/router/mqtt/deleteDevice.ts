@@ -8,9 +8,15 @@ const inputSchema = z.object({
 
 export default publicProcedure.input(inputSchema).mutation(async ({ input }) => {
   const { imei } = input
-  await Promise.all([
-    databaseService.deleteDevice(imei),
-    databaseService.deleteDeviceInterval(imei),
-    databaseService.deleteSetupChannel(imei),
-  ])
+  try {
+    await Promise.all([
+      databaseService.deleteDeviceInterval(imei),
+      databaseService.deleteSetupChannel(imei),
+      databaseService.deleteGatewayStatusByImei(imei),
+      databaseService.deleteBatteryStatusByImei(imei),
+    ])
+  } catch (error) {
+    console.log(error)
+  }
+  await databaseService.deleteDevice(imei)
 })
