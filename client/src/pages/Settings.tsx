@@ -417,11 +417,13 @@ const ModalSetting = ({ choseItem, refetch }: any) => {
             name="usingChannel"
             control={control2}
             rules={{
-              required: true,
+              required: { value: true, message: TEXT_REQUIRED },
+              maxLength: { value: 4, message: "Độ dài tối đa 4 ký tự" },
+              minLength: { value: 4, message: "Độ dài tối thiểu 4 ký tự" },
             }}
             render={({ field }) => <Input {...field} placeholder="Device Status Interval" />}
           />
-          {errors2.usingChannel && <span className="text-red-500">{TEXT_REQUIRED}</span>}
+          {errors2.usingChannel && <span className="text-red-500">{errors2.usingChannel.message}</span>}
         </div>
         <div className="mt-5">
           <Button

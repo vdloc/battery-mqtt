@@ -1,6 +1,7 @@
 import useWebSocket from "@/hooks/useWebSocket"
 import { createContext, Dispatch, ReactNode, SetStateAction, useContext } from "react"
 
+// const wsUrl = import.meta.env.VITE_WS_URL
 const wsUrl = import.meta.env.VITE_WS_URL
 interface WebSocketType {
   messages: any

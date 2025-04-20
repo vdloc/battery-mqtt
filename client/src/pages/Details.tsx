@@ -132,7 +132,6 @@ const Details = () => {
   const dataConfig = useMemo(() => {
     if (data) {
       return data
-
         ?.filter((item) => item.infor?.CH1 && item.infor?.CH2 && item.infor?.CH3 && item.infor?.CH4)
         ?.map((item) => {
           return {
@@ -145,9 +144,10 @@ const Details = () => {
             ch4Voltage: +item.infor?.CH4?.Voltage,
             ch4Ampere: +item.infor?.CH4?.Ampere,
             label: formatDateAxis(+item.time),
-            time: item.time.toString(),
+            time: item.time,
           }
         })
+        .sort((a, b) => a.time - b.time)
     }
     return []
   }, [data])
@@ -237,20 +237,14 @@ const Details = () => {
 
 export default Details
 
-const colorsHot = ["#DC143C", "#FFA500", "#FF6347", "#FFD700"]
-const colorsCold = ["#87CEEB", "#008080", "#4B0082", "#2E8B57"]
+const colorsHot = ["#ff0000", "#ffa500", "#FF6347", "#eb2f96"]
+const colorsCold = ["#0000ff", "#008080", "#6cff00", "#008000"]
 const colors = [...colorsHot, ...colorsCold]
 const Chart = ({ data, newData }: any) => {
   const chartRef = useRef<any>(null)
-
-  const seriesV1 = useRef<any>(null)
-  const seriesV2 = useRef<any>(null)
-  const seriesV3 = useRef<any>(null)
-  const seriesV4 = useRef<any>(null)
-  const seriesA1 = useRef<any>(null)
-  const seriesA2 = useRef<any>(null)
-  const seriesA3 = useRef<any>(null)
-  const seriesA4 = useRef<any>(null)
+  console.log("data", data)
+  const seriesRef = useRef<any>(null)
+  const seriesList = useRef<any>([])
 
   console.log("data", data)
 
@@ -292,27 +286,6 @@ const Chart = ({ data, newData }: any) => {
       })
     )
 
-    let date = new Date()
-    date.setHours(0, 0, 0, 0)
-    let value = 100
-
-    function generateData() {
-      value = Math.round(Math.random() * 10 - 4.2 + value)
-      am5.time.add(date, "day", 1)
-      return {
-        date: date.getTime(),
-        value: value,
-      }
-    }
-
-    function generateDatas(count: any) {
-      let data = []
-      for (var i = 0; i < count; ++i) {
-        data.push(generateData())
-      }
-      return data
-    }
-
     let xRenderer = am5xy.AxisRendererX.new(root, {
       minorGridEnabled: true,
     })
@@ -323,10 +296,9 @@ const Chart = ({ data, newData }: any) => {
     // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
     let xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
-        maxDeviation: 0.2,
         baseInterval: {
-          timeUnit: "day",
-          count: 1,
+          timeUnit: "second",
+          count: 30,
         },
         renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {}),
@@ -347,40 +319,33 @@ const Chart = ({ data, newData }: any) => {
     )
     yAxis1.get("renderer").grid.template.set("visible", false)
     yAxis2.get("renderer").grid.template.set("visible", false)
-    let series: any
     // Add series
     // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
-    for (var i = 0; i < 8; i++) {
-      series = chart.series.push(
-        am5xy.LineSeries.new(root, {
-          name: "Series " + i,
-          xAxis: xAxis,
-          yAxis: i < 4 ? yAxis1 : yAxis2,
-          valueYField: "value",
-          valueXField: "date",
-          legendValueText: "{valueY}",
-          fill: am5.color(colors[i]),
-          stroke: am5.color(colors[i]),
-          tooltip: am5.Tooltip.new(root, {
-            pointerOrientation: "horizontal",
-            labelText: "{valueY}",
-          }),
-        })
-      )
-
-      date = new Date()
-      date.setHours(0, 0, 0, 0)
-      value = 0
-
-      let data = generateDatas(100)
-      series.data.setAll(data)
-
+    for (var i = 1; i < 9; i++) {
+      const label = i < 5 ? "Voltage" : "Ampere"
+      const line = am5xy.LineSeries.new(root, {
+        name: `CH${i < 5 ? i : i - 4} ${label}`,
+        xAxis: xAxis,
+        yAxis: i < 5 ? yAxis1 : yAxis2,
+        valueYField: `ch${i < 5 ? i : i - 4}${label}`,
+        valueXField: "time",
+        legendValueText: "{valueY}",
+        fill: am5.color(colors[i - 1]),
+        stroke: am5.color(colors[i - 1]),
+        tooltip: am5.Tooltip.new(root, {
+          pointerOrientation: "horizontal",
+          labelText: "{valueY}",
+        }),
+      })
+      seriesList.current[i - 1] = line
+      seriesRef.current = chart.series.push(line)
+      seriesRef.current.data.setAll(data)
       // Make stuff animate on load
       // https://www.amcharts.com/docs/v5/concepts/animations/
-      series.appear()
+      seriesRef.current.appear()
     }
 
-    var tooltip = series.set("tooltip", am5.Tooltip.new(root, {}))
+    var tooltip = seriesRef.current.set("tooltip", am5.Tooltip.new(root, {}))
     tooltip.label.set("text", "{valueY}")
 
     // Add cursor
@@ -442,9 +407,6 @@ const Chart = ({ data, newData }: any) => {
 
     // When legend item container is unhovered, make all series as they are
     legend.itemContainers.template.events.on("pointerout", function (e) {
-      let itemContainer = e.target
-      let series = itemContainer?.dataItem?.dataContext
-
       chart.series.each(function (chartSeries: any) {
         chartSeries?.strokes?.template.setAll({
           strokeOpacity: 1,
@@ -483,12 +445,17 @@ const Chart = ({ data, newData }: any) => {
         ch4Voltage: +newData.infor?.CH4?.Voltage,
         ch4Ampere: +newData.infor?.CH4?.Ampere,
         label: formatDateAxis(+newData.time),
-        time: newData.time.toString(),
+        time: newData.time,
       }
-      seriesV1.current?.data.push(dataPush)
-      seriesA1.current?.data.push(dataPush)
+      for (var i = 1; i < 9; i++) {
+        seriesList.current[i - 1].data.push(dataPush)
+      }
     }
   }, [newData])
-
-  return <div id="chartdiv" ref={chartRef} style={{ width: "100%", height: "400px" }} />
+  let a = 1
+  return (
+    <>
+      <div id="chartdiv" ref={chartRef} style={{ width: "100%", height: "400px" }} />
+    </>
+  )
 }

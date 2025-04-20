@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query"
 
 const url = API_URL.GET_DEVICES_STATUS
 const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart: number; timeEnd: number }) => {
-  console.log("params", params)
   return useQuery({
     queryKey: [url, params],
     queryFn: async () => {
@@ -12,8 +11,7 @@ const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart
         method: "GET",
         url,
         params: {
-          input: encodeURIComponent(JSON.stringify(params)),
-          limit: 100000,
+          input: JSON.stringify({ ...params, limit: 100000 }),
         },
       })
 

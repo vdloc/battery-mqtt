@@ -181,7 +181,7 @@ const HomePage = () => {
                 <p>{channelsStatus}</p>
               </>
             ),
-            Ampe: (
+            Ampe: channelsStatus ? (
               <>
                 {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1?.Ampere}</b>}
                 {channelsStatus?.[1] === "1" && (
@@ -202,6 +202,8 @@ const HomePage = () => {
                   </>
                 )}
               </>
+            ) : (
+              "--"
             ),
             Bat_interval: batInterval[item.imei]?.batteryStatusInterval,
             Imei: item.imei,
