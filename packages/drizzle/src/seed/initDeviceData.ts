@@ -4,11 +4,17 @@ import { randomUUID } from "crypto"
 interface DeviceRecord {
   id: string
   imei: string
+  time: number
+  usingChannel: string
+  manageUnitId: string
+  manageUnitName: string
+  aliasName: string
 }
 
-export const devices: DeviceRecord[] = Array.from({ length: 50 }).map(() => ({
+export const devices: any[] = Array.from({ length: 20 }).map(() => ({
   id: randomUUID(),
   imei: getRandom(),
+  time: Date.now(),
 }))
 
 export const deviceStatusIntervals = devices.map(({ imei }) => ({

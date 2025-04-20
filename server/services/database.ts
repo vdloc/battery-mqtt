@@ -71,7 +71,7 @@ class DatabaseService {
     })
 
     if (!existedDevice) {
-      let record = { ...input, manageUnitName: "" }
+      let record = { ...input, manageUnitName: "", time: Date.now() }
       if (manageUnitId) {
         record.manageUnitName = await this.getManageUnitName(manageUnitId)
       }
