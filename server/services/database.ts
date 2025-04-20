@@ -53,7 +53,7 @@ class DatabaseService {
   async getDevices(): Promise<DevicesFromDB> {
     try {
       const devices = await db.query.brokerDeviceTable.findMany({
-        orderBy: (device: any, queryHelper: QueryHelpers) => queryHelper.asc(device.id),
+        orderBy: (device: any, queryHelper: QueryHelpers) => queryHelper.asc(device.time),
       })
       console.log(" devices:", devices)
 
@@ -69,12 +69,14 @@ class DatabaseService {
     const existedDevice = await db.query.brokerDeviceTable.findFirst({
       where: eq(brokerDeviceTable.imei as any, imei),
     })
+    console.log(" input:", input)
 
     if (!existedDevice) {
       let record = { ...input, manageUnitName: "", time: Date.now() }
       if (manageUnitId) {
         record.manageUnitName = await this.getManageUnitName(manageUnitId)
       }
+      console.log(" record:", record)
       await db.insert(brokerDeviceTable).values(record)
 
       return record

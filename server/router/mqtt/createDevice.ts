@@ -24,7 +24,7 @@ export default publicProcedure.input(inputSchema).mutation(async ({ input }) => 
     batteryStatusInterval,
     deviceStatusInterval,
     usingChannel,
-    time,
+    time = Date.now(),
   } = input
   let device = await databaseService.createDevice({
     imei,
