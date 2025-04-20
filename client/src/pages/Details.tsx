@@ -195,16 +195,16 @@ const Details = () => {
               Tên gợi nhớ: <b>{listenDevice?.aliasName}</b>
             </li>
             <li>
-              0perator: <b>{listenDevice?.lastGatewayStatus.operator}</b>
+              0perator: <b>{listenDevice?.lastGatewayStatus?.operator}</b>
             </li>
             <li>
               Imei: <b>{listenDevice?.imei}</b>
             </li>
             <li>
-              IP: <b>{listenDevice?.lastGatewayStatus.IP}</b>
+              IP: <b>{listenDevice?.lastGatewayStatus?.IP}</b>
             </li>
             <li>
-              RSSI: <b>{listenDevice?.imei && lastGatewayStatus[listenDevice?.imei]?.RSSI}</b>
+              RSSI: <b>{listenDevice?.imei && lastGatewayStatus?.[listenDevice?.imei]?.RSSI}</b>
             </li>
             <li>
               Battery interval: <b>{listenDevice?.imei && batInterval[listenDevice.imei]?.batteryStatusInterval}</b>
@@ -213,7 +213,7 @@ const Details = () => {
               UsingChannel: <b>{channelStatus}</b>
             </li>
             <li>
-              FwVersion: <b>{listenDevice?.lastGatewayStatus.fwVersion}</b>
+              FwVersion: <b>{listenDevice?.lastGatewayStatus?.fwVersion}</b>
             </li>
           </ul>
         )}

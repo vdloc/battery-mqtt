@@ -60,13 +60,19 @@ class DatabaseService {
   }
 
   async createDevice(input: DeviceInput) {
-    const { imei } = input
+    const { imei, manageUnitId } = input
     const existedDevice = await db.query.brokerDeviceTable.findFirst({
       where: eq(brokerDeviceTable.imei as any, imei),
     })
 
     if (!existedDevice) {
-      return await db.insert(brokerDeviceTable).values(input)
+      let record = { ...input, manageUnitName: "" }
+      if (manageUnitId) {
+        record.manageUnitName = await this.getManageUnitName(manageUnitId)
+      }
+      await db.insert(brokerDeviceTable).values(record)
+
+      return record
     }
     throw new DeviceExistedError(imei)
   }
@@ -221,6 +227,14 @@ class DatabaseService {
   async getManageUnits() {
     const manageUnits = await db.query.manageUnitTable.findMany({})
     return manageUnits
+  }
+
+  async getManageUnitName(id: string) {
+    const manageUnit = await db.query.manageUnitTable.findFirst({
+      where: eq(manageUnitTable.id as any, id),
+    })
+    if (manageUnit.rowCount > 0) return manageUnit?.name
+    throw new ManageUnitNotFoundError(id)
   }
 
   async updateManageUnit({ name, id }: { name: string; id: string }) {
