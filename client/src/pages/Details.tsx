@@ -6,7 +6,7 @@ import am5themes_Animated from "@amcharts/amcharts5/themes/Animated"
 import { useParams } from "react-router"
 import { DeviceType } from "./HomePage"
 import useGetDevices from "@/hooks/useGetDevices"
-import { Button, Card, DatePicker, DatePickerProps, Select } from "antd"
+import { Card, DatePicker, Select } from "antd"
 import type { Dayjs } from "dayjs"
 import dayjs from "dayjs"
 import useGetDeviceStatus from "@/hooks/useGetDeviceStatus"
@@ -14,7 +14,6 @@ import { useSocket } from "@/components/SocketProvider"
 
 import { formatDateAxis } from "@/utils/formatDate"
 import useGetIntervals from "@/hooks/useGetIntervals"
-import { cn } from "@/utils/utils"
 import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
 
 const Details = () => {
@@ -23,17 +22,17 @@ const Details = () => {
   const [batInterval, setBatInterval] = useState<any>({})
   const [deviceSetupChannelsStatus, setDeviceSetupChannelsStatus] = useState<any>({})
   const [newData, setNewData] = useState<any>(null)
-  const [tab, setTab] = useState<string[]>([])
   const { data: intervals } = useGetIntervals()
-  const [date, setDate] = useState<Dayjs>(dayjs(new Date()))
+  const [startTime, setStartTime] = useState<Dayjs>(dayjs(new Date()).startOf("day"))
+  const [endTime, setEndTime] = useState<Dayjs>(dayjs(new Date()).endOf("day"))
   const { data: deviceSetupChannels } = useGetDeviceSetupChannels()
   const { data: devices, isLoading: isLoadingDevices } = useGetDevices()
   const { messages, sendMessage, connected, setMessages } = useSocket()
   const [imei, setImei] = useState<null | string>(null)
   const { data, isLoading } = useGetDeviceStatus({
     imei: imei,
-    timeStart: date.startOf("day").toDate().getTime(),
-    timeEnd: date.endOf("day").toDate().getTime(),
+    timeStart: startTime.toDate().getTime(),
+    timeEnd: endTime.toDate().getTime(),
   })
 
   useEffect(() => {
@@ -58,8 +57,10 @@ const Details = () => {
     }
   }, [params.imei, connected])
 
-  const onChange: DatePickerProps["onChange"] = (value: Dayjs) => {
-    setDate(value)
+  const onChange: any = ([valueStart, valueEnd]: any) => {
+    setMessages(null)
+    setStartTime(valueStart)
+    setEndTime(valueEnd)
   }
 
   useEffect(() => {
@@ -108,13 +109,16 @@ const Details = () => {
         [messages.imei]: messages.info,
       }))
     }
+  }, [messages])
+  useEffect(() => {
     if (
       messages &&
       messages?.operator === "SendBatteryStatus" &&
       messages.infor?.CH1 &&
       messages.infor?.CH2 &&
       messages.infor?.CH3 &&
-      messages.infor?.CH4
+      messages.infor?.CH4 &&
+      +messages.time < endTime.toDate().getTime()
     ) {
       setNewData((prevData: any) => {
         if (!prevData || prevData.time !== messages.time) {
@@ -123,7 +127,7 @@ const Details = () => {
         return prevData
       })
     }
-  }, [messages])
+  }, [messages, endTime])
 
   const dataConfig = useMemo(() => {
     if (data) {
@@ -147,17 +151,6 @@ const Details = () => {
     }
     return []
   }, [data])
-
-  const selectTab = (type: string) => {
-    const tabClone = [...tab]
-    const index = tabClone.indexOf(type)
-    if (index >= 0) {
-      tabClone.splice(index, 1)
-    } else {
-      tabClone.push(type)
-    }
-    setTab(tabClone)
-  }
 
   const channelStatus = useMemo(() => {
     if (imei && deviceSetupChannelsStatus) {
@@ -222,53 +215,7 @@ const Details = () => {
         title={<p className="text-2xl font-bold">Chart</p>}
         extra={
           <div className="flex items-center gap-3">
-            <ul className="flex items-center gap-3">
-              {channelStatus?.[0] === "1" && (
-                <li>
-                  <Button
-                    type="default"
-                    className={cn("!font-bold", [tab.includes("CH1") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
-                    onClick={() => selectTab("CH1")}
-                  >
-                    CH1
-                  </Button>
-                </li>
-              )}
-              {channelStatus?.[1] === "1" && (
-                <li>
-                  <Button
-                    type="default"
-                    className={cn("!font-bold", [tab.includes("CH2") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
-                    onClick={() => selectTab("CH2")}
-                  >
-                    CH2
-                  </Button>
-                </li>
-              )}
-              {channelStatus?.[2] === "1" && (
-                <li>
-                  <Button
-                    type="default"
-                    className={cn("!font-bold", [tab.includes("CH3") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
-                    onClick={() => selectTab("CH3")}
-                  >
-                    CH3
-                  </Button>
-                </li>
-              )}
-              {channelStatus?.[3] === "1" && (
-                <li>
-                  <Button
-                    type="default"
-                    className={cn("!font-bold", [tab.includes("CH4") ? "!border-[#4096ff] !text-[#4096ff]" : ""])}
-                    onClick={() => selectTab("CH4")}
-                  >
-                    CH4
-                  </Button>
-                </li>
-              )}
-            </ul>
-            <DatePicker value={date} onChange={onChange} />
+            <DatePicker.RangePicker showTime value={[startTime, endTime]} onChange={onChange} />
           </div>
         }
       >
@@ -290,6 +237,9 @@ const Details = () => {
 
 export default Details
 
+const colorsHot = ["#DC143C", "#FFA500", "#FF6347", "#FFD700"]
+const colorsCold = ["#87CEEB", "#008080", "#4B0082", "#2E8B57"]
+const colors = [...colorsHot, ...colorsCold]
 const Chart = ({ data, newData }: any) => {
   const chartRef = useRef<any>(null)
 
@@ -315,10 +265,13 @@ const Chart = ({ data, newData }: any) => {
     })
 
     myTheme.rule("Grid", ["x"]).setAll({
-      strokeOpacity: 0.05,
+      strokeOpacity: 0,
+    })
+    myTheme.rule("Grid", ["y"]).setAll({
+      strokeOpacity: 0,
     })
 
-    myTheme.rule("Grid", ["x", "minor"]).setAll({
+    myTheme.rule("Grid", ["y", "minor"]).setAll({
       strokeOpacity: 0.05,
     })
 
@@ -360,6 +313,12 @@ const Chart = ({ data, newData }: any) => {
       return data
     }
 
+    let xRenderer = am5xy.AxisRendererX.new(root, {
+      minorGridEnabled: true,
+    })
+    xRenderer.labels.template.set("minPosition", 0.01)
+    xRenderer.labels.template.set("maxPosition", 0.99)
+
     // Create axes
     // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
     let xAxis = chart.xAxes.push(
@@ -369,30 +328,39 @@ const Chart = ({ data, newData }: any) => {
           timeUnit: "day",
           count: 1,
         },
-        renderer: am5xy.AxisRendererX.new(root, {
-          minorGridEnabled: true,
-        }),
+        renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {}),
       })
     )
 
-    let yAxis = chart.yAxes.push(
+    let yAxis1 = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
         renderer: am5xy.AxisRendererY.new(root, {}),
       })
     )
-
+    let yAxis2 = chart.yAxes.push(
+      am5xy.ValueAxis.new(root, {
+        renderer: am5xy.AxisRendererY.new(root, {
+          opposite: true,
+        }),
+      })
+    )
+    yAxis1.get("renderer").grid.template.set("visible", false)
+    yAxis2.get("renderer").grid.template.set("visible", false)
+    let series: any
     // Add series
     // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
-    for (var i = 0; i < 10; i++) {
-      let series = chart.series.push(
+    for (var i = 0; i < 8; i++) {
+      series = chart.series.push(
         am5xy.LineSeries.new(root, {
           name: "Series " + i,
           xAxis: xAxis,
-          yAxis: yAxis,
+          yAxis: i < 4 ? yAxis1 : yAxis2,
           valueYField: "value",
           valueXField: "date",
           legendValueText: "{valueY}",
+          fill: am5.color(colors[i]),
+          stroke: am5.color(colors[i]),
           tooltip: am5.Tooltip.new(root, {
             pointerOrientation: "horizontal",
             labelText: "{valueY}",
@@ -411,6 +379,9 @@ const Chart = ({ data, newData }: any) => {
       // https://www.amcharts.com/docs/v5/concepts/animations/
       series.appear()
     }
+
+    var tooltip = series.set("tooltip", am5.Tooltip.new(root, {}))
+    tooltip.label.set("text", "{valueY}")
 
     // Add cursor
     // https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/

@@ -154,13 +154,12 @@ const Settings = () => {
         onCancel={() => setIsModalOpen(false)}
         destroyOnClose
       >
-        {choseItem === null ? (
-          <ModalSetting
+        {!choseItem ? (
+          <ModalCreate
             refetch={() => {
               refetch()
               setIsModalOpen(false)
             }}
-            choseItem={choseItem}
           />
         ) : modalType === "delete" ? (
           <ModalDelete
@@ -171,11 +170,12 @@ const Settings = () => {
             choseItem={choseItem}
           />
         ) : (
-          <ModalCreate
+          <ModalSetting
             refetch={() => {
               refetch()
               setIsModalOpen(false)
             }}
+            choseItem={choseItem}
           />
         )}
       </Modal>
