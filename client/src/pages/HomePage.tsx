@@ -159,22 +159,22 @@ const HomePage = () => {
             Volt: (
               <>
                 <p>
-                  {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1.Voltage}</b>}
+                  {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1?.Voltage}</b>}
                   {channelsStatus?.[1] === "1" && (
                     <>
-                      {channelsStatus?.[0] === "1" && "/"} <b>{item.lastBatteryStatus?.CH2.Voltage}</b>
+                      {channelsStatus?.[0] === "1" && "/"} <b>{item.lastBatteryStatus?.CH2?.Voltage}</b>
                     </>
                   )}
                   {channelsStatus?.[2] === "1" && (
                     <>
                       {channelsStatus?.[1] === "1" && "/"}
-                      <b>{item.lastBatteryStatus?.CH3.Voltage}</b>
+                      <b>{item.lastBatteryStatus?.CH3?.Voltage}</b>
                     </>
                   )}
                   {channelsStatus?.[3] === "1" && (
                     <>
                       {channelsStatus?.[2] === "1" && "/"}
-                      <b>{item.lastBatteryStatus?.CH4.Voltage}</b>
+                      <b>{item.lastBatteryStatus?.CH4?.Voltage}</b>
                     </>
                   )}
                 </p>
@@ -183,22 +183,22 @@ const HomePage = () => {
             ),
             Ampe: (
               <>
-                {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1.Ampere}</b>}
+                {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1?.Ampere}</b>}
                 {channelsStatus?.[1] === "1" && (
                   <>
-                    {channelsStatus?.[0] === "1" && "/"} <b>{item.lastBatteryStatus?.CH2.Ampere}</b>
+                    {channelsStatus?.[0] === "1" && "/"} <b>{item.lastBatteryStatus?.CH2?.Ampere}</b>
                   </>
                 )}
                 {channelsStatus?.[2] === "1" && (
                   <>
                     {channelsStatus?.[1] === "1" && "/"}
-                    <b>{item.lastBatteryStatus?.CH3.Ampere}</b>
+                    <b>{item.lastBatteryStatus?.CH3?.Ampere}</b>
                   </>
                 )}
                 {channelsStatus?.[3] === "1" && (
                   <>
                     {channelsStatus?.[2] === "1" && "/"}
-                    <b>{item.lastBatteryStatus?.CH4.Ampere}</b>
+                    <b>{item.lastBatteryStatus?.CH4?.Ampere}</b>
                   </>
                 )}
               </>
