@@ -10,16 +10,7 @@ import { appService } from "./services/app"
 
 const fastify = Fastify({
   maxParamLength: 5000,
-  logger: {
-    transport: {
-      target: "pino-pretty",
-      options: {
-        translateTime: "HH:MM:ss Z",
-        ignore: "pid,hostname",
-      },
-    },
-    file: "./application.log",
-  },
+  logger: false,
 })
 
 const corsOptions = {

@@ -43,12 +43,12 @@ const columns = [
   "Trạng thái gateway",
   "Volt",
   "Ampe",
-  "Bat_interval",
+  "Battery Interval",
+  "Device Interval",
   "Imei",
   "Operator",
   "Số sim",
   "RSSI",
-  ,
   "Action",
 ]
 const HomePage = () => {
@@ -119,7 +119,11 @@ const HomePage = () => {
     if (messages && messages?.operator === "SetInterval") {
       setBatInterval((prevStatus: any) => ({
         ...prevStatus,
-        [messages.imei]: messages.info,
+        [messages.imei]: {
+          ...prevStatus[messages.imei],
+          batteryStatusInterval: messages.infor.BatteryStatusInterval,
+          deviceStatusInterval: messages.infor.DeviceStatusInterval,
+        },
       }))
     }
     if (messages && messages?.operator === "SetupChannel") {
@@ -161,6 +165,7 @@ const HomePage = () => {
         // }}
         dataSource={dataToShow?.map((item: any, index: number) => {
           const channelsStatus = deviceSetupChannelsStatus[item.imei]?.usingChannel
+
           return {
             key: index + 1,
             Stt: item.index,
@@ -217,7 +222,8 @@ const HomePage = () => {
             ) : (
               "--"
             ),
-            Bat_interval: batInterval[item.imei]?.batteryStatusInterval,
+            "Battery Interval": batInterval[item.imei]?.batteryStatusInterval,
+            "Device Interval": batInterval[item.imei]?.deviceStatusInterval,
             Imei: item.imei,
             Operator: item.lastGatewayStatus?.operator,
             "Số sim": item.simNumber,
@@ -225,11 +231,13 @@ const HomePage = () => {
             Action: <Button onClick={() => navigate(`/device/${item.imei}`)}>Detail</Button>,
           }
         })}
-        columns={columns.map((item) => ({
+        columns={columns.map((item, index) => ({
           title: item,
           dataIndex: item,
           key: item,
+          fixed: index < 4 ? "left" : undefined,
         }))}
+        scroll={{ x: "max-content" }}
       />
     </Card>
   )

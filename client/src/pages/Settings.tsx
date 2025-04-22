@@ -254,7 +254,7 @@ const ModalSetting = ({ choseItem, refetch }: any) => {
       await mutateAsync(bodyData)
       toast.success("Gửi yêu cầu cập nhật intervals thành công!")
     } catch (error: any) {
-      console.log("error", error?.response)
+      console.error("error", error?.response)
       toast.error(error?.response?.data?.error?.message)
     }
   }
@@ -274,7 +274,7 @@ const ModalSetting = ({ choseItem, refetch }: any) => {
       await mutateAsync(bodyData)
       toast.success("Gửi yêu cầu cập nhật channel thành công!")
     } catch (error: any) {
-      console.log("error", error?.response)
+      console.error("error", error?.response)
       toast.error(error?.response?.data?.error?.message)
     }
   }
@@ -295,7 +295,7 @@ const ModalSetting = ({ choseItem, refetch }: any) => {
       refetch()
       toast.success("Cập nhật thông tin thành công!")
     } catch (error: any) {
-      console.log("error", error?.response)
+      console.error("error", error?.response)
       toast.error(error?.response?.data?.error?.message)
     }
   }
@@ -489,7 +489,7 @@ const ModalCreate = ({ refetch }: any) => {
 
       toast.success("Tạo device thành công!")
     } catch (error: any) {
-      console.log("error", error?.response)
+      console.error("error", error?.response)
       toast.error(error?.response?.data?.error?.message)
     }
   }
@@ -604,14 +604,14 @@ const ModalCreate = ({ refetch }: any) => {
 
 const ModalDelete = ({ choseItem, refetch }: any) => {
   const { isPending, mutateAsync } = usePostDevices(DeviceType.DELETE_DEVICE)
-  console.log("choseDevice", choseItem)
+  console.error("choseDevice", choseItem)
   const onSubmit = async () => {
     try {
       await mutateAsync({ imei: choseItem?.imei })
       refetch()
       toast.success("Xóa device thành công!")
     } catch (error: any) {
-      console.log("error", error?.response)
+      console.error("error", error?.response)
       toast.error(error?.response?.data?.error?.message)
     }
   }

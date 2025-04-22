@@ -242,11 +242,11 @@ const colorsCold = ["#0000ff", "#008080", "#6cff00", "#008000"]
 const colors = [...colorsHot, ...colorsCold]
 const Chart = ({ data, newData }: any) => {
   const chartRef = useRef<any>(null)
-  console.log("data", data)
+  console.debug("data", data)
   const seriesRef = useRef<any>(null)
   const seriesList = useRef<any>([])
 
-  console.log("data", data)
+  console.debug("data", data)
 
   useEffect(() => {
     const root = am5.Root.new(chartRef.current)
