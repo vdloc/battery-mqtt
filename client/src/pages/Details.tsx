@@ -454,6 +454,7 @@ const Chart = ({ data, newData }: any) => {
       }
     }
   }, [newData])
+
   return (
     <>
       <div id="chartdiv" ref={chartRef} style={{ width: "100%", height: "400px" }} />

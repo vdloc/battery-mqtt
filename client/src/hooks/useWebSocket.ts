@@ -20,13 +20,13 @@ const useWebSocket = (url: string) => {
     socketRef.current = socket
 
     socket.addEventListener("open", () => {
-      console.log("WebSocket connection opened")
+      console.info("WebSocket connection opened")
       setConnected(true)
       socket.send(JSON.stringify({ message: "Hello, Server!" }))
     })
 
     socket.addEventListener("message", (event) => {
-      console.log("Message from server:", event.data)
+      console.debug("Message from server:", event.data)
       let messages = event.data.length ? event.data : [event.data]
       setMessages(JSON.parse(messages))
     })
@@ -37,7 +37,7 @@ const useWebSocket = (url: string) => {
     })
 
     socket.addEventListener("close", () => {
-      console.log("WebSocket connection closed")
+      console.info("WebSocket connection closed")
       setDisconnected(true)
       setConnected(false)
     })
