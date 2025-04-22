@@ -58,9 +58,11 @@ const HomePage = () => {
   const { data: deviceSetupChannels } = useGetDeviceSetupChannels()
   const { messages, sendMessage, connected, setMessages } = useSocket()
   const [lastGatewayStatus, setLastGatewayStatus] = useState<any>({})
+  const [lastBatteryStatus, setLastBatteryStatus] = useState<any>({})
   const [batInterval, setBatInterval] = useState<any>({})
   const { data: devices } = useGetDevices()
   const { data: intervals } = useGetIntervals()
+
   useEffect(() => {
     if (devices && connected) {
       sendMessage(JSON.stringify({ operator: "SET_LISTEN_DEVICE", device: devices.base.map((item: any) => item.imei) }))
@@ -75,6 +77,10 @@ const HomePage = () => {
       setLastGatewayStatus((prevStatus: any) => ({
         ...prevStatus,
         ...devices.lastGatewayStatus,
+      }))
+      setLastBatteryStatus((prevStatus: any) => ({
+        ...prevStatus,
+        ...devices.lastBatteryStatus,
       }))
     }
   }, [devices])
@@ -102,6 +108,12 @@ const HomePage = () => {
       setLastGatewayStatus((prevStatus: any) => ({
         ...prevStatus,
         [messages.imei]: messages.info,
+      }))
+    }
+    if (messages && messages?.operator === "SendBatteryStatus") {
+      setLastBatteryStatus((prevStatus: any) => ({
+        ...prevStatus,
+        [messages.imei]: messages.infor,
       }))
     }
     if (messages && messages?.operator === "SetInterval") {
@@ -159,22 +171,22 @@ const HomePage = () => {
             Volt: (
               <>
                 <p>
-                  {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1?.Voltage}</b>}
+                  {channelsStatus?.[0] === "1" && <b>{lastBatteryStatus[item.imei]?.CH1?.Voltage}</b>}
                   {channelsStatus?.[1] === "1" && (
                     <>
-                      {channelsStatus?.[0] === "1" && "/"} <b>{item.lastBatteryStatus?.CH2?.Voltage}</b>
+                      {channelsStatus?.[0] === "1" && "/"} <b>{lastBatteryStatus[item.imei]?.CH2?.Voltage}</b>
                     </>
                   )}
                   {channelsStatus?.[2] === "1" && (
                     <>
                       {channelsStatus?.[1] === "1" && "/"}
-                      <b>{item.lastBatteryStatus?.CH3?.Voltage}</b>
+                      <b>{lastBatteryStatus[item.imei]?.CH3?.Voltage}</b>
                     </>
                   )}
                   {channelsStatus?.[3] === "1" && (
                     <>
                       {channelsStatus?.[2] === "1" && "/"}
-                      <b>{item.lastBatteryStatus?.CH4?.Voltage}</b>
+                      <b>{lastBatteryStatus[item.imei]?.CH4?.Voltage}</b>
                     </>
                   )}
                 </p>
@@ -183,22 +195,22 @@ const HomePage = () => {
             ),
             Ampe: channelsStatus ? (
               <>
-                {channelsStatus?.[0] === "1" && <b>{item.lastBatteryStatus?.CH1?.Ampere}</b>}
+                {channelsStatus?.[0] === "1" && <b>{lastBatteryStatus[item.imei]?.CH1?.Ampere}</b>}
                 {channelsStatus?.[1] === "1" && (
                   <>
-                    {channelsStatus?.[0] === "1" && "/"} <b>{item.lastBatteryStatus?.CH2?.Ampere}</b>
+                    {channelsStatus?.[0] === "1" && "/"} <b>{lastBatteryStatus[item.imei]?.CH2?.Ampere}</b>
                   </>
                 )}
                 {channelsStatus?.[2] === "1" && (
                   <>
                     {channelsStatus?.[1] === "1" && "/"}
-                    <b>{item.lastBatteryStatus?.CH3?.Ampere}</b>
+                    <b>{lastBatteryStatus[item.imei]?.CH3?.Ampere}</b>
                   </>
                 )}
                 {channelsStatus?.[3] === "1" && (
                   <>
                     {channelsStatus?.[2] === "1" && "/"}
-                    <b>{item.lastBatteryStatus?.CH4?.Ampere}</b>
+                    <b>{lastBatteryStatus[item.imei]?.CH4?.Ampere}</b>
                   </>
                 )}
               </>
