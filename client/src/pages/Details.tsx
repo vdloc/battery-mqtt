@@ -144,7 +144,7 @@ const Details = () => {
             ch4Voltage: +item.infor?.CH4?.Voltage,
             ch4Ampere: +item.infor?.CH4?.Ampere,
             label: formatDateAxis(+item.time),
-            time: item.time,
+            time: +item.time,
           }
         })
         .sort((a, b) => a.time - b.time)
@@ -215,7 +215,7 @@ const Details = () => {
         title={<p className="text-2xl font-bold">Chart</p>}
         extra={
           <div className="flex items-center gap-3">
-            <DatePicker.RangePicker showTime value={[startTime, endTime]} onChange={onChange} />
+            <DatePicker.RangePicker showTime defaultValue={[startTime, endTime]} onChange={onChange} />
           </div>
         }
       >
@@ -243,10 +243,7 @@ const colors = [...colorsHot, ...colorsCold]
 const Chart = ({ data, newData }: any) => {
   const chartRef = useRef<any>(null)
   console.log("data", data)
-  const seriesRef = useRef<any>(null)
   const seriesList = useRef<any>([])
-
-  console.log("data", data)
 
   useEffect(() => {
     const root = am5.Root.new(chartRef.current)
@@ -283,6 +280,9 @@ const Chart = ({ data, newData }: any) => {
         wheelY: "zoomX",
         maxTooltipDistance: 0,
         pinchZoomX: true,
+        tooltip: am5.Tooltip.new(root, {
+          labelText: `[bold]{name}[/]\n{valueY} at {valueX.formatDate('HH:mm:ss')}`,
+        }),
       })
     )
 
@@ -319,33 +319,36 @@ const Chart = ({ data, newData }: any) => {
     )
     yAxis1.get("renderer").grid.template.set("visible", false)
     yAxis2.get("renderer").grid.template.set("visible", false)
+
     // Add series
     // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
     for (var i = 1; i < 9; i++) {
       const label = i < 5 ? "Voltage" : "Ampere"
-      const line = am5xy.LineSeries.new(root, {
-        name: `CH${i < 5 ? i : i - 4} ${label}`,
-        xAxis: xAxis,
-        yAxis: i < 5 ? yAxis1 : yAxis2,
-        valueYField: `ch${i < 5 ? i : i - 4}${label}`,
-        valueXField: "time",
-        legendValueText: "{valueY}",
-        fill: am5.color(colors[i - 1]),
-        stroke: am5.color(colors[i - 1]),
-        tooltip: am5.Tooltip.new(root, {
-          pointerOrientation: "horizontal",
-          labelText: "{valueY}",
-        }),
-      })
-      seriesList.current[i - 1] = line
-      seriesRef.current = chart.series.push(line)
-      seriesRef.current.data.setAll(data)
+      const name = `CH${i < 5 ? i : i - 4} ${label}`
+      const series = chart.series.push(
+        am5xy.LineSeries.new(root, {
+          name: name,
+          xAxis: xAxis,
+          yAxis: i < 5 ? yAxis1 : yAxis2,
+          valueYField: `ch${i < 5 ? i : i - 4}${label}`,
+          valueXField: "time",
+          legendValueText: "{valueY}",
+          fill: am5.color(colors[i - 1]),
+          stroke: am5.color(colors[i - 1]),
+          tooltip: am5.Tooltip.new(root, {
+            pointerOrientation: "horizontal",
+            labelText: "{valueY}",
+          }),
+        })
+      )
+      series.data.setAll(data)
+      seriesList.current[i - 1] = series
+
       // Make stuff animate on load
       // https://www.amcharts.com/docs/v5/concepts/animations/
-      seriesRef.current.appear()
     }
 
-    var tooltip = seriesRef.current.set("tooltip", am5.Tooltip.new(root, {}))
+    var tooltip = chart.set("tooltip", am5.Tooltip.new(root, {}))
     tooltip.label.set("text", "{valueY}")
 
     // Add cursor
@@ -432,7 +435,6 @@ const Chart = ({ data, newData }: any) => {
       root.dispose()
     }
   }, [data])
-
   useEffect(() => {
     if (newData) {
       const dataPush = {
@@ -445,14 +447,13 @@ const Chart = ({ data, newData }: any) => {
         ch4Voltage: +newData.infor?.CH4?.Voltage,
         ch4Ampere: +newData.infor?.CH4?.Ampere,
         label: formatDateAxis(+newData.time),
-        time: newData.time,
+        time: +newData.time,
       }
       for (var i = 1; i < 9; i++) {
         seriesList.current[i - 1].data.push(dataPush)
       }
     }
   }, [newData])
-  let a = 1
   return (
     <>
       <div id="chartdiv" ref={chartRef} style={{ width: "100%", height: "400px" }} />
