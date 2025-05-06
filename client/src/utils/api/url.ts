@@ -8,6 +8,9 @@ const API_URL = {
   UPDATE_DEVICE: "/updateDevice",
   GET_MANAGE_UNITS: "/getManageUnits",
   REQUEST: "/request",
+  LOGIN: "/login",
+  SIGNUP: "/signup",
+  GET_USER: "/getUser",
 }
 
 export default API_URL

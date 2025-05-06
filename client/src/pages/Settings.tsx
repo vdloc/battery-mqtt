@@ -80,7 +80,7 @@ const Settings = () => {
   return (
     <div className="flex flex-col gap-5  mx-auto">
       <Card
-        title={<p className="text-2xl font-bold">Settings</p>}
+        title={<p className="text-2xl font-bold">Cài đặt thiết bị</p>}
         extra={
           <Input
             placeholder="Từ khóa..."

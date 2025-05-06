@@ -149,7 +149,7 @@ const HomePage = () => {
   }, [search, devices])
   return (
     <Card
-      title={<p className="text-2xl font-bold">List Devices</p>}
+      title={<p className="text-2xl font-bold">Danh sách thiết bị</p>}
       extra={
         <Input
           placeholder="Từ khóa..."
