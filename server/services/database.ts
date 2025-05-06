@@ -26,6 +26,7 @@ interface QueryHelpers {
   lte: <T>(a: T, b: T) => boolean // Define the type of 'lte'
   and: <T>(...args: T[]) => boolean // Define the type of 'and',
   asc: <T>(a: T) => boolean
+  inArray: <T>(a: T, b: T[]) => boolean
 }
 
 interface DeviceInput {
@@ -208,19 +209,30 @@ class DatabaseService {
 
   async getDeviceStatus(data: any) {
     const sortParams = { time: true }
-    const { imei, timeStart, timeEnd, sort = {}, limit = 50 } = data
+    const { imei, timeStart, timeEnd, sort = {}, limit = 50, imeiList } = data
+
+    if (!imei && !imeiList) {
+      throw new Error("imei or imeiList is required")
+    }
 
     Object.assign(sort, sortParams)
-
     const batteryStatuses = db.query.batteryStatusTable.findMany({
-      where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
-        return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
+      where: (status: any, { eq, gte, lte, and, inArray }: QueryHelpers) => {
+        return and(
+          imeiList?.length ? inArray(status.imei, imeiList) : eq(status.imei, imei),
+          gte(status.time, timeStart),
+          lte(status.time, timeEnd)
+        )
       },
       limit,
     })
     const gatewayStatuses = db.query.gatewayStatusTable.findMany({
-      where: (status: any, { eq, gte, lte, and }: QueryHelpers) => {
-        return and(eq(status.imei, imei), gte(status.time, timeStart), lte(status.time, timeEnd))
+      where: (status: any, { eq, gte, lte, and, inArray }: QueryHelpers) => {
+        return and(
+          imeiList?.length ? inArray(status.imei, imeiList) : eq(status.imei, imei),
+          gte(status.time, timeStart),
+          lte(status.time, timeEnd)
+        )
       },
       limit,
     })
