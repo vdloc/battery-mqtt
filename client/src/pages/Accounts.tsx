@@ -1,15 +1,10 @@
-import { useSocket } from "@/components/SocketProvider"
 import { TEXT_REQUIRED } from "@/constants"
 import useSignup from "@/hooks/auth/useSignup"
-import useGetDevices from "@/hooks/useGetDevices"
-import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
-import useGetIntervals from "@/hooks/useGetIntervals"
 import useGetUser from "@/hooks/user/useGetUser"
 import { Button, Card, Input, Modal, Table } from "antd"
-import { useEffect, useMemo, useState } from "react"
+import { useState } from "react"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
-import { Link, useNavigate } from "react-router"
 export type DeviceType = {
   id: string
   imei: string
