@@ -1,11 +1,11 @@
 import { drizzleOrm } from "@fsb/drizzle"
-import { publicProcedure } from "../../trpc"
+import { protectedProcedure } from "../../trpc"
 import { schema } from "@fsb/drizzle"
 
 const { desc } = drizzleOrm
 const { deviceIntervalTable } = schema
 
-export default publicProcedure.query(async ({ ctx }) => {
+export default protectedProcedure.query(async ({ ctx }) => {
   const db = ctx.db
 
   return await db.query.deviceIntervalTable.findMany({

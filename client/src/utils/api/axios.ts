@@ -8,6 +8,8 @@ const instanceAxios = {
   baseURL: VITE_BASE_URL,
 }
 
+axios.defaults.withCredentials = true
+
 const axiosConfig = axios.create(instanceAxios)
 
 const request = ({ method, url, data, ...rest }: AxiosRequestConfig) =>

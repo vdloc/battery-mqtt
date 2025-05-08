@@ -1,5 +1,5 @@
 import z from "zod"
-import { publicProcedure } from "../../trpc"
+import { protectedProcedure } from "../../trpc"
 import { databaseService } from "../../services/database"
 
 const inputSchema = z.object({
@@ -9,7 +9,7 @@ const inputSchema = z.object({
   limit: z.number().optional(),
 })
 
-export default publicProcedure.input(inputSchema).query(async ({ ctx, input }) => {
+export default protectedProcedure.input(inputSchema).query(async ({ ctx, input }) => {
   const { imei, timeStart, timeEnd, limit } = input
 
   const batteryStatuses = await databaseService.getDeviceStatus({

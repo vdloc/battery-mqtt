@@ -1,5 +1,5 @@
 import z from "zod"
-import { publicProcedure } from "../../trpc"
+import { protectedProcedure } from "../../trpc"
 import { databaseService } from "../../services/database"
 
 const inputSchema = z.object({
@@ -14,7 +14,7 @@ const inputSchema = z.object({
   time: z.number().optional(),
 })
 
-export default publicProcedure.input(inputSchema).mutation(async ({ input }) => {
+export default protectedProcedure.input(inputSchema).mutation(async ({ input }) => {
   const {
     imei,
     manageUnitId,

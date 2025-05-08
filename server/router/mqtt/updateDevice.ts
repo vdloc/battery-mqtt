@@ -1,5 +1,5 @@
 import z from "zod"
-import { publicProcedure } from "../../trpc"
+import { protectedProcedure } from "../../trpc"
 import { databaseService } from "../../services/database"
 
 const inputSchema = z.object({
@@ -10,6 +10,6 @@ const inputSchema = z.object({
   simNumber: z.string().optional(),
 })
 
-export default publicProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {
+export default protectedProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {
   await databaseService.updateDevice(input)
 })

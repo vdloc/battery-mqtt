@@ -1,5 +1,5 @@
 import z from "zod"
-import { publicProcedure } from "../../trpc"
+import { protectedProcedure } from "../../trpc"
 import { OPERATORS, Topic } from "../../types/Topic"
 import { databaseService } from "../../services/database"
 import { mqttService } from "../../services/mqtt"
@@ -20,7 +20,7 @@ const inputSchema = z.object({
   time: z.number(),
 })
 
-export default publicProcedure
+export default protectedProcedure
   .input(inputSchema)
   .output(inputSchema)
   .meta({ summary: "Gui request den gateway" })
