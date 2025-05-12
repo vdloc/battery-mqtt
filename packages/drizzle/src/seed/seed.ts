@@ -11,6 +11,10 @@ import {
   batteryStatusTable,
   gatewayStatusTable,
   manageUnitTable,
+  roleTable,
+  userRoleTable,
+  permissionTable,
+  rolePermissionTable,
 } from "../db/schema"
 import dotenv from "dotenv"
 import citiesData from "./cities.json"
@@ -49,47 +53,76 @@ const main = async () => {
   // for (const setupChannel of deviceSetupChannels) {
   //   await db.insert(setupChannelTable).values(setupChannel)
   // }
-  Object.values(citiesData).forEach(async (city) => {
-    const { name } = city
-    await db.insert(manageUnitTable).values({
-      name,
-    })
-  })
-  let manageUnits = await db
-    .select({
-      id: manageUnitTable.id,
-      name: manageUnitTable.name,
-    })
-    .from(manageUnitTable)
-  let imeis = await db
-    .select({
-      imei: brokerDeviceTable.imei,
-      id: brokerDeviceTable.id,
-    })
-    .from(brokerDeviceTable)
-  for (const imei of imeis) {
-    const manageUnit = faker.helpers.arrayElement(manageUnits)
-    const data = {
-      simNumber: faker.phone.number({ style: "national" }),
-      manageUnitId: manageUnit.id,
-      manageUnitName: manageUnit.name,
-      aliasName: faker.company.name(),
-      stationCode: faker.string.alphanumeric(10),
-    }
-    const result = await db.update(brokerDeviceTable).set(data).where(eq(brokerDeviceTable.id, imei.id)).returning({
-      id: brokerDeviceTable.id,
-      imei: brokerDeviceTable.imei,
-      manageUnitId: brokerDeviceTable.manageUnitId,
-      manageUnitName: brokerDeviceTable.manageUnitName,
-      aliasName: brokerDeviceTable.aliasName,
-      stationCode: brokerDeviceTable.stationCode,
-    })
-    console.log(" result:", result)
-  }
+  // Object.values(citiesData).forEach(async (city) => {
+  //   const { name } = city
+  //   await db.insert(manageUnitTable).values({
+  //     name,
+  //   })
+  // })
+  // let manageUnits = await db
+  //   .select({
+  //     id: manageUnitTable.id,
+  //     name: manageUnitTable.name,
+  //   })
+  //   .from(manageUnitTable)
+  // let imeis = await db
+  //   .select({
+  //     imei: brokerDeviceTable.imei,
+  //     id: brokerDeviceTable.id,
+  //   })
+  //   .from(brokerDeviceTable)
+  // for (const imei of imeis) {
+  //   const manageUnit = faker.helpers.arrayElement(manageUnits)
+  //   const data = {
+  //     simNumber: faker.phone.number({ style: "national" }),
+  //     manageUnitId: manageUnit.id,
+  //     manageUnitName: manageUnit.name,
+  //     aliasName: faker.company.name(),
+  //     stationCode: faker.string.alphanumeric(10),
+  //   }
+  //   const result = await db.update(brokerDeviceTable).set(data).where(eq(brokerDeviceTable.id, imei.id)).returning({
+  //     id: brokerDeviceTable.id,
+  //     imei: brokerDeviceTable.imei,
+  //     manageUnitId: brokerDeviceTable.manageUnitId,
+  //     manageUnitName: brokerDeviceTable.manageUnitName,
+  //     aliasName: brokerDeviceTable.aliasName,
+  //     stationCode: brokerDeviceTable.stationCode,
+  //   })
+  //   console.log(" result:", result)
+  // }
 
   // for (const imei of imeis) {
   //   await db.update(brokerDeviceTable).set({ time: Date.now() }).where(eq(brokerDeviceTable.imei, imei.imei))
   // }
+
+  for (const role of ["admin", "user"]) {
+    await db.insert(roleTable).values({
+      name: role,
+    })
+  }
+
+  for (const permission of [
+    "ManageUnit_View",
+    "ManageUnit_Create",
+    "ManageUnit_Update",
+    "ManageUnit_Delete",
+    "Devices_View",
+    "Device_View",
+    "Device_Create",
+    "Device_Update",
+    "Device_Delete",
+    "Device_Export",
+    "User_View",
+    "User_Create",
+    "User_Update",
+    "User_Delete",
+    "SMSSetting_Update"
+  ]) {
+    await db.insert(permissionTable).values({
+      name: permission,
+    })
+  }
+
   console.log(`Done!`)
   process.exit(0)
 }

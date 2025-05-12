@@ -4,9 +4,6 @@ import { relations } from "drizzle-orm"
 export const userTable = pgTable("user", {
   id: uuid().defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  age: integer(),
-  image: text("image"),
-  email: text("email").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastLoginAt: timestamp("last_login_at"),
 })
@@ -31,6 +28,36 @@ export const userCredentialToUserRelations = relations(userCredentialTable, ({ o
   }),
 }))
 
+export const roleTable = pgTable("role", {
+  id: uuid().defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+})
+
+export const permissionTable = pgTable("permission", {
+  id: uuid().defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+})
+
+export const userRoleTable = pgTable("role", {
+  id: uuid().defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => userTable.id),
+  roleId: uuid("role_id")
+    .notNull()
+    .references(() => roleTable.id),
+})
+
+export const rolePermissionTable = pgTable("role_permission", {
+  id: uuid().defaultRandom().primaryKey(),
+  roleId: uuid("role_id")
+    .notNull()
+    .references(() => roleTable.id),
+  permissionId: uuid("permission_id")
+    .notNull()
+    .references(() => permissionTable.id),
+})
+
 export const deviceTable = pgTable("device", {
   id: uuid().defaultRandom().primaryKey(),
   userAgent: text("userAgent").notNull(),
@@ -52,5 +79,3 @@ export const deviceToUserRelations = relations(deviceTable, ({ one }) => ({
 export const userToDevicesRelations = relations(userTable, ({ many }) => ({
   devices: many(deviceTable),
 }))
-
-
