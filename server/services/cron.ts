@@ -82,11 +82,11 @@ class CronJobService {
 
     return intervals.filter(Boolean).map((status) => {
       const { imei, batteryStatusInterval, deviceStatusInterval } = status
-      const batteryStatusCronTask = this.schedule(deviceStatusInterval, () => {
+      const batteryStatusCronTask = this.schedule(batteryStatusInterval, () => {
         const message = { topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) }
         this.mqttService?.publish(message)
       })
-      const gatewayStatusCronTask = this.schedule(batteryStatusInterval, () => {
+      const gatewayStatusCronTask = this.schedule(deviceStatusInterval, () => {
         const message = { topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) }
         this.mqttService?.publish(message)
       })
