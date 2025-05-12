@@ -1,14 +1,13 @@
 import { requestToken } from "@/utils/api/axios"
 import API_URL from "@/utils/api/url"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "react-router"
 
 const url = API_URL.GET_DEVICES_STATUS
-const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart: number; timeEnd: number }) => {
+const useGetDeviceStatusToExport = () => {
   const navigate = useNavigate()
-  return useQuery({
-    queryKey: [url, params],
-    queryFn: async () => {
+  return useMutation({
+    mutationFn: async (params: { imei: string | undefined | null; timeStart: number; timeEnd: number }) => {
       try {
         const res = await requestToken({
           method: "GET",
@@ -18,7 +17,7 @@ const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart
           },
         })
 
-        const result = res?.data?.result?.data
+        const result = res?.data?.result?.data.sort((a: any, b: any) => a.time - b.time)
         let resultConfig: any[] = []
         for (let i = 0; i < result.length; i++) {
           for (let j = 0; j < result[i].length; j++) {
@@ -39,8 +38,7 @@ const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart
         return undefined
       }
     },
-    enabled: !!params && !!params.imei,
   })
 }
 
-export default useGetDeviceStatus
+export default useGetDeviceStatusToExport

@@ -1,21 +1,24 @@
 import { requestToken } from "@/utils/api/axios"
 import API_URL from "@/utils/api/url"
-import { useMutation } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "react-router"
-const url = API_URL.REQUEST
-const usePostRequest = () => {
+import Cookies from "js-cookie"
+
+const url = API_URL.GET_AUTH
+const useGetAuth = () => {
   const navigate = useNavigate()
-  return useMutation({
-    mutationFn: async (data: any) => {
+  return useQuery({
+    queryKey: [url],
+    queryFn: async () => {
       try {
         const res = await requestToken({
-          method: "POST",
+          method: "GET",
           url,
-          data,
         })
-        return res
+        return res.data?.result?.data
       } catch (error: any) {
         if (error.response.status === 401) {
+          Cookies.remove("battery-auth")
           navigate("/login")
         }
         return undefined
@@ -24,4 +27,4 @@ const usePostRequest = () => {
   })
 }
 
-export default usePostRequest
+export default useGetAuth

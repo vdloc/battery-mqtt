@@ -3,6 +3,7 @@ import useLogin from "@/hooks/auth/useLogin"
 
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import { TEXT_REQUIRED } from "@/constants"
+import toast from "react-hot-toast"
 type Inputs = {
   email: string | number
   password: string | number
@@ -17,13 +18,18 @@ export default function Login() {
   const { isPending, mutateAsync: login } = useLogin()
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    await login(data)
+    try {
+      await login(data)
+    } catch (error: any) {
+      console.log("error", error)
+      toast.error(error?.response?.data?.error?.message)
+    }
   }
 
   return (
     <div className="h-screen flex items-center">
       <div className="max-w-2xl min-w-[400px] mx-auto">
-        <Card title={<p className="text-2xl font-bold">Login</p>}>
+        <Card title={<p className="text-2xl font-bold">Đăng nhập</p>}>
           <div>
             <label className="font-bold">Email</label>
             <Controller
@@ -65,7 +71,7 @@ export default function Login() {
             type="primary"
             onClick={handleSubmit(onSubmit)}
           >
-            {isPending ? "Submiting..." : "Submit"}
+            {isPending ? "Đang xác nhận..." : "Xác nhận"}
           </Button>
         </Card>
       </div>

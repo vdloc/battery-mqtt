@@ -6,15 +6,17 @@ import am5themes_Animated from "@amcharts/amcharts5/themes/Animated"
 import { useParams } from "react-router"
 import { DeviceType } from "./HomePage"
 import useGetDevices from "@/hooks/useGetDevices"
-import { Card, DatePicker, Select } from "antd"
+import { Button, Card, DatePicker, Select } from "antd"
 import type { Dayjs } from "dayjs"
 import dayjs from "dayjs"
 import useGetDeviceStatus from "@/hooks/useGetDeviceStatus"
 import { useSocket } from "@/components/SocketProvider"
 
-import { formatDateAxis } from "@/utils/formatDate"
+import { formatDate, formatDateAxis } from "@/utils/formatDate"
 import useGetIntervals from "@/hooks/useGetIntervals"
 import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
+import useGetDeviceStatusToExport from "@/hooks/useGetDeviceStatusToExport"
+import { exportToExcel } from "@/utils/utils"
 
 const Details = () => {
   const params = useParams()
@@ -216,6 +218,7 @@ const Details = () => {
         extra={
           <div className="flex items-center gap-3">
             <DatePicker.RangePicker showTime defaultValue={[startTime, endTime]} onChange={onChange} />
+            <ButtonExportExcel startTime={startTime} endTime={endTime} imei={imei} />
           </div>
         }
       >
@@ -225,7 +228,13 @@ const Details = () => {
           <div className="grid grid-cols-1">
             <div>
               <div className="h-[400px]">
-                <Chart data={dataConfig} newData={newData} />
+                {listenDevice && listenDevice?.imei && (
+                  <Chart
+                    data={dataConfig}
+                    newData={newData}
+                    interval={listenDevice?.imei && batInterval[listenDevice.imei]?.batteryStatusInterval}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -240,10 +249,16 @@ export default Details
 const colorsHot = ["#ff0000", "#ffa500", "#FF6347", "#eb2f96"]
 const colorsCold = ["#0000ff", "#008080", "#6cff00", "#008000"]
 const colors = [...colorsHot, ...colorsCold]
-const Chart = ({ data, newData }: any) => {
+const Chart = ({ data, newData, interval }: any) => {
   const chartRef = useRef<any>(null)
-  console.log("data", data)
   const seriesList = useRef<any>([])
+  const intervalRef = useRef<any>(interval || null)
+
+  useEffect(() => {
+    if (interval) {
+      intervalRef.current = interval
+    }
+  }, [interval])
 
   useEffect(() => {
     const root = am5.Root.new(chartRef.current)
@@ -298,7 +313,7 @@ const Chart = ({ data, newData }: any) => {
       am5xy.DateAxis.new(root, {
         baseInterval: {
           timeUnit: "second",
-          count: 30,
+          count: intervalRef.current,
         },
         renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {}),
@@ -459,5 +474,37 @@ const Chart = ({ data, newData }: any) => {
     <>
       <div id="chartdiv" ref={chartRef} style={{ width: "100%", height: "400px" }} />
     </>
+  )
+}
+
+const ButtonExportExcel = ({ startTime, endTime, imei }: any) => {
+  const { mutateAsync } = useGetDeviceStatusToExport()
+  const onSubmit = async () => {
+    const res = await mutateAsync({
+      imei: imei,
+      timeStart: startTime.toDate().getTime(),
+      timeEnd: endTime.toDate().getTime(),
+    })
+    if (res) {
+      const dataMap = res?.map((item: any) => {
+        return {
+          "Thời gian": formatDate(item.time),
+          "CH1 Voltage": item.infor?.CH1?.Voltage,
+          "CH1 Ampere": item.infor?.CH1?.Ampere,
+          "CH2 Voltage": item.infor?.CH2?.Voltage,
+          "CH2 Ampere": item.infor?.CH2?.Ampere,
+          "CH3 Voltage": item.infor?.CH3?.Voltage,
+          "CH3 Ampere": item.infor?.CH3?.Ampere,
+          "CH4 Voltage": item.infor?.CH4?.Voltage,
+          "CH4 Ampere": item.infor?.CH4?.Ampere,
+        }
+      })
+      exportToExcel(dataMap, "Dữ liệu")
+    }
+  }
+  return (
+    <Button type="primary" onClick={onSubmit}>
+      Export
+    </Button>
   )
 }

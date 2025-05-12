@@ -10,7 +10,10 @@ const API_URL = {
   REQUEST: "/request",
   LOGIN: "/login",
   SIGNUP: "/signup",
-  GET_USER: "/getUser",
+  GET_USER: "/getUsers",
+  GET_AUTH: "/getAuth",
+  UPDATE_USER: "/updateUser",
+  UPDATE_USER_PASSWORD: "/updateUserPassord",
 }
 
 export default API_URL

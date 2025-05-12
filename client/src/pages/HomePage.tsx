@@ -168,8 +168,8 @@ const HomePage = () => {
 
           return {
             key: index + 1,
-            Stt: item.index,
-            "Đơn vị": item.manageUnitName,
+            Stt: item.index + 1,
+            "Đơn vị": <Link to={`/device/${item.imei}`}>{item.manageUnitName}</Link>,
             "Mã trạm": item.stationCode,
             "Tên gợi nhớ": item.aliasName,
             "Trạng thái gateway": lastGatewayStatus[item.imei]?.RSSI,

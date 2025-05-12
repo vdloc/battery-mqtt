@@ -2,8 +2,8 @@ import { requestToken } from "@/utils/api/axios"
 import API_URL from "@/utils/api/url"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "react-router"
-const url = API_URL.REQUEST
-const usePostRequest = () => {
+const url = API_URL.UPDATE_USER
+const useUpdateUser = () => {
   const navigate = useNavigate()
   return useMutation({
     mutationFn: async (data: any) => {
@@ -24,4 +24,4 @@ const usePostRequest = () => {
   })
 }
 
-export default usePostRequest
+export default useUpdateUser

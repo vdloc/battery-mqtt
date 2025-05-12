@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosRequestConfig } from "axios"
+import Cookies from "js-cookie"
 
 export const VITE_BASE_URL = "http://localhost:4000"
 // export const VITE_BASE_URL = import.meta.env.VITE_URL_BACKEND
@@ -21,7 +22,7 @@ const request = ({ method, url, data, ...rest }: AxiosRequestConfig) =>
   })
 
 const requestToken = ({ method, url, data, ...rest }: AxiosRequestConfig) => {
-  const token = localStorage.getItem("battery_token")
+  const token = Cookies.get("battery-auth")
   return axiosConfig({
     method: method,
     url: url,

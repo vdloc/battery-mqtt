@@ -13,7 +13,12 @@
     border-color: var(--color-gray-200, currentColor);
   }
 }
-
+.ant-table-tbody > tr > td {
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+  max-width: 100px !important;
+  white-space: wrap !important;
+}
 button {
   @apply font-bold py-2 px-4 rounded-sm cursor-pointer;
 }

@@ -1,6 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
+
+export const exportToExcel = (data: any[], fileName = "export") => {
+  // Create a worksheet from JSON data
+  const worksheet = XLSX.utils.json_to_sheet(data)
+
+  // Create a new workbook and append the worksheet
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1")
+
+  // Generate buffer
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
+
+  // Create a Blob and trigger download
+  const file = new Blob([excelBuffer], { type: "application/octet-stream" })
+  saveAs(file, `${fileName}.xlsx`)
+}
 const utils = {
   sanitizePage: (page: string | null) => {
     if (!page) return 1
