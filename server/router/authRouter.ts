@@ -24,13 +24,6 @@ const authRouter = router({
     const user = await db.query.userTable.findFirst({
       where: eq(userTable.email, opts.input.email),
       columns: { id: true, name: true, image: true },
-      // with: {
-      //   userCredentialERRROR: {
-      //     columns: {
-      //       passwordHash: true,
-      //     },
-      //   },
-      // },
     })
 
     if (!user) throw new Error("Incorrect login")
@@ -138,9 +131,6 @@ const authRouter = router({
       deviceid: opts.ctx.device.id,
       decoded: opts.ctx.decoded,
     }
-    // return {
-    //   user: {},
-    // }
   }),
 })
 

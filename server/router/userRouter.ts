@@ -29,13 +29,14 @@ const userRouter = router({
     .input(
       z.object({
         page: z.number(),
+        limit: z.number().optional(),
         search: z.string().optional(),
         userId: z.string().optional(),
       })
     )
     .query(async (opts) => {
       const page = opts.input.page
-      const limit = 12
+      const limit = opts.input.limit ?? 12
       const db = opts.ctx.db
       const users = await db.query.userTable.findMany({
         limit,
