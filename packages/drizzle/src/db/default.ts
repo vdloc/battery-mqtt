@@ -4,6 +4,7 @@ import { relations } from "drizzle-orm"
 export const userTable = pgTable("user", {
   id: uuid().defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  email: text("email").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastLoginAt: timestamp("last_login_at"),
 })
@@ -38,7 +39,7 @@ export const permissionTable = pgTable("permission", {
   name: text("name").notNull(),
 })
 
-export const userRoleTable = pgTable("role", {
+export const userRoleTable = pgTable("user_role", {
   id: uuid().defaultRandom().primaryKey(),
   userId: uuid("user_id")
     .notNull()

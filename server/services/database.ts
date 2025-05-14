@@ -13,6 +13,9 @@ const {
   gatewayStatusTable,
   setupChannelTable,
   manageUnitTable,
+  rolePermissionTable,
+  userRoleTable,
+  roleTable,
 } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
@@ -51,6 +54,33 @@ interface SetupChannelInput {
 }
 
 class DatabaseService {
+  private rolesPermissions: {
+    [key: string]: {
+      permissions: string[]
+    }
+  }
+
+  constructor() {
+    this.rolesPermissions = {}
+    this.init()
+  }
+
+  async init() {
+    let roles = await this.getRoles()
+
+    for await (const role of roles) {
+      const rolePermission = await this.getRolePermissions(role.id)
+      const permissions = await db.query.permissionTable.findMany({
+        where: (permission: any, queryHelper: QueryHelpers) =>
+          queryHelper.inArray(
+            permission.id,
+            rolePermission.map((permission: { permissionId: string }) => permission.permissionId)
+          ),
+      })
+
+      this.rolesPermissions[role.name] = permissions.map((permission: { name: string }) => permission.name)
+    }
+  }
   async getDevices(): Promise<DevicesFromDB> {
     try {
       const devices = await db.query.brokerDeviceTable.findMany({
@@ -59,7 +89,6 @@ class DatabaseService {
 
       return devices
     } catch (error) {
-      console.log("Error in getDevices", error)
       return []
     }
   }
@@ -272,6 +301,36 @@ class DatabaseService {
 
   async createManageUnit({ name }: { name: string }) {
     return await db.insert(manageUnitTable).values({ name })
+  }
+
+  async getRolePermissions(userRoleId: string) {
+    const permissions = await db.query.rolePermissionTable.findMany({
+      where: eq(rolePermissionTable.roleId as any, userRoleId),
+    })
+    return permissions
+  }
+
+  async getUserRoleName(userId: string) {
+    const userRole = await db.query.userRoleTable.findFirst({
+      where: eq(userRoleTable.userId as any, userId),
+    })
+    const role = await db.query.roleTable.findFirst({
+      where: eq(roleTable.id as any, userRole?.roleId),
+    })
+    return role.name
+  }
+
+  async getRoles() {
+    const roles = await db.query.roleTable.findMany({})
+
+    return roles
+  }
+
+  async getUserPermissions(userId: string) {
+    const userRoleName = await this.getUserRoleName(userId)
+    if (!userRoleName) return []
+
+    return this.rolesPermissions[userRoleName]
   }
 }
 

@@ -41,7 +41,6 @@ const userDeviceRouter = router({
             columns: {
               id: true,
               name: true,
-              image: true,
             },
           },
         },

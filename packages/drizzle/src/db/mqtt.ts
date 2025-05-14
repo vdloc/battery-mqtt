@@ -58,6 +58,14 @@ export const manageUnitTable = pgTable("mqtt_manage_unit", {
   name: varchar({ length: 100 }).notNull(),
 })
 
+export const employeeTable = pgTable("mqtt_employee", {
+  id: uuid().defaultRandom().primaryKey(),
+  name: varchar({ length: 100 }).notNull(),
+  email: varchar({ length: 100 }).notNull(),
+  manageUnitId: uuid().references(() => manageUnitTable.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
 export const deviceIntervalRelations = relations(brokerDeviceTable, ({ one }) => ({
   user: one(deviceIntervalTable, {
     fields: [brokerDeviceTable.imei],

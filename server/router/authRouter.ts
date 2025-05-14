@@ -8,6 +8,7 @@ import { zod } from "@fsb/shared"
 import { utils } from "../utils"
 import { timeSessionCookie, cookieNameAuth, cookieNameDeviceIds, timeDeviceCookie } from "../configTer"
 import manageDevice from "../helper/manageDevice"
+import { databaseService } from "../services/database"
 
 const { eq } = drizzleOrm
 const { userTable, userCredentialTable } = schema
@@ -23,7 +24,7 @@ const authRouter = router({
 
     const user = await db.query.userTable.findFirst({
       where: eq(userTable.email, opts.input.email),
-      columns: { id: true, name: true, image: true },
+      columns: { id: true, name: true },
     })
 
     if (!user) throw new Error("Incorrect login")
@@ -120,16 +121,21 @@ const authRouter = router({
     opts.ctx.res.clearCookie(cookieNameAuth, utils.getParamsCookies(timeSessionCookie))
     return true
   }),
-  getAuth: publicProcedure.query((opts) => {
+  getAuth: publicProcedure.query(async (opts) => {
     if (!opts.ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" })
+    let userId = opts.ctx.user.id
+    console.log(" userId:", userId)
+    const permissions = await databaseService.getUserPermissions(userId)
+    console.log(" permissions:", permissions)
+
     return {
       user: {
         id: opts.ctx.user.id,
         name: opts.ctx.user.name,
-        image: opts.ctx.user.image,
       },
       deviceid: opts.ctx.device.id,
       decoded: opts.ctx.decoded,
+      permissions,
     }
   }),
 })
