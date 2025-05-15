@@ -9,6 +9,7 @@ const API_URL = {
   GET_MANAGE_UNITS: "/getManageUnits",
   REQUEST: "/request",
   LOGIN: "/login",
+  LOGOUT: "/logout",
   SIGNUP: "/signup",
   GET_USER: "/getUsers",
   GET_AUTH: "/getAuth",

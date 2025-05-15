@@ -11,7 +11,7 @@ import manageDevice from "../helper/manageDevice"
 import { databaseService } from "../services/database"
 
 const { eq } = drizzleOrm
-const { userTable, userCredentialTable } = schema
+const { userTable, userCredentialTable, userRoleTable, roleTable } = schema
 
 const authRouter = router({
   login: publicProcedure.input(zod.zodLogin).mutation(async (opts) => {
@@ -101,6 +101,16 @@ const authRouter = router({
       userId,
       passwordHash: await bcrypt.hash(opts.input.password, 10),
     })
+    let userRole = await db.query.roleTable.findFirst({
+      where: eq(roleTable.name, "user"),
+    })
+
+    if (userRole) {
+      await db.insert(userRoleTable).values({
+        userId,
+        roleId: userRole.id,
+      })
+    }
 
     const token = jwt.sign({ id: userId, exp: utils.getNewExp() }, secretJwt)
 

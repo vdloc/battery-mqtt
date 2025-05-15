@@ -317,7 +317,8 @@ class DatabaseService {
     const role = await db.query.roleTable.findFirst({
       where: eq(roleTable.id as any, userRole?.roleId),
     })
-    return role.name
+
+    return role?.name
   }
 
   async getRoles() {
@@ -328,6 +329,7 @@ class DatabaseService {
 
   async getUserPermissions(userId: string) {
     const userRoleName = await this.getUserRoleName(userId)
+
     if (!userRoleName) return []
 
     return this.rolesPermissions[userRoleName]

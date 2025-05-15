@@ -14,6 +14,7 @@ import Cookies from "js-cookie"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import useChangePassword from "./hooks/auth/useChangePassword"
 import { TEXT_REQUIRED } from "./constants"
+import useLogout from "@/hooks/auth/useLogout"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
@@ -84,6 +85,7 @@ const LayoutApp = ({ children }: any) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const navigate = useNavigate()
   const { data: me } = useGetAuth()
+  const { mutateAsync: logout } = useLogout()
   const items: MenuProps["items"] = useMemo(() => {
     return [
       {
@@ -119,8 +121,8 @@ const LayoutApp = ({ children }: any) => {
     {
       label: "Đăng xuất",
       key: "2",
-      onClick: () => {
-        Cookies.remove("battery-auth")
+      onClick: async () => {
+        await logout()
         navigate("/login")
       },
     },
