@@ -2,7 +2,7 @@ import { protectedProcedure, router } from "../trpc"
 import { z } from "zod"
 import { schema, drizzleOrm } from "@fsb/drizzle"
 import { databaseService } from "../services/database"
-const { eq, count, asc, ilike, and } = drizzleOrm
+const { eq, count, asc, ilike, and, desc } = drizzleOrm
 const { userTable } = schema
 
 const userRouter = router({
@@ -41,7 +41,7 @@ const userRouter = router({
       const users = await db.query.userTable.findMany({
         limit,
         offset: (page - 1) * limit,
-        orderBy: [asc(userTable.name)],
+        orderBy: [desc(userTable.createdAt)],
         columns: { id: true, name: true, email: true, createdAt: true, lastLoginAt: true },
         where: and(
           opts.input.search ? ilike(userTable.name, `%${opts.input.search}%`) : undefined,
