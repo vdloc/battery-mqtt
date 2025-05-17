@@ -1,5 +1,17 @@
 export const initUsersData = [
   {
+    email: "admin@example.com",
+    name: "Admin",
+    password: "$2b$10$6K4nDgAfAfE5ktaWbHU3meBaZYbsWMBm97/8628/hM7jTz3gJUyMm",
+    createdAt: new Date("2025-11-28T11:12:54Z"),
+  },
+  {
+    email: "user@example.com",
+    name: "User",
+    password: "$2b$10$6K4nDgAfAfE5ktaWbHU3meBaZYbsWMBm97/8628/hM7jTz3gJUyMm",
+    createdAt: new Date("2025-11-28T11:12:54Z"),
+  },
+  {
     email: "alan@example.com",
     name: "Alan Doe",
     image:

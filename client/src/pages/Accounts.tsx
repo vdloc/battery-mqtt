@@ -1,7 +1,9 @@
 import { TEXT_REQUIRED } from "@/constants"
 import useSignup from "@/hooks/auth/useSignup"
+import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import useGetUser from "@/hooks/user/useGetUser"
 import useUpdateUser from "@/hooks/user/useUpdateUser"
+import { Permissions } from "@/types/serverTypes"
 import { formatDate } from "@/utils/formatDate"
 import { Button, Card, Input, Modal, Table } from "antd"
 import { useEffect, useState } from "react"
@@ -149,7 +151,7 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
       setValue("email", choseItem.email)
     }
   }, [choseItem])
-  console.log("choseItem", choseItem)
+
   const onSubmit: SubmitHandler<InputsCrete> = async (data) => {
     try {
       if (!choseItem) {
@@ -171,7 +173,7 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
     <div>
       <div className="grid grid-cols-1 gap-3 py-3 my-3 border-y border-gray-200">
         <div>
-          <label className="font-bold">name</label>
+          <label className="font-bold">Tên tài khoản</label>
           <Controller
             name="name"
             control={control}

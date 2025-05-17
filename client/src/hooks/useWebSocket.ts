@@ -26,7 +26,7 @@ const useWebSocket = (url: string) => {
     })
 
     socket.addEventListener("message", (event) => {
-      console.debug("Message from server:", event.data)
+      // console.debug("Message from server:", event.data)
       let messages = event.data.length ? event.data : [event.data]
       setMessages(JSON.parse(messages))
     })

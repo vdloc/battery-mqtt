@@ -1,20 +1,19 @@
-import React, { useMemo, useState } from "react"
+import React, { useState } from "react"
 import { AccountBookOutlined, AppstoreOutlined, DownOutlined, SettingOutlined } from "@ant-design/icons"
 import type { MenuProps } from "antd"
 import { Button, Dropdown, Input, Layout, Menu, Modal, Space, theme } from "antd"
 import toast, { Toaster } from "react-hot-toast"
-import { Route, Routes, useNavigate } from "react-router"
+import { Navigate, Route, Routes, useNavigate } from "react-router"
 import HomePage from "./pages/HomePage"
 import Details from "./pages/Details"
 import Settings from "./pages/Settings"
 import Login from "./pages/Login"
 import Accounts from "./pages/Accounts"
 import useGetAuth from "./hooks/auth/useGetAuth"
-import Cookies from "js-cookie"
-import { Controller, SubmitHandler, useForm } from "react-hook-form"
-import useChangePassword from "./hooks/auth/useChangePassword"
-import { TEXT_REQUIRED } from "./constants"
 import useLogout from "@/hooks/auth/useLogout"
+import { Permissions } from "@/types/serverTypes"
+import useCheckPermissions from "@/hooks/user/useCheckPermissions"
+import ModalChangePassword from "@/components/ModalChangePassword"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
@@ -29,6 +28,8 @@ const siderStyle: React.CSSProperties = {
 }
 
 const App = () => {
+  const accountPermission = useCheckPermissions([Permissions.ACCOUNT_VIEW])
+
   return (
     <>
       <Routes>
@@ -41,14 +42,18 @@ const App = () => {
             </LayoutApp>
           }
         />
-        <Route
-          path="accounts"
-          element={
-            <LayoutApp>
-              <Accounts />
-            </LayoutApp>
-          }
-        />
+
+        {accountPermission && (
+          <Route
+            path="accounts"
+            element={
+              <LayoutApp>
+                <Accounts />
+              </LayoutApp>
+            }
+          />
+        )}
+
         <Route
           path="/device/:imei"
           element={
@@ -65,9 +70,10 @@ const App = () => {
             </LayoutApp>
           }
         />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
           duration: 5000,
         }}
@@ -86,38 +92,43 @@ const LayoutApp = ({ children }: any) => {
   const navigate = useNavigate()
   const { data: me } = useGetAuth()
   const { mutateAsync: logout } = useLogout()
-  const items: MenuProps["items"] = useMemo(() => {
-    return [
-      {
-        key: 1,
-        icon: React.createElement(AppstoreOutlined),
-        label: "Thiết bị",
-        onClick: () => navigate("/"),
-      },
-      {
-        key: 2,
-        icon: React.createElement(AccountBookOutlined),
-        label: "Tài khoản",
-        onClick: () => navigate("/accounts"),
-      },
-      {
-        key: 3,
-        icon: React.createElement(SettingOutlined),
-        label: "Cài đặt",
-        onClick: () => navigate("/settings"),
-      },
-    ]
-  }, [])
+  const hasAccountPermissions = useCheckPermissions([Permissions.ACCOUNT_MANAGE])
+  const hasDevicePermissions = useCheckPermissions([Permissions.DEVICE_MANAGE])
+  const items: MenuProps["items"] = [
+    {
+      key: 1,
+      icon: React.createElement(AppstoreOutlined),
+      label: "Thiết bị",
+      onClick: () => navigate("/"),
+    },
+    hasAccountPermissions
+      ? {
+          key: 2,
+          icon: React.createElement(AccountBookOutlined),
+          label: "Tài khoản",
+          onClick: () => navigate("/accounts"),
+        }
+      : null,
+    hasDevicePermissions
+      ? {
+          key: 3,
+          icon: React.createElement(SettingOutlined),
+          label: "Cài đặt",
+          onClick: () => navigate("/settings"),
+        }
+      : null,
+  ].filter(Boolean)
 
   const itemsList: MenuProps["items"] = [
-    {
-      label: "Đổi mật khẩu",
-      key: "1",
-      onClick: () => {
-        setIsModalOpen(true)
-        navigate("/login")
-      },
-    },
+    hasAccountPermissions
+      ? {
+          label: "Đổi mật khẩu",
+          key: "1",
+          onClick: () => {
+            setIsModalOpen(true)
+          },
+        }
+      : null,
     {
       label: "Đăng xuất",
       key: "2",
@@ -126,7 +137,7 @@ const LayoutApp = ({ children }: any) => {
         navigate("/login")
       },
     },
-  ]
+  ].filter(Boolean)
 
   const menuProps = {
     items: itemsList,
@@ -172,61 +183,5 @@ const LayoutApp = ({ children }: any) => {
         />
       </Modal>
     </>
-  )
-}
-type InputsCrete = {
-  password?: string
-}
-
-const ModalChangePassword = ({ refetch }: any) => {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors: errors },
-  } = useForm<InputsCrete>()
-
-  const { isPending, mutateAsync } = useChangePassword()
-
-  const onSubmit: SubmitHandler<InputsCrete> = async (data) => {
-    try {
-      await mutateAsync(data)
-      refetch()
-    } catch (error: any) {
-      console.error("error", error?.response)
-      toast.error(error?.response?.data?.error?.message)
-    }
-  }
-  return (
-    <div>
-      <div className="grid grid-cols-1 gap-3 py-3 my-3 border-y border-gray-200">
-        <div>
-          <label className="font-bold">Mật khẩu</label>
-          <Controller
-            name="password"
-            control={control}
-            rules={{
-              required: {
-                value: true,
-                message: TEXT_REQUIRED,
-              },
-            }}
-            render={({ field }) => <Input {...field} placeholder="Mật khẩu" />}
-          />
-          {errors.password && <span className="text-red-500">{errors.password.message}</span>}
-        </div>
-
-        <div className="mt-5 w-full ">
-          <Button
-            disabled={isPending}
-            size="large"
-            className="w-full !font-bold"
-            type="primary"
-            onClick={handleSubmit(onSubmit)}
-          >
-            {isPending ? "Đang cập nhật..." : "Cập nhật"}
-          </Button>
-        </div>
-      </div>
-    </div>
   )
 }

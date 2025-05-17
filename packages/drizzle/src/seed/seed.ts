@@ -1,6 +1,6 @@
 import { initUsersData } from "./initUsersData"
 import { devices, deviceStatusIntervals, deviceSetupChannels } from "./initDeviceData"
-import { drizzle } from "drizzle-orm/node-postgres"
+import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres"
 import {
   userTable,
   deviceTable,
@@ -29,6 +29,16 @@ const databaseUrl = process.env.DATABASE_URL!
 const main = async () => {
   console.log(`Seeding ${databaseUrl}...`)
   const db = drizzle(databaseUrl)
+
+  for await (const fn of [resetData, createUserAndDevice, createManageUnits, createPermissions]) {
+    fn(db)
+  }
+
+  console.log(`Done!`)
+  process.exit(0)
+}
+
+async function resetData(db: NodePgDatabase<Record<string, never>>) {
   await db.delete(userCredentialTable)
   await db.delete(userRoleTable)
   await db.delete(deviceTable)
@@ -43,7 +53,9 @@ const main = async () => {
   await db.delete(employeeTable)
   await db.delete(manageUnitTable)
   await db.delete(permissionTable)
+}
 
+async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
   for (const user of initUsersData) {
     let users = await db.insert(userTable).values(user).returning({ id: userTable.id })
     await db.insert(userCredentialTable).values({
@@ -63,6 +75,9 @@ const main = async () => {
   for (const setupChannel of deviceSetupChannels) {
     await db.insert(setupChannelTable).values(setupChannel)
   }
+}
+
+async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
   Object.values(citiesData).forEach(async (city) => {
     const { name } = city
     await db.insert(manageUnitTable).values({
@@ -104,7 +119,9 @@ const main = async () => {
   for (const imei of imeis) {
     await db.update(brokerDeviceTable).set({ time: Date.now() }).where(eq(brokerDeviceTable.imei, imei.imei))
   }
+}
 
+async function createPermissions(db: NodePgDatabase<Record<string, never>>) {
   for (const role of ["admin", "user"]) {
     await db.insert(roleTable).values({
       name: role,
@@ -114,6 +131,12 @@ const main = async () => {
   let permissions = Object.values(Permissions).map((permission) => ({ name: permission }))
   await db.insert(permissionTable).values(permissions)
 
+  let manageUnits = await db
+    .select({
+      id: manageUnitTable.id,
+      name: manageUnitTable.name,
+    })
+    .from(manageUnitTable)
   for (const manageUnit of manageUnits) {
     let employees = Array.from({ length: 10 }).map(() => ({
       manageUnitId: manageUnit.id,
@@ -147,12 +170,9 @@ const main = async () => {
   console.log(" users:", users)
   let userRoles = users.map((user) => ({
     userId: user.id,
-    roleId: user.email === "user1@example.com" ? roleAdmin[0].id : roleUser[0].id,
+    roleId: user.email === "admin@example.com" ? roleAdmin[0].id : roleUser[0].id,
   }))
   await db.insert(userRoleTable).values(userRoles)
-
-  console.log(`Done!`)
-  process.exit(0)
 }
 
 main()

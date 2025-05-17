@@ -15,8 +15,6 @@ interface WebSocketType {
 const WebSocket = createContext<WebSocketType | undefined>(undefined)
 const SocketProvider = ({ children }: { children: ReactNode }) => {
   const { messages, sendMessage, connected, disconnected, socket, error, setMessages } = useWebSocket(wsUrl)
-  console.info("connected", connected)
-  console.debug("messages", messages)
   return (
     <WebSocket.Provider value={{ messages, sendMessage, connected, socket, disconnected, error, setMessages }}>
       {children}
