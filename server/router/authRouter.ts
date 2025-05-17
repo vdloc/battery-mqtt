@@ -11,7 +11,7 @@ import manageDevice from "../helper/manageDevice"
 import { databaseService } from "../services/database"
 
 const { eq } = drizzleOrm
-const { userTable, userCredentialTable, userRoleTable, roleTable } = schema
+const { userTable, userCredentialTable, userRoleTable, roleTable, userManageUnitTable } = schema
 
 const authRouter = router({
   login: publicProcedure.input(zod.zodLogin).mutation(async (opts) => {
@@ -82,6 +82,7 @@ const authRouter = router({
       db,
       config: { secretJwt },
     } = opts.ctx
+    let { name, email, password, manageUnitId } = opts.input
 
     const user = await db.query.userTable.findFirst({ where: eq(userTable.email, opts.input.email) })
     if (user) throw new Error("User already exists")
@@ -89,8 +90,8 @@ const authRouter = router({
     const newUsers = await db
       .insert(userTable)
       .values({
-        name: opts.input.name,
-        email: opts.input.email,
+        name,
+        email,
         lastLoginAt: new Date(),
         // password: await bcrypt.hash(opts.input.password, 10),
       })
@@ -99,8 +100,14 @@ const authRouter = router({
 
     await db.insert(userCredentialTable).values({
       userId,
-      passwordHash: await bcrypt.hash(opts.input.password, 10),
+      passwordHash: await bcrypt.hash(password, 10),
     })
+    if (manageUnitId) {
+      await db.insert(userManageUnitTable).values({
+        userId,
+        manageUnitId,
+      })
+    }
     let userRole = await db.query.roleTable.findFirst({
       where: eq(roleTable.name, "user"),
     })
@@ -134,9 +141,7 @@ const authRouter = router({
   getAuth: publicProcedure.query(async (opts) => {
     if (!opts.ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" })
     let userId = opts.ctx.user.id
-    console.log(" userId:", userId)
     const permissions = await databaseService.getUserPermissions(userId)
-    console.log(" permissions:", permissions)
 
     return {
       user: {

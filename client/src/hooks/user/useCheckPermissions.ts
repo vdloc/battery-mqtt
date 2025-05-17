@@ -3,22 +3,22 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 
 const useCheckPermissions = (permissions: string[], redirectRoute: string | null = null) => {
-  const { data: me } = useGetAuth()
+  const { data: me, isSuccess, isLoadingError } = useGetAuth()
+
   const navigate = useNavigate()
-  const [hasPermissions, setHasPermissions] = useState(
-    permissions.length === 0 || permissions.every((permission) => me?.permissions.includes(permission))
-  )
+  const [hasPermissions, setHasPermissions] = useState(true)
 
   useEffect(() => {
-    if (!hasPermissions && redirectRoute) {
+    if (((isSuccess && !hasPermissions) || isLoadingError) && redirectRoute) {
       navigate(redirectRoute)
     }
   }, [hasPermissions, redirectRoute])
 
   useEffect(() => {
-    setHasPermissions(
-      permissions.length === 0 || permissions.every((permission) => me?.permissions.includes(permission))
-    )
+    isSuccess &&
+      setHasPermissions(
+        permissions.length === 0 || permissions.every((permission) => me?.permissions.includes(permission))
+      )
   }, [permissions])
 
   return hasPermissions

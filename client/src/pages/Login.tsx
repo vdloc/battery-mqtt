@@ -21,7 +21,6 @@ export default function Login() {
     try {
       await login(data)
     } catch (error: any) {
-      console.log("error", error)
       toast.error(error?.response?.data?.error?.message)
     }
   }

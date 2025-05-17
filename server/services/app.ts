@@ -80,7 +80,7 @@ class AppService {
     let clients = this.webSocketService.getClients()
     let clientsMap = this.webSocketService.getClientsMap()
 
-    clients.forEach((client) => {
+    clients.forEach((client: any) => {
       let imeis = clientsMap.get(client)?.devices
       if (
         !imeis ||

@@ -16,6 +16,7 @@ import {
   permissionTable,
   rolePermissionTable,
   employeeTable,
+  userManageUnitTable,
 } from "../db/schema"
 import dotenv from "dotenv"
 import citiesData from "./cities.json"
@@ -31,7 +32,7 @@ const main = async () => {
   const db = drizzle(databaseUrl)
 
   for await (const fn of [resetData, createUserAndDevice, createManageUnits, createPermissions]) {
-    fn(db)
+    await fn(db)
   }
 
   console.log(`Done!`)
@@ -39,20 +40,25 @@ const main = async () => {
 }
 
 async function resetData(db: NodePgDatabase<Record<string, never>>) {
-  await db.delete(userCredentialTable)
-  await db.delete(userRoleTable)
-  await db.delete(deviceTable)
-  await db.delete(userTable)
-  await db.delete(deviceIntervalTable)
-  await db.delete(setupChannelTable)
-  await db.delete(batteryStatusTable)
-  await db.delete(gatewayStatusTable)
-  await db.delete(brokerDeviceTable)
-  await db.delete(rolePermissionTable)
-  await db.delete(roleTable)
-  await db.delete(employeeTable)
-  await db.delete(manageUnitTable)
-  await db.delete(permissionTable)
+  for (const table of [
+    userManageUnitTable,
+    userCredentialTable,
+    userRoleTable,
+    deviceTable,
+    userTable,
+    deviceIntervalTable,
+    setupChannelTable,
+    batteryStatusTable,
+    gatewayStatusTable,
+    brokerDeviceTable,
+    rolePermissionTable,
+    roleTable,
+    employeeTable,
+    manageUnitTable,
+    permissionTable,
+  ]) {
+    await db.delete(table)
+  }
 }
 
 async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
@@ -84,6 +90,7 @@ async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
       name,
     })
   })
+
   let manageUnits = await db
     .select({
       id: manageUnitTable.id,
@@ -118,6 +125,22 @@ async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
 
   for (const imei of imeis) {
     await db.update(brokerDeviceTable).set({ time: Date.now() }).where(eq(brokerDeviceTable.imei, imei.imei))
+  }
+
+  let users = await db
+    .select({
+      id: userTable.id,
+    })
+    .from(userTable)
+
+  for (const user of users) {
+    console.log(" user:", user)
+    const manageUnit = faker.helpers.arrayElement(manageUnits)
+    console.log(" manageUnit:", manageUnit)
+    await db.insert(userManageUnitTable).values({
+      userId: user.id,
+      manageUnitId: manageUnit.id,
+    })
   }
 }
 
@@ -167,7 +190,6 @@ async function createPermissions(db: NodePgDatabase<Record<string, never>>) {
   await db.insert(rolePermissionTable).values(userPermissions)
 
   let users = await db.select({ id: userTable.id, email: userTable.email }).from(userTable)
-  console.log(" users:", users)
   let userRoles = users.map((user) => ({
     userId: user.id,
     roleId: user.email === "admin@example.com" ? roleAdmin[0].id : roleUser[0].id,

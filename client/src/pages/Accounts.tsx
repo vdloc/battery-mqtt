@@ -1,11 +1,12 @@
 import { TEXT_REQUIRED } from "@/constants"
 import useSignup from "@/hooks/auth/useSignup"
+import useGetManageUnits from "@/hooks/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import useGetUser from "@/hooks/user/useGetUser"
 import useUpdateUser from "@/hooks/user/useUpdateUser"
 import { Permissions } from "@/types/serverTypes"
 import { formatDate } from "@/utils/formatDate"
-import { Button, Card, Input, Modal, Table } from "antd"
+import { Button, Card, Input, Modal, Select, Table } from "antd"
 import { useEffect, useState } from "react"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
@@ -45,6 +46,8 @@ const Accounts = () => {
   const { data: user, refetch } = useGetUser()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [choseItem, setChoseItem] = useState<any>(null)
+
+  useCheckPermissions([Permissions.ACCOUNT_MANAGE], "/login")
 
   return (
     <>
@@ -128,10 +131,11 @@ const Accounts = () => {
 
 export default Accounts
 
-type InputsCrete = {
+type InputsCreate = {
   name?: string
   email?: string
   password?: string
+  manageUnitId?: string
 }
 
 const ModalCreate = ({ refetch, choseItem }: any) => {
@@ -140,26 +144,28 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
     setValue,
     handleSubmit,
     formState: { errors: errors },
-  } = useForm<InputsCrete>()
+  } = useForm<InputsCreate>()
 
   const { isPending, mutateAsync } = useSignup()
   const { isPending: isPendingUpdate, mutateAsync: mutateAsyncUpdate } = useUpdateUser()
+  const { data: manageUnits } = useGetManageUnits()
 
   useEffect(() => {
     if (choseItem) {
       setValue("name", choseItem.name)
       setValue("email", choseItem.email)
+      setValue("manageUnitId", choseItem.manageUnit?.manageUnitId)
     }
   }, [choseItem])
 
-  const onSubmit: SubmitHandler<InputsCrete> = async (data) => {
+  const onSubmit: SubmitHandler<InputsCreate> = async (data) => {
     try {
       if (!choseItem) {
         await mutateAsync(data)
         toast.success("Tạo tài khoản thành công!")
       } else {
-        const { name, email } = data
-        await mutateAsyncUpdate({ id: choseItem.id, name, email })
+        const { name, email, manageUnitId } = data
+        await mutateAsyncUpdate({ id: choseItem.id, name, email, manageUnitId })
         toast.success("Cập nhật tài khoản thành công!")
       }
 
@@ -172,6 +178,34 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
   return (
     <div>
       <div className="grid grid-cols-1 gap-3 py-3 my-3 border-y border-gray-200">
+        <div>
+          <label className="font-bold">Đơn vị</label>
+          <Controller
+            name="manageUnitId"
+            control={control}
+            rules={{
+              required: {
+                value: true,
+                message: TEXT_REQUIRED,
+              },
+            }}
+            render={({ field }) => (
+              <Select
+                {...field}
+                placeholder="Chọn đơn vị"
+                className="w-full"
+                options={manageUnits?.map((item: any) => ({
+                  label: item.name,
+                  value: item.id,
+                }))}
+                onChange={(value) => {
+                  setValue("manageUnitId", value)
+                }}
+              />
+            )}
+          />
+          {errors.manageUnitId && <span className="text-red-500">{errors.manageUnitId.message}</span>}
+        </div>
         <div>
           <label className="font-bold">Tên tài khoản</label>
           <Controller
@@ -191,7 +225,7 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
                 message: "name must be less than 50 characters",
               },
             }}
-            render={({ field }) => <Input {...field} placeholder="Đơn vị" />}
+            render={({ field }) => <Input {...field} placeholder="Tên tài khoản" />}
           />
           {errors.name && <span className="text-red-500">{errors.name.message}</span>}
         </div>

@@ -66,7 +66,6 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
       }
     } catch (error) {
       // Nếu có lỗi trong quá trình giải mã hoặc tìm kiếm, xóa cookie xác thực
-      console.log("error", error)
       res.clearCookie(cookieNameAuth)
     }
   }
