@@ -40,12 +40,14 @@ export type DeviceType = {
   }
 }
 
-const columns = ["Stt", "Tên tài khoản", "Email", "Ngày tạo", "Hành động"]
+const columns = ["Stt", "Tên tài khoản", "Email", "Đơn vị", "Ngày tạo", "Hành động"]
 const Accounts = () => {
   const [search, setSearch] = useState("")
   const { data: user, refetch } = useGetUser()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalCreateOrUpdateOpen, setModalCreateOrUpdateOpen] = useState(false)
+  const [isModalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [choseItem, setChoseItem] = useState<any>(null)
+  const { data: manageUnits } = useGetManageUnits()
 
   useCheckPermissions([Permissions.ACCOUNT_MANAGE], "/login")
 
@@ -66,7 +68,7 @@ const Accounts = () => {
           <Button
             type="primary"
             onClick={() => {
-              setIsModalOpen(true)
+              setModalCreateOrUpdateOpen(true)
               setChoseItem(null)
             }}
           >
@@ -78,6 +80,9 @@ const Accounts = () => {
           //   pageSize: 50,
           // }}
           dataSource={user?.users?.map((item: any, index: number) => {
+            const manageUnitName = manageUnits.find(
+              (manageUnit: Record<string, any>) => manageUnit.id === item?.manageUnit?.manageUnitId
+            )?.name
             return {
               key: index + 1,
               Stt: index + 1,
@@ -88,15 +93,28 @@ const Accounts = () => {
               ),
               Email: item.email,
               "Ngày tạo": formatDate(item.createdAt),
+              "Đơn vị": manageUnitName,
               "Hành động": (
-                <Button
-                  onClick={() => {
-                    setChoseItem(item)
-                    setIsModalOpen(true)
-                  }}
-                >
-                  Chỉnh sửa
-                </Button>
+                <div className="flex gap-4">
+                  <Button
+                    onClick={() => {
+                      setChoseItem(item)
+                      setModalCreateOrUpdateOpen(true)
+                    }}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                  <Button
+                    color="danger"
+                    variant="solid"
+                    onClick={() => {
+                      setChoseItem(item)
+                      setModalDeleteOpen(true)
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                </div>
               ),
             }
           })}
@@ -111,16 +129,32 @@ const Accounts = () => {
       </Card>
       <Modal
         title={choseItem === null ? "Tạo mới" : "Chỉnh sửa"}
-        open={isModalOpen}
+        open={isModalCreateOrUpdateOpen}
         footer={null}
         closable
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => setModalCreateOrUpdateOpen(false)}
         destroyOnClose
       >
         <ModalCreate
           refetch={() => {
             refetch()
-            setIsModalOpen(false)
+            setModalCreateOrUpdateOpen(false)
+          }}
+          choseItem={choseItem}
+        />
+      </Modal>
+      <Modal
+        title={`Xóa tài khoản ${choseItem?.name}`}
+        open={isModalDeleteOpen}
+        footer={null}
+        closable
+        onCancel={() => setModalDeleteOpen(false)}
+        destroyOnClose
+      >
+        <ModalDelete
+          refetch={() => {
+            refetch()
+            setModalDeleteOpen(false)
           }}
           choseItem={choseItem}
         />
@@ -278,6 +312,41 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
             {!choseItem ? (isPending ? "Đang tạo..." : "Tạo") : isPendingUpdate ? "Đang cập nhật..." : "Cập nhật"}
           </Button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+const ModalDelete = ({ refetch, choseItem }: any) => {
+  const { isPending, mutateAsync } = useSignup()
+  const { isPending: isPendingUpdate, mutateAsync: mutateAsyncUpdate } = useUpdateUser()
+
+  const handleSubmit = async () => {
+    try {
+      if (!choseItem) {
+        await mutateAsync(data)
+        toast.success("Tạo tài khoản thành công!")
+      } else {
+        const { name, email, manageUnitId } = data
+        await mutateAsyncUpdate({ id: choseItem.id, name, email, manageUnitId })
+        toast.success("Cập nhật tài khoản thành công!")
+      }
+
+      refetch()
+    } catch (error: any) {
+      console.error("error", error?.response)
+      toast.error(error?.response?.data?.error?.message)
+    }
+  }
+  return (
+    <div>
+      <div className="grid grid-cols-1 gap-3 py-3 my-3 border-y border-gray-200">
+        <Button size="large" color="danger" variant="solid" onClick={handleSubmit}>
+          Xác nhận
+        </Button>
+        <Button size="large" type="default" onClick={handleSubmit}>
+          Hủy
+        </Button>
       </div>
     </div>
   )
