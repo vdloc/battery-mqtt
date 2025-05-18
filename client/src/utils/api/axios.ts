@@ -2,8 +2,8 @@
 import axios, { AxiosRequestConfig } from "axios"
 import Cookies from "js-cookie"
 
-export const VITE_BASE_URL = "http://localhost:4000"
-// export const VITE_BASE_URL = import.meta.env.VITE_URL_BACKEND
+// export const VITE_BASE_URL = "http://localhost:4000"
+export const VITE_BASE_URL = import.meta.env.VITE_URL_BACKEND
 
 const instanceAxios = {
   baseURL: VITE_BASE_URL,
