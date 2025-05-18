@@ -2,6 +2,7 @@ import { protectedProcedure, router } from "../trpc"
 import { z } from "zod"
 import { schema, drizzleOrm } from "@fsb/drizzle"
 import { databaseService } from "../services/database"
+import { UserNotFoundError } from "../helper/errors"
 const { eq, count, asc, ilike, and, desc } = drizzleOrm
 const { userTable, userManageUnitTable, manageUnitTable } = schema
 
@@ -27,7 +28,22 @@ const userRouter = router({
 
       return user
     }),
+  deleteUser: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const db = opts.ctx.db
+      const { id } = opts.input
+      const user = await db.query.userTable.findFirst({
+        where: eq(userTable.id, id),
+      })
+      if (!user) throw new UserNotFoundError()
 
+      return user
+    }),
   getUsers: protectedProcedure
     .input(
       z.object({

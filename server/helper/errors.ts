@@ -26,3 +26,12 @@ export class ManageUnitNotFoundError extends TRPCError {
     })
   }
 }
+
+export class UserNotFoundError extends TRPCError {
+  constructor(userId?: string) {
+    super({
+      code: "NOT_FOUND",
+      message: userId ? `User with id ${userId} not found` : `User not found`,
+    })
+  }
+}
