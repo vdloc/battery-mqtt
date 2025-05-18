@@ -17,7 +17,7 @@ export const utils = {
   getParamsCookies: (maxAge: number): CookieSerializeOptions => {
     return {
       maxAge: Math.floor(maxAge / 1000), // Convert milliseconds to seconds
-      domain: process.env.NODE_ENV === "development" ? "localhost" : undefined,
+      domain: process.env.NODE_ENV === "development" ? "localhost" : ".battery.work.gd",
       httpOnly: true,
       secure: process.env.NODE_ENV === "development" ? false : true,
       path: "/",
