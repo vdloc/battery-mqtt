@@ -1,6 +1,5 @@
 import useGetAuth from "@/hooks/auth/useGetAuth"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
-import API_URL from "@/utils/api/url"
 import { Navigate, Outlet } from "react-router"
 
 interface PrivateRouteProps {

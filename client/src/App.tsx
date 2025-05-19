@@ -13,18 +13,17 @@ import useGetAuth from "./hooks/auth/useGetAuth"
 import useLogout from "@/hooks/auth/useLogout"
 import { Permissions } from "@/types/serverTypes"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
-import ModalChangePassword from "@/components/ModalChangePassword"
+import ModalChangePassword from "@/components/modals/ChangePassword.modal"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
   overflow: "auto",
   height: "100vh",
   position: "sticky",
-  insetInlineStart: 0,
+  paddingBlockStart: 10,
+  paddingInline: 10,
   top: 0,
   bottom: 0,
-  scrollbarWidth: "thin",
-  scrollbarGutter: "stable",
 }
 
 const App = () => {
