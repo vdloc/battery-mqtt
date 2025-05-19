@@ -35,3 +35,12 @@ export class UserNotFoundError extends TRPCError {
     })
   }
 }
+
+export class EmployeeNotFoundError extends TRPCError {
+  constructor(employeeID?: string) {
+    super({
+      code: "NOT_FOUND",
+      message: employeeID ? `Employee with id ${employeeID} not found` : `Employee not found`,
+    })
+  }
+}

@@ -3,7 +3,12 @@ import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
 import { eq, and } from "drizzle-orm"
-import { DeviceExistedError, DeviceNotFoundError, ManageUnitNotFoundError } from "../helper/errors"
+import {
+  DeviceExistedError,
+  DeviceNotFoundError,
+  EmployeeNotFoundError,
+  ManageUnitNotFoundError,
+} from "../helper/errors"
 
 const { asc } = drizzleOrm
 const {
@@ -16,6 +21,7 @@ const {
   rolePermissionTable,
   userRoleTable,
   roleTable,
+  employeeTable,
 } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
@@ -333,6 +339,35 @@ class DatabaseService {
     if (!userRoleName) return []
 
     return this.rolesPermissions[userRoleName]
+  }
+
+  async getEmployees(manageUnitId: string) {
+    const employees = await db.query.employeeTable.findMany({
+      where: eq(employeeTable.manageUnitId as any, manageUnitId),
+    })
+    return employees
+  }
+
+  async createEmployee({ name, email, manageUnitId }: { name: string; manageUnitId: string; email: string }) {
+    await db.insert(employeeTable).values({ name, email, manageUnitId }).returning()
+  }
+
+  async updateEmployee({ name, email, id }: { name: string; email: string; id: string }) {
+    const result = await db
+      .update(employeeTable)
+      .set({
+        name,
+        email,
+      })
+      .where(eq(employeeTable.id as any, id))
+    if (result.rowCount > 0) return result
+    throw new EmployeeNotFoundError(id)
+  }
+
+  async deleteEmployee({ id }: { id: string }) {
+    let result = await db.delete(employeeTable).where(eq(employeeTable.id as any, id))
+    if (result.rowCount > 0) return result
+    throw new EmployeeNotFoundError(id)
   }
 }
 
