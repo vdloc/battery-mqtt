@@ -18,17 +18,12 @@ const useGetDeviceStatus = (params: { imei: string | undefined | null; timeStart
           },
         })
 
-        const result = res?.data?.result?.data
+        const result = res?.data?.result?.data?.[0]
         let resultConfig: any[] = []
         for (let i = 0; i < result.length; i++) {
-          for (let j = 0; j < result[i].length; j++) {
-            const resultConfigLatest = resultConfig[resultConfig.length - 1]
-            if (
-              !resultConfigLatest ||
-              (resultConfigLatest && result[i][j] && resultConfigLatest.time !== result[i][j].time)
-            ) {
-              resultConfig.push(result[i][j])
-            }
+          const resultConfigLatest = resultConfig[resultConfig.length - 1]
+          if (!resultConfigLatest || (resultConfigLatest && result[i] && resultConfigLatest.time !== result[i].time)) {
+            resultConfig.push(result[i])
           }
         }
         return resultConfig

@@ -23,13 +23,16 @@ const ModalDeleteAccount = ({ refetch, choseItem }: any) => {
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 gap-3 py-3 my-3 border-y border-gray-200">
-        <Button size="large" color="danger" variant="solid" onClick={handleSubmit}>
-          Xác nhận
-        </Button>
+    <div className=" border-t border-gray-200 pt-4">
+      <p className="text-center pb-4">
+        Bạn chắc chắn muốn xóa tài khoản <b>{choseItem?.name}</b>
+      </p>
+      <div className="grid grid-cols-2 gap-3 ">
         <Button size="large" type="default" onClick={refetch}>
           Hủy
+        </Button>
+        <Button size="large" color="danger" variant="solid" onClick={handleSubmit}>
+          Xác nhận
         </Button>
       </div>
     </div>
