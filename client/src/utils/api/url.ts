@@ -14,6 +14,7 @@ const API_URL = {
   GET_USER: "/getUsers",
   GET_AUTH: "/getAuth",
   UPDATE_USER: "/updateUser",
+  DELETE_USER: "/deleteUser",
   UPDATE_USER_PASSWORD: "/updateUserPassord",
 }
 

@@ -2,6 +2,7 @@ import { TEXT_REQUIRED } from "@/constants"
 import useSignup from "@/hooks/auth/useSignup"
 import useGetManageUnits from "@/hooks/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
+import useDeleteUser from "@/hooks/user/useDeleteUser"
 import useGetUser from "@/hooks/user/useGetUser"
 import useUpdateUser from "@/hooks/user/useUpdateUser"
 import { Permissions } from "@/types/serverTypes"
@@ -80,7 +81,7 @@ const Accounts = () => {
           //   pageSize: 50,
           // }}
           dataSource={user?.users?.map((item: any, index: number) => {
-            const manageUnitName = manageUnits.find(
+            const manageUnitName = manageUnits?.find(
               (manageUnit: Record<string, any>) => manageUnit.id === item?.manageUnit?.manageUnitId
             )?.name
             return {
@@ -318,19 +319,17 @@ const ModalCreate = ({ refetch, choseItem }: any) => {
 }
 
 const ModalDelete = ({ refetch, choseItem }: any) => {
-  const { isPending, mutateAsync } = useSignup()
-  const { isPending: isPendingUpdate, mutateAsync: mutateAsyncUpdate } = useUpdateUser()
+  const { isPending, mutateAsync } = useDeleteUser()
 
   const handleSubmit = async () => {
     try {
       if (!choseItem) {
-        await mutateAsync(data)
-        toast.success("Tạo tài khoản thành công!")
-      } else {
-        const { name, email, manageUnitId } = data
-        await mutateAsyncUpdate({ id: choseItem.id, name, email, manageUnitId })
-        toast.success("Cập nhật tài khoản thành công!")
+        return refetch()
       }
+
+      const { id, name } = choseItem
+      await mutateAsync({ id })
+      toast.success(`Đã xóa tài khoản ${name} thành công!`)
 
       refetch()
     } catch (error: any) {
@@ -338,13 +337,14 @@ const ModalDelete = ({ refetch, choseItem }: any) => {
       toast.error(error?.response?.data?.error?.message)
     }
   }
+
   return (
     <div>
       <div className="grid grid-cols-1 gap-3 py-3 my-3 border-y border-gray-200">
         <Button size="large" color="danger" variant="solid" onClick={handleSubmit}>
           Xác nhận
         </Button>
-        <Button size="large" type="default" onClick={handleSubmit}>
+        <Button size="large" type="default" onClick={refetch}>
           Hủy
         </Button>
       </div>

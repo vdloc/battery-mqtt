@@ -4,7 +4,7 @@ import { schema, drizzleOrm } from "@fsb/drizzle"
 import { databaseService } from "../services/database"
 import { UserNotFoundError } from "../helper/errors"
 const { eq, count, asc, ilike, and, desc } = drizzleOrm
-const { userTable, userManageUnitTable, manageUnitTable } = schema
+const { userTable, userManageUnitTable, manageUnitTable, userCredentialTable, userRoleTable } = schema
 
 const userRouter = router({
   updateUser: protectedProcedure
@@ -41,6 +41,10 @@ const userRouter = router({
         where: eq(userTable.id, id),
       })
       if (!user) throw new UserNotFoundError()
+      await db.delete(userManageUnitTable).where(eq(userManageUnitTable.userId, id))
+      await db.delete(userCredentialTable).where(eq(userCredentialTable.userId, id))
+      await db.delete(userRoleTable).where(eq(userRoleTable.userId, id))
+      await db.delete(userTable).where(eq(userTable.id, id))
 
       return user
     }),
