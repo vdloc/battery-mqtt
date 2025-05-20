@@ -15,4 +15,8 @@ export const {
   BROKER_PROTOCOL,
   WS_HOST,
   WS_PORT,
+  SMTP_HOST,
+  SMTP_PORT,
+  SMTP_USER,
+  SMTP_PASS,
 } = process.env
