@@ -19,7 +19,7 @@ const useCheckPermissions = (permissions: string[], redirectRoute: string | null
       setHasPermissions(
         permissions.length === 0 || permissions.every((permission) => me?.permissions.includes(permission))
       )
-  }, [permissions])
+  }, [permissions, me, isSuccess])
 
   return hasPermissions
 }

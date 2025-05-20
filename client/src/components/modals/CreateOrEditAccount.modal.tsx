@@ -136,7 +136,9 @@ const ModalCreateOrEditAccount = ({ refetch, choseItem }: any) => {
                 message: TEXT_REQUIRED,
               },
             }}
-            render={({ field }) => <Input {...field} placeholder="Mật khẩu" type="password" />}
+            render={({ field }) => (
+              <Input.Password {...field} placeholder="Mật khẩu" className="[&>input]:!shadow-[unset]" type="password" />
+            )}
           />
           {errors.password && <span className="text-red-500">{errors.password.message}</span>}
         </div>

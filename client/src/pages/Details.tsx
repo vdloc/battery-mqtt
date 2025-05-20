@@ -309,6 +309,7 @@ const Chart = ({ data, newData, interval }: any) => {
 
     // Create axes
     // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+
     let xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
         baseInterval: {
@@ -478,8 +479,10 @@ const Chart = ({ data, newData, interval }: any) => {
 }
 
 const ButtonExportExcel = ({ startTime, endTime, imei }: any) => {
+  const [loading, setLoading] = useState(false)
   const { mutateAsync } = useGetDeviceStatusToExport()
   const onSubmit = async () => {
+    setLoading(true)
     const res = await mutateAsync({
       imei: imei,
       timeStart: startTime.toDate().getTime(),
@@ -501,9 +504,10 @@ const ButtonExportExcel = ({ startTime, endTime, imei }: any) => {
       })
       exportToExcel(dataMap, "Dữ liệu")
     }
+    setLoading(false)
   }
   return (
-    <Button type="primary" onClick={onSubmit}>
+    <Button type="primary" onClick={onSubmit} loading={loading}>
       Export
     </Button>
   )

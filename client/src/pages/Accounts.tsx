@@ -142,7 +142,7 @@ const Accounts = () => {
         />
       </Modal>
       <Modal
-        title={`Xóa tài khoản ${choseItem?.name}`}
+        title={`Xóa tài khoản`}
         open={isModalDeleteOpen}
         footer={null}
         closable
