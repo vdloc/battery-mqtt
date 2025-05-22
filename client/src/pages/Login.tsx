@@ -59,7 +59,7 @@ export default function Login() {
                   message: TEXT_REQUIRED,
                 },
               }}
-              render={({ field }) => <Input type="password" {...field} placeholder="Mật khẩu" />}
+              render={({ field }) => <Input.Password type="password" {...field} placeholder="Mật khẩu" />}
             />
             {errors.password && <span className="text-red-500">{errors.password.message}</span>}
           </div>

@@ -16,6 +16,10 @@ const API_URL = {
   UPDATE_USER: "/updateUser",
   DELETE_USER: "/deleteUser",
   UPDATE_USER_PASSWORD: "/updateUserPassord",
+  GET_EMPLOYEES: "/getEmployees",
+  CREATE_EMPLOYEES: "/createEmployee",
+  UPDATE_EMPLOYEES: "/updateEmployee",
+  DELETE_EMPLOYEES: "/deleteEmployee",
 }
 
 export default API_URL

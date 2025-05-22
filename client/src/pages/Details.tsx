@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import React, { useLayoutEffect, useRef } from "react"
+import { useRef } from "react"
 import * as am5 from "@amcharts/amcharts5"
 import * as am5xy from "@amcharts/amcharts5/xy"
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated"
@@ -17,8 +17,12 @@ import useGetIntervals from "@/hooks/useGetIntervals"
 import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
 import useGetDeviceStatusToExport from "@/hooks/useGetDeviceStatusToExport"
 import { exportToExcel } from "@/utils/utils"
+import useCheckPermissions from "@/hooks/user/useCheckPermissions"
+import { Permissions } from "@/types/serverTypes"
+import CheckPermisstion from "@/components/CheckPermisstion"
 
 const Details = () => {
+  useCheckPermissions([Permissions.DEVICE_VIEW], "/login")
   const params = useParams()
   const [lastGatewayStatus, setLastGatewayStatus] = useState<any>({})
   const [batInterval, setBatInterval] = useState<any>({})
@@ -218,7 +222,10 @@ const Details = () => {
         extra={
           <div className="flex items-center gap-3">
             <DatePicker.RangePicker showTime defaultValue={[startTime, endTime]} onChange={onChange} />
-            <ButtonExportExcel startTime={startTime} endTime={endTime} imei={imei} />
+
+            <CheckPermisstion permission={Permissions.DEVICE_EXPORT}>
+              <ButtonExportExcel startTime={startTime} endTime={endTime} imei={imei} />
+            </CheckPermisstion>
           </div>
         }
       >

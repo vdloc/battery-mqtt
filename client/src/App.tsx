@@ -1,8 +1,14 @@
 import React, { useState } from "react"
-import { AccountBookOutlined, AppstoreOutlined, DownOutlined, SettingOutlined } from "@ant-design/icons"
+import {
+  AccountBookFilled,
+  AccountBookOutlined,
+  AppstoreOutlined,
+  DownOutlined,
+  SettingOutlined,
+} from "@ant-design/icons"
 import type { MenuProps } from "antd"
-import { Button, Dropdown, Input, Layout, Menu, Modal, Space, theme } from "antd"
-import toast, { Toaster } from "react-hot-toast"
+import { Button, Dropdown, Layout, Menu, Modal, theme } from "antd"
+import { Toaster } from "react-hot-toast"
 import { Navigate, Route, Routes, useNavigate } from "react-router"
 import HomePage from "./pages/HomePage"
 import Details from "./pages/Details"
@@ -14,6 +20,7 @@ import useLogout from "@/hooks/auth/useLogout"
 import { Permissions } from "@/types/serverTypes"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import ModalChangePassword from "@/components/modals/ChangePassword.modal"
+import Employee from "./pages/Employee"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
@@ -52,7 +59,14 @@ const App = () => {
             }
           />
         )}
-
+        <Route
+          path="employees"
+          element={
+            <LayoutApp>
+              <Employee />
+            </LayoutApp>
+          }
+        />
         <Route
           path="/device/:imei"
           element={
@@ -93,6 +107,7 @@ const LayoutApp = ({ children }: any) => {
   const { mutateAsync: logout } = useLogout()
   const hasAccountPermissions = useCheckPermissions([Permissions.ACCOUNT_MANAGE])
   const hasDevicePermissions = useCheckPermissions([Permissions.DEVICE_MANAGE])
+  const hasEmployeePermissions = useCheckPermissions([Permissions.EMPLOYEE_MANAGE])
   const items: MenuProps["items"] = [
     {
       key: 1,
@@ -106,6 +121,14 @@ const LayoutApp = ({ children }: any) => {
           icon: React.createElement(AccountBookOutlined),
           label: "Tài khoản",
           onClick: () => navigate("/accounts"),
+        }
+      : null,
+    hasEmployeePermissions
+      ? {
+          key: 6,
+          icon: React.createElement(AccountBookFilled),
+          label: "Nhân viên",
+          onClick: () => navigate("/employees"),
         }
       : null,
     hasDevicePermissions

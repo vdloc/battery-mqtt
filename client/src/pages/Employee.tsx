@@ -1,40 +1,59 @@
 import CheckPermisstion from "@/components/CheckPermisstion"
-import ModalCreateOrEditAccount from "@/components/modals/CreateOrEditAccount.modal"
-import ModalDeleteAccount from "@/components/modals/DeleteAccount.modal"
+import ModalCreateOrEditEmployee from "@/components/modals/CreateOrEditEmployee.modal"
+
+import ModalDeleteEmployee from "@/components/modals/DeleteEmployee.modal"
+import useGetEmployee from "@/hooks/employee/useGetEmployee"
 import useGetManageUnits from "@/hooks/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
-import useGetUser from "@/hooks/user/useGetUser"
 import { Permissions } from "@/types/serverTypes"
 import { formatDate } from "@/utils/formatDate"
-import { Button, Card, Input, Modal, Table } from "antd"
-import { useState } from "react"
+import { Button, Card, Input, Modal, Select, Table } from "antd"
+import { useEffect, useState } from "react"
 
-const columns = ["Stt", "Tên tài khoản", "Email", "Đơn vị", "Ngày tạo", "Hành động"]
-const Accounts = () => {
+const columns = ["Stt", "Tên tài khoản", "Email", "Ngày tạo", "Hành động"]
+const Employee = () => {
+  const [unit, setUnit] = useState<any>(null)
   const [search, setSearch] = useState("")
-  const { data: user, refetch } = useGetUser()
+  const { isLoading, data: employees, refetch } = useGetEmployee(unit)
   const [isModalCreateOrUpdateOpen, setModalCreateOrUpdateOpen] = useState(false)
   const [isModalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [choseItem, setChoseItem] = useState<any>(null)
   const { data: manageUnits } = useGetManageUnits()
 
-  useCheckPermissions([Permissions.ACCOUNT_VIEW], "/login")
+  useEffect(() => {
+    if (!unit && manageUnits?.length > 0) setUnit(manageUnits?.[0]?.id)
+  }, [unit, manageUnits])
 
+  useCheckPermissions([Permissions.EMPLOYEE_VIEW], "/login")
   return (
     <>
       <Card
         title={<p className="text-2xl font-bold">Danh sách tài khoản</p>}
         extra={
-          <Input
-            placeholder="Từ khóa..."
-            className="!w-[200px]"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="flex items-center gap-2">
+            <Select
+              placeholder="Chọn đơn vị"
+              className="w-full"
+              options={manageUnits?.map((item: any) => ({
+                label: item.name,
+                value: item.id,
+              }))}
+              value={unit}
+              onChange={(value) => {
+                setUnit(value)
+              }}
+            />
+            <Input
+              placeholder="Từ khóa..."
+              className="!w-[200px]"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         }
       >
         <div className="flex mb-3 justify-end">
-          <CheckPermisstion permission={Permissions.ACCOUNT_CREATE}>
+          <CheckPermisstion permission={Permissions.EMPLOYEE_CREATE}>
             <Button
               type="primary"
               onClick={() => {
@@ -50,12 +69,13 @@ const Accounts = () => {
           // pagination={{
           //   pageSize: 50,
           // }}
-          dataSource={user?.users
+          loading={isLoading}
+          dataSource={employees
             ?.filter((item: any) => item.name.toLowerCase().includes(search.toLowerCase()))
             .map((item: any, index: number) => {
-              const manageUnitName = manageUnits?.find(
-                (manageUnit: Record<string, any>) => manageUnit.id === item?.manageUnit?.manageUnitId
-              )?.name
+              // const manageUnitName = manageUnits?.find(
+              //   (manageUnit: Record<string, any>) => manageUnit.id === item?.manageUnitId
+              // )?.name
               return {
                 key: index + 1,
                 Stt: index + 1,
@@ -66,10 +86,10 @@ const Accounts = () => {
                 ),
                 Email: item.email,
                 "Ngày tạo": formatDate(item.createdAt),
-                "Đơn vị": manageUnitName,
+                // "Đơn vị": manageUnitName,
                 "Hành động": (
                   <div className="flex gap-4">
-                    <CheckPermisstion permission={Permissions.ACCOUNT_UPDATE}>
+                    <CheckPermisstion permission={Permissions.EMPLOYEE_UPDATE}>
                       <Button
                         onClick={() => {
                           setChoseItem(item)
@@ -79,7 +99,7 @@ const Accounts = () => {
                         Chỉnh sửa
                       </Button>
                     </CheckPermisstion>
-                    <CheckPermisstion permission={Permissions.ACCOUNT_DELETE}>
+                    <CheckPermisstion permission={Permissions.EMPLOYEE_DELETE}>
                       <Button
                         color="danger"
                         variant="solid"
@@ -112,23 +132,24 @@ const Accounts = () => {
         onCancel={() => setModalCreateOrUpdateOpen(false)}
         destroyOnClose
       >
-        <ModalCreateOrEditAccount
+        <ModalCreateOrEditEmployee
           refetch={() => {
             refetch()
             setModalCreateOrUpdateOpen(false)
           }}
           choseItem={choseItem}
+          unit={unit}
         />
       </Modal>
       <Modal
-        title={`Xóa tài khoản`}
+        title={`Xóa nhân viên`}
         open={isModalDeleteOpen}
         footer={null}
         closable
         onCancel={() => setModalDeleteOpen(false)}
         destroyOnClose
       >
-        <ModalDeleteAccount
+        <ModalDeleteEmployee
           refetch={() => {
             refetch()
             setModalDeleteOpen(false)
@@ -140,4 +161,4 @@ const Accounts = () => {
   )
 }
 
-export default Accounts
+export default Employee

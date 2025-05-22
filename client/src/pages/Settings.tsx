@@ -1,3 +1,4 @@
+import CheckPermisstion from "@/components/CheckPermisstion"
 import { useSocket } from "@/components/SocketProvider"
 import { TEXT_REQUIRED } from "@/constants"
 import usePostDevices, { DeviceType } from "@/hooks/devices/usePostDevices"
@@ -6,6 +7,8 @@ import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
 import useGetIntervals from "@/hooks/useGetIntervals"
 import useGetManageUnits from "@/hooks/useGetManageUnits"
 import usePostRequest from "@/hooks/usePostRequest"
+import useCheckPermissions from "@/hooks/user/useCheckPermissions"
+import { Permissions } from "@/types/serverTypes"
 import { Button, Card, Input, Modal, Select, Table } from "antd"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, SubmitHandler, Controller } from "react-hook-form"
@@ -77,6 +80,7 @@ const Settings = () => {
     return dataToShow
   }, [search, dataToShow])
 
+  useCheckPermissions([Permissions.DEVICE_MANAGE], "/")
   return (
     <div className="flex flex-col gap-5  mx-auto">
       <Card
@@ -91,15 +95,17 @@ const Settings = () => {
         }
       >
         <div className="flex mb-3 justify-end">
-          <Button
-            type="primary"
-            onClick={() => {
-              setIsModalOpen(true)
-              setChoseItem(null)
-            }}
-          >
-            Tạo mới
-          </Button>
+          <CheckPermisstion permission={Permissions.DEVICE_CREATE}>
+            <Button
+              type="primary"
+              onClick={() => {
+                setIsModalOpen(true)
+                setChoseItem(null)
+              }}
+            >
+              Tạo mới
+            </Button>
+          </CheckPermisstion>
         </div>
         <Table
           dataSource={dataToFilter?.map((item: any, index: number) => {
@@ -114,26 +120,30 @@ const Settings = () => {
               "Device Status Interval": item.intervals?.deviceStatusInterval,
               Action: (
                 <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setIsModalOpen(true)
-                      setModalType("update")
-                      setChoseItem(item)
-                    }}
-                  >
-                    Setting
-                  </Button>
-                  <Button
-                    color="danger"
-                    className="!border !border-red-500 !text-red-500"
-                    onClick={() => {
-                      setIsModalOpen(true)
-                      setModalType("delete")
-                      setChoseItem(item)
-                    }}
-                  >
-                    Delete
-                  </Button>
+                  <CheckPermisstion permission={Permissions.DEVICE_UPDATE}>
+                    <Button
+                      onClick={() => {
+                        setIsModalOpen(true)
+                        setModalType("update")
+                        setChoseItem(item)
+                      }}
+                    >
+                      Setting
+                    </Button>
+                  </CheckPermisstion>
+                  <CheckPermisstion permission={Permissions.DEVICE_DELETE}>
+                    <Button
+                      color="danger"
+                      className="!border !border-red-500 !text-red-500"
+                      onClick={() => {
+                        setIsModalOpen(true)
+                        setModalType("delete")
+                        setChoseItem(item)
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </CheckPermisstion>
                 </div>
               ),
             }

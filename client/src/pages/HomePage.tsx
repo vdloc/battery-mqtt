@@ -2,6 +2,8 @@ import { useSocket } from "@/components/SocketProvider"
 import useGetDevices from "@/hooks/useGetDevices"
 import useGetDeviceSetupChannels from "@/hooks/useGetDeviceSetupChannels"
 import useGetIntervals from "@/hooks/useGetIntervals"
+import useCheckPermissions from "@/hooks/user/useCheckPermissions"
+import { Permissions } from "@/types/serverTypes"
 import { Button, Card, Input, Table } from "antd"
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router"
@@ -147,6 +149,7 @@ const HomePage = () => {
     }
     return devices?.base
   }, [search, devices])
+  useCheckPermissions([Permissions.DEVICE_VIEW], "/login")
   return (
     <Card
       title={<p className="text-2xl font-bold">Danh sách thiết bị</p>}
