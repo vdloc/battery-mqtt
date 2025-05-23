@@ -4,6 +4,7 @@ import {
   AccountBookOutlined,
   AppstoreOutlined,
   DownOutlined,
+  SendOutlined,
   SettingOutlined,
 } from "@ant-design/icons"
 import type { MenuProps } from "antd"
@@ -21,6 +22,7 @@ import { Permissions } from "@/types/serverTypes"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import ModalChangePassword from "@/components/modals/ChangePassword.modal"
 import Employee from "./pages/Employee"
+import SendSMS from "./pages/SendSMS"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
@@ -68,6 +70,14 @@ const App = () => {
           }
         />
         <Route
+          path="send-sms"
+          element={
+            <LayoutApp>
+              <SendSMS />
+            </LayoutApp>
+          }
+        />
+        <Route
           path="/device/:imei"
           element={
             <LayoutApp>
@@ -108,6 +118,7 @@ const LayoutApp = ({ children }: any) => {
   const hasAccountPermissions = useCheckPermissions([Permissions.ACCOUNT_MANAGE])
   const hasDevicePermissions = useCheckPermissions([Permissions.DEVICE_MANAGE])
   const hasEmployeePermissions = useCheckPermissions([Permissions.EMPLOYEE_MANAGE])
+  const hasSendMessagePermissions = useCheckPermissions([Permissions.SEND_MESSAGE])
   const items: MenuProps["items"] = [
     {
       key: 1,
@@ -125,10 +136,18 @@ const LayoutApp = ({ children }: any) => {
       : null,
     hasEmployeePermissions
       ? {
-          key: 6,
+          key: 9,
           icon: React.createElement(AccountBookFilled),
           label: "Nhân viên",
           onClick: () => navigate("/employees"),
+        }
+      : null,
+    hasSendMessagePermissions
+      ? {
+          key: 6,
+          icon: React.createElement(SendOutlined),
+          label: "SMS",
+          onClick: () => navigate("/send-sms"),
         }
       : null,
     hasDevicePermissions

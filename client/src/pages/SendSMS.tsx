@@ -11,7 +11,7 @@ import { Button, Card, Input, Modal, Select, Table } from "antd"
 import { useEffect, useState } from "react"
 
 const columns = ["Stt", "Tên tài khoản", "Email", "Ngày tạo", "Hành động"]
-const Employee = () => {
+const SendSMS = () => {
   const [unit, setUnit] = useState<any>(null)
   const [search, setSearch] = useState("")
   const { isLoading, data: employees, refetch } = useGetEmployee(unit)
@@ -28,7 +28,7 @@ const Employee = () => {
   return (
     <>
       <Card
-        title={<p className="text-2xl font-bold">Danh sách nhân viên</p>}
+        title={<p className="text-2xl font-bold">Danh sách gửi tin nhắn</p>}
         extra={
           <div className="flex items-center gap-2">
             <Select
@@ -161,4 +161,4 @@ const Employee = () => {
   )
 }
 
-export default Employee
+export default SendSMS
