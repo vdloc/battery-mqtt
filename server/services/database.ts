@@ -2,7 +2,6 @@ import { schema, drizzleOrm } from "@fsb/drizzle"
 import { DATABASE_URL } from "../envConfigs"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { BatteryStatusResponse, GatewayStatusResponse } from "../types/Response"
-import { eq, and } from "drizzle-orm"
 import {
   DeviceExistedError,
   DeviceNotFoundError,
@@ -10,7 +9,7 @@ import {
   ManageUnitNotFoundError,
 } from "../helper/errors"
 
-const { asc } = drizzleOrm
+const { eq, count, asc, ilike, and, desc, notInArray } = drizzleOrm
 const {
   deviceIntervalTable,
   brokerDeviceTable,
@@ -22,6 +21,7 @@ const {
   userRoleTable,
   roleTable,
   employeeTable,
+  userTable,
 } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
@@ -36,6 +36,7 @@ interface QueryHelpers {
   and: <T>(...args: T[]) => boolean // Define the type of 'and',
   asc: <T>(a: T) => boolean
   inArray: <T>(a: T, b: T[]) => boolean
+  ilike: <T>(a: T, b: T) => boolean
 }
 
 interface DeviceInput {
@@ -368,6 +369,57 @@ class DatabaseService {
     let result = await db.delete(employeeTable).where(eq(employeeTable.id as any, id))
     if (result.rowCount > 0) return result
     throw new EmployeeNotFoundError(id)
+  }
+
+  async getUsers({
+    limit,
+    page,
+    search,
+    userId,
+  }: {
+    limit: number
+    page: number
+    search: string
+    userId: string | null
+  }) {
+    const roles = await this.getRoles()
+    const adminRoleId = roles.find((role: { id: string; name: string }) => role.name === "admin")?.id
+    const adminUsers = await db.query.userRoleTable.findMany({
+      columns: {
+        userId: true,
+      },
+      where: eq(userRoleTable.roleId as any, adminRoleId),
+    })
+    console.log(" adminUsers:", adminUsers)
+    const users = await db.query.userTable.findMany({
+      limit,
+      offset: (page - 1) * limit,
+      orderBy: [desc(userTable.createdAt)],
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
+      with: {
+        manageUnit: {
+          columns: {
+            manageUnitId: true,
+          },
+        },
+      },
+      where: and(
+        search ? ilike(userTable.name, `%${search}%`) : undefined,
+        userId ? eq(userTable.id, userId) : undefined,
+        notInArray(
+          userTable.id,
+          adminUsers.map((user: any) => user.userId)
+        )
+      ),
+    })
+
+    return users
   }
 }
 

@@ -58,32 +58,9 @@ const userRouter = router({
       })
     )
     .query(async (opts) => {
-      const page = opts.input.page
-      const limit = opts.input.limit ?? 12
+      const { page, limit = 12, search = "", userId = null } = opts.input
       const db = opts.ctx.db
-      const users = await db.query.userTable.findMany({
-        limit,
-        offset: (page - 1) * limit,
-        orderBy: [desc(userTable.createdAt)],
-        columns: {
-          id: true,
-          name: true,
-          email: true,
-          createdAt: true,
-          lastLoginAt: true,
-        },
-        with: {
-          manageUnit: {
-            columns: {
-              manageUnitId: true,
-            },
-          },
-        },
-        where: and(
-          opts.input.search ? ilike(userTable.name, `%${opts.input.search}%`) : undefined,
-          opts.input.userId ? eq(userTable.id, opts.input.userId) : undefined
-        ),
-      })
+      const users = await databaseService.getUsers({ limit, page, search, userId })
 
       const totalData = await db
         .select({ count: count() })
