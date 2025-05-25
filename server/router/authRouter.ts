@@ -140,8 +140,10 @@ const authRouter = router({
   }),
   getAuth: publicProcedure.query(async (opts) => {
     if (!opts.ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" })
+
     let userId = opts.ctx.user.id
     const permissions = await databaseService.getUserPermissions(userId)
+    const manageUnitId = await databaseService.getUserManageUnitId(userId)
 
     return {
       user: {
@@ -151,6 +153,7 @@ const authRouter = router({
       deviceid: opts.ctx.device.id,
       decoded: opts.ctx.decoded,
       permissions,
+      manageUnitId,
     }
   }),
 })

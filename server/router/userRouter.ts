@@ -58,10 +58,9 @@ const userRouter = router({
       })
     )
     .query(async (opts) => {
-      const { page, limit = 12, search = "", userId = null } = opts.input
+      const { page, limit = 12, search = "", userId } = opts.input
       const db = opts.ctx.db
       const users = await databaseService.getUsers({ limit, page, search, userId })
-
       const totalData = await db
         .select({ count: count() })
         .from(userTable)

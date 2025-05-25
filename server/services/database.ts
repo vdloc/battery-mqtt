@@ -22,6 +22,7 @@ const {
   roleTable,
   employeeTable,
   userTable,
+  userManageUnitTable,
 } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
@@ -88,10 +89,19 @@ class DatabaseService {
       this.rolesPermissions[role.name] = permissions.map((permission: { name: string }) => permission.name)
     }
   }
-  async getDevices(): Promise<DevicesFromDB> {
+  async getDevices(userId: string | undefined): Promise<DevicesFromDB> {
+    if (!userId) return []
+    const adminUsersIds = await this.getAdminUserIds()
+    const isAdmin = adminUsersIds.includes(userId)
+    const superManageUnitId = await this.getSuperManagaUnitId()
+    const userManageUnitId = await this.getUserManageUnitId(userId)
+    const isSuperUser = userManageUnitId === superManageUnitId
+    const filter = !isAdmin && !isSuperUser ? eq(brokerDeviceTable.manageUnitId, userManageUnitId) : undefined
+
     try {
       const devices = await db.query.brokerDeviceTable.findMany({
         orderBy: (device: any, queryHelper: QueryHelpers) => queryHelper.asc(device.time),
+        where: filter,
       })
 
       return devices
@@ -380,17 +390,9 @@ class DatabaseService {
     limit: number
     page: number
     search: string
-    userId: string | null
+    userId: string | undefined
   }) {
-    const roles = await this.getRoles()
-    const adminRoleId = roles.find((role: { id: string; name: string }) => role.name === "admin")?.id
-    const adminUsers = await db.query.userRoleTable.findMany({
-      columns: {
-        userId: true,
-      },
-      where: eq(userRoleTable.roleId as any, adminRoleId),
-    })
-    console.log(" adminUsers:", adminUsers)
+    const adminUsersIds = await this.getAdminUserIds()
     const users = await db.query.userTable.findMany({
       limit,
       offset: (page - 1) * limit,
@@ -412,14 +414,46 @@ class DatabaseService {
       where: and(
         search ? ilike(userTable.name, `%${search}%`) : undefined,
         userId ? eq(userTable.id, userId) : undefined,
-        notInArray(
-          userTable.id,
-          adminUsers.map((user: any) => user.userId)
-        )
+        notInArray(userTable.id, adminUsersIds)
       ),
     })
 
     return users
+  }
+
+  async getUserManageUnitId(userId: string) {
+    return (
+      await db.query.userManageUnitTable.findFirst({
+        where: eq(userManageUnitTable.userId as any, userId),
+        columns: {
+          manageUnitId: true,
+        },
+      })
+    )?.manageUnitId
+  }
+
+  async getAdminUserIds() {
+    const roles = await this.getRoles()
+    const adminRoleId = roles.find((role: { id: string; name: string }) => role.name === "admin")?.id
+    const adminUsersIds = await db.query.userRoleTable.findMany({
+      columns: {
+        userId: true,
+      },
+      where: eq(userRoleTable.roleId as any, adminRoleId),
+    })
+
+    return adminUsersIds.map((user: any) => user.userId)
+  }
+
+  async getSuperManagaUnitId() {
+    const manageUnit = await db.query.manageUnitTable.findFirst({
+      where: eq(manageUnitTable.name, "Cao Bằng"),
+      columns: {
+        id: true,
+      },
+    })
+
+    return manageUnit.id
   }
 }
 
