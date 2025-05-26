@@ -36,6 +36,7 @@ interface QueryHelpers {
   lte: <T>(a: T, b: T) => boolean // Define the type of 'lte'
   and: <T>(...args: T[]) => boolean // Define the type of 'and',
   asc: <T>(a: T) => boolean
+  desc: <T>(a: T) => boolean // Define the type of 'desc'
   inArray: <T>(a: T, b: T[]) => boolean
   ilike: <T>(a: T, b: T) => boolean
 }
@@ -100,7 +101,7 @@ class DatabaseService {
 
     try {
       const devices = await db.query.brokerDeviceTable.findMany({
-        orderBy: (device: any, queryHelper: QueryHelpers) => queryHelper.asc(device.time),
+        orderBy: (device: any, queryHelper: QueryHelpers) => queryHelper.desc(device.time),
         where: filter,
       })
 
