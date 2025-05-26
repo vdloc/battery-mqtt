@@ -9,6 +9,7 @@ import useGetDevices from "@/hooks/useGetDevices"
 import { Button, Card, DatePicker, Select } from "antd"
 import type { Dayjs } from "dayjs"
 import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
 import useGetDeviceStatus from "@/hooks/useGetDeviceStatus"
 import { useSocket } from "@/components/SocketProvider"
 
@@ -21,6 +22,8 @@ import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import { Permissions } from "@/types/serverTypes"
 import CheckPermisstion from "@/components/CheckPermisstion"
 
+dayjs.extend(utc)
+
 const Details = () => {
   useCheckPermissions([Permissions.DEVICE_VIEW], "/login")
   const params = useParams()
@@ -29,8 +32,8 @@ const Details = () => {
   const [deviceSetupChannelsStatus, setDeviceSetupChannelsStatus] = useState<any>({})
   const [newData, setNewData] = useState<any>(null)
   const { data: intervals } = useGetIntervals()
-  const [startTime, setStartTime] = useState<Dayjs>(dayjs(new Date()).startOf("day"))
-  const [endTime, setEndTime] = useState<Dayjs>(dayjs(new Date()).endOf("day"))
+  const [startTime, setStartTime] = useState<Dayjs>(dayjs.utc(new Date()).startOf("day"))
+  const [endTime, setEndTime] = useState<Dayjs>(dayjs.utc(new Date()).endOf("day"))
   const { data: deviceSetupChannels } = useGetDeviceSetupChannels()
   const { data: devices, isLoading: isLoadingDevices } = useGetDevices()
   const { messages, sendMessage, connected, setMessages } = useSocket()
