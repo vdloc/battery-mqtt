@@ -18,7 +18,7 @@ class AppService {
   constructor() {}
 
   init() {
-    // mqttService.onMessage(this.handleMqttMessage)
+    mqttService.onMessage(this.handleMqttMessage)
     // cronjobService.init()
   }
 

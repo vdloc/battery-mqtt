@@ -51,21 +51,21 @@ export default protectedProcedure
             },
           },
         })
-        // Demo only
-        mqttService.publish({
-          topic: Topic.RESPONSE,
-          message: {
-            time: Date.now(),
-            operator: OPERATORS.SET_INTERVAL,
-            infor: {
-              BatteryStatusInterval: BatteryStatusInterval,
-              DeviceStatusInterval: DeviceStatusInterval,
-            },
-            imei,
-          },
-        })
-        // Demo only
-        cronjobService.updateTask(imei, BatteryStatusInterval || 30, DeviceStatusInterval || 30)
+        // // Demo only
+        // mqttService.publish({
+        //   topic: Topic.RESPONSE,
+        //   message: {
+        //     time: Date.now(),
+        //     operator: OPERATORS.SET_INTERVAL,
+        //     infor: {
+        //       BatteryStatusInterval: BatteryStatusInterval,
+        //       DeviceStatusInterval: DeviceStatusInterval,
+        //     },
+        //     imei,
+        //   },
+        // })
+        // // Demo only
+        // cronjobService.updateTask(imei, BatteryStatusInterval || 30, DeviceStatusInterval || 30)
         return input
       case OPERATORS.SETUP_CHANNEL:
         await db
@@ -85,18 +85,18 @@ export default protectedProcedure
             },
           },
         })
-        // Demo only
-        mqttService.publish({
-          topic: Topic.RESPONSE,
-          message: {
-            time: Date.now(),
-            operator: OPERATORS.SETUP_CHANNEL,
-            infor: {
-              usingChannel: usingChannel,
-            },
-            imei,
-          },
-        })
+        // // Demo only
+        // mqttService.publish({
+        //   topic: Topic.RESPONSE,
+        //   message: {
+        //     time: Date.now(),
+        //     operator: OPERATORS.SETUP_CHANNEL,
+        //     infor: {
+        //       usingChannel: usingChannel,
+        //     },
+        //     imei,
+        //   },
+        // })
         return input
       default:
         throw new Error("Invalid operator")
