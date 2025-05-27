@@ -35,6 +35,13 @@ export const setupChannelTable = pgTable("mqtt_setup_channel", {
   time: bigint({ mode: "number" }).notNull(),
 })
 
+export const notificationSettingTable = pgTable("mqtt_notification_setting", {
+  id: uuid().defaultRandom().primaryKey(),
+  t1: bigint({ mode: "number" }).notNull(),
+  t2: bigint({ mode: "number" }).notNull(),
+  t3: bigint({ mode: "number" }).notNull(),
+})
+
 export const batteryStatusTable = pgTable("mqtt_battery_status", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   imei: varchar()

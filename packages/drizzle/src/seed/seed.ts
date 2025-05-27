@@ -17,6 +17,7 @@ import {
   rolePermissionTable,
   employeeTable,
   userManageUnitTable,
+  notificationSettingTable,
 } from "../db/schema"
 import dotenv from "dotenv"
 import citiesData from "./cities.json"
@@ -56,13 +57,14 @@ async function resetData(db: NodePgDatabase<Record<string, never>>) {
     employeeTable,
     manageUnitTable,
     permissionTable,
+    notificationSettingTable,
   ]) {
     await db.delete(table)
   }
 }
 
 async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
-  for (const user of initUsersData) {
+  for await (const user of initUsersData) {
     let users = await db.insert(userTable).values(user).returning({ id: userTable.id })
     await db.insert(userCredentialTable).values({
       userId: users[0].id,
@@ -70,17 +72,23 @@ async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
     })
   }
 
-  for (const device of devices) {
+  for await (const device of devices) {
     await db.insert(brokerDeviceTable).values(device)
   }
 
-  for (const statusInverval of deviceStatusIntervals) {
+  for await (const statusInverval of deviceStatusIntervals) {
     await db.insert(deviceIntervalTable).values(statusInverval)
   }
 
-  for (const setupChannel of deviceSetupChannels) {
+  for await (const setupChannel of deviceSetupChannels) {
     await db.insert(setupChannelTable).values(setupChannel)
   }
+
+  await db.insert(notificationSettingTable).values({
+    t1: 5 * 60 * 1000,
+    t2: 10 * 60 * 1000,
+    t3: 15 * 60 * 1000,
+  })
 }
 
 async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
@@ -134,9 +142,7 @@ async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
     .from(userTable)
 
   for (const user of users) {
-    console.log(" user:", user)
     const manageUnit = faker.helpers.arrayElement(manageUnits)
-    console.log(" manageUnit:", manageUnit)
     await db.insert(userManageUnitTable).values({
       userId: user.id,
       manageUnitId: manageUnit.id,

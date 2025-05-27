@@ -23,6 +23,7 @@ const {
   employeeTable,
   userTable,
   userManageUnitTable,
+  notificationSettingTable,
 } = schema
 const dbUrl = `${DATABASE_URL}`
 const db = drizzle(dbUrl, { schema }) as any
@@ -91,13 +92,18 @@ class DatabaseService {
     }
   }
   async getDevices(userId: string | undefined): Promise<DevicesFromDB> {
-    if (!userId) return []
-    const adminUsersIds = await this.getAdminUserIds()
-    const isAdmin = adminUsersIds.includes(userId)
-    const superManageUnitId = await this.getSuperManagaUnitId()
-    const userManageUnitId = await this.getUserManageUnitId(userId)
-    const isSuperUser = userManageUnitId === superManageUnitId
-    const filter = !isAdmin && !isSuperUser ? eq(brokerDeviceTable.manageUnitId, userManageUnitId) : undefined
+    let filter
+    if (userId) {
+      const adminUsersIds = await this.getAdminUserIds()
+      const isAdmin = adminUsersIds.includes(userId)
+      const superManageUnitId = await this.getSuperManagaUnitId()
+      const userManageUnitId = await this.getUserManageUnitId(userId)
+      const isSuperUser = userManageUnitId === superManageUnitId
+
+      filter = !isAdmin && !isSuperUser ? eq(brokerDeviceTable.manageUnitId, userManageUnitId) : undefined
+    } else {
+      filter = undefined
+    }
 
     try {
       const devices = await db.query.brokerDeviceTable.findMany({
@@ -151,15 +157,10 @@ class DatabaseService {
   }
 
   async getDevicesInterval(devices: DevicesFromDB): Promise<DeviceIntervalsFromDB> {
-    return Promise.all(
-      devices.map(async (device) => {
-        const imei = device.imei
-        const interval = await db.query.deviceIntervalTable.findFirst({
-          where: (deviceInterval: any, queryHelper: QueryHelpers) => queryHelper.eq(deviceInterval.imei, imei),
-        })
-        return interval
-      })
-    )
+    const imeiList = devices.map((device) => device.imei)
+    return await db.query.deviceIntervalTable.findMany({
+      where: (deviceInterval: any, queryHelper: QueryHelpers) => queryHelper.inArray(deviceInterval.imei, imeiList),
+    })
   }
   async updateDeviceInterval({ imei, batteryStatusInterval, deviceStatusInterval, time }: DeviceIntervalInput) {
     let result = await db
@@ -187,6 +188,18 @@ class DatabaseService {
     const result = await db.delete(deviceIntervalTable).where(eq(deviceIntervalTable.imei as any, imei))
     if (result.rowCount > 0) return result
     throw new DeviceNotFoundError(imei)
+  }
+
+  async getSetupChannel(imei: string) {
+    let result = await db.query.setupChannelTable.findFirst({
+      where: eq(setupChannelTable.imei as any, imei),
+      columns: {
+        usingChannel: true,
+      },
+    })
+
+    if (result.length) return result?.usingChannel
+    return null
   }
 
   async updateSetupChannel({ imei, usingChannel, time }: any) {
@@ -219,15 +232,19 @@ class DatabaseService {
   async saveBatteryStatus(data: BatteryStatusResponse) {
     const { imei, infor, time } = data
 
-    return await Promise.all([
-      db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
-      db
-        .update(brokerDeviceTable)
-        .set({
-          lastBatteryStatus: JSON.stringify(infor),
-        })
-        .where(eq(brokerDeviceTable.imei as any, imei)),
-    ])
+    try {
+      await Promise.all([
+        db.insert(batteryStatusTable).values({ imei, infor: JSON.stringify(infor), time }),
+        db
+          .update(brokerDeviceTable)
+          .set({
+            lastBatteryStatus: JSON.stringify(infor),
+          })
+          .where(eq(brokerDeviceTable.imei as any, imei)),
+      ])
+    } catch (error) {
+      console.log(error)
+    }
   }
   async deleteBatteryStatusByImei(imei: string) {
     const result = await db.delete(batteryStatusTable).where(eq(batteryStatusTable.imei as any, imei))
@@ -455,6 +472,23 @@ class DatabaseService {
     })
 
     return manageUnit.id
+  }
+
+  async getNotificationSetting() {
+    return await db.query.notificationSettingTable.findFirst({})
+  }
+
+  async updateNotificationSetting({ t1, t2, t3 }: { t1: number; t2: number; t3: number }) {
+    let { id } = await this.getNotificationSetting()
+
+    return await db
+      .update(notificationSettingTable)
+      .set({
+        t1,
+        t2,
+        t3,
+      })
+      .where(eq(notificationSettingTable.id as any, id))
   }
 }
 
