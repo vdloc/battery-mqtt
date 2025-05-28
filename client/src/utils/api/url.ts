@@ -20,6 +20,8 @@ const API_URL = {
   CREATE_EMPLOYEES: "/createEmployee",
   UPDATE_EMPLOYEES: "/updateEmployee",
   DELETE_EMPLOYEES: "/deleteEmployee",
+  GET_NOTIFICATION_SETTINGS: "/getNotificationSetting",
+  UPDATE_NOTIFICATION_SETTINGS: "/updateNotificationSetting",
 }
 
 export default API_URL

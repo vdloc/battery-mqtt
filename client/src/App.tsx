@@ -22,7 +22,7 @@ import { Permissions } from "@/types/serverTypes"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import ModalChangePassword from "@/components/modals/ChangePassword.modal"
 import Employee from "./pages/Employee"
-import SendSMS from "./pages/SendSMS"
+import SendSMS from "./pages/Notification"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
@@ -36,7 +36,12 @@ const siderStyle: React.CSSProperties = {
 }
 
 const App = () => {
-  const accountPermission = useCheckPermissions([Permissions.ACCOUNT_VIEW])
+  const adminPermissions = useCheckPermissions([
+    Permissions.ACCOUNT_MANAGE,
+    Permissions.EMPLOYEE_MANAGE,
+    Permissions.SEND_MESSAGE,
+    Permissions.DEVICE_MANAGE,
+  ])
 
   return (
     <>
@@ -50,33 +55,35 @@ const App = () => {
             </LayoutApp>
           }
         />
-
-        {accountPermission && (
-          <Route
-            path="accounts"
-            element={
-              <LayoutApp>
-                <Accounts />
-              </LayoutApp>
-            }
-          />
+        {adminPermissions && (
+          <>
+            <Route
+              path="accounts"
+              element={
+                <LayoutApp>
+                  <Accounts />
+                </LayoutApp>
+              }
+            />
+            <Route
+              path="employees"
+              element={
+                <LayoutApp>
+                  <Employee />
+                </LayoutApp>
+              }
+            />
+            <Route
+              path="notification"
+              element={
+                <LayoutApp>
+                  <SendSMS />
+                </LayoutApp>
+              }
+            />
+          </>
         )}
-        <Route
-          path="employees"
-          element={
-            <LayoutApp>
-              <Employee />
-            </LayoutApp>
-          }
-        />
-        <Route
-          path="send-sms"
-          element={
-            <LayoutApp>
-              <SendSMS />
-            </LayoutApp>
-          }
-        />
+
         <Route
           path="/device/:imei"
           element={
@@ -85,14 +92,16 @@ const App = () => {
             </LayoutApp>
           }
         />
-        <Route
-          path="/settings"
-          element={
-            <LayoutApp>
-              <Settings />
-            </LayoutApp>
-          }
-        />
+        {adminPermissions && (
+          <Route
+            path="/settings"
+            element={
+              <LayoutApp>
+                <Settings />
+              </LayoutApp>
+            }
+          />
+        )}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
       <Toaster
@@ -115,7 +124,7 @@ const LayoutApp = ({ children }: any) => {
   const navigate = useNavigate()
   const { data: me } = useGetAuth()
   const { mutateAsync: logout } = useLogout()
-  const hasAccountPermissions = useCheckPermissions([Permissions.ACCOUNT_MANAGE])
+  const hasadminPermissionss = useCheckPermissions([Permissions.ACCOUNT_MANAGE])
   const hasDevicePermissions = useCheckPermissions([Permissions.DEVICE_MANAGE])
   const hasEmployeePermissions = useCheckPermissions([Permissions.EMPLOYEE_MANAGE])
   const hasSendMessagePermissions = useCheckPermissions([Permissions.SEND_MESSAGE])
@@ -126,7 +135,7 @@ const LayoutApp = ({ children }: any) => {
       label: "Thiết bị",
       onClick: () => navigate("/"),
     },
-    hasAccountPermissions
+    hasadminPermissionss
       ? {
           key: 2,
           icon: React.createElement(AccountBookOutlined),
@@ -146,8 +155,8 @@ const LayoutApp = ({ children }: any) => {
       ? {
           key: 6,
           icon: React.createElement(SendOutlined),
-          label: "SMS",
-          onClick: () => navigate("/send-sms"),
+          label: "Email",
+          onClick: () => navigate("/notification"),
         }
       : null,
     hasDevicePermissions
@@ -161,7 +170,7 @@ const LayoutApp = ({ children }: any) => {
   ].filter(Boolean)
 
   const itemsList: MenuProps["items"] = [
-    hasAccountPermissions
+    hasadminPermissionss
       ? {
           label: "Đổi mật khẩu",
           key: "1",
