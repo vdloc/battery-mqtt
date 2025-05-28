@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker"
-import { schedule, ScheduledTask } from "node-cron"
 import { Topic } from "../types/Topic"
 import { mqttService, MqttService } from "./mqtt"
 import { databaseService, DevicesFromDB, DeviceIntervalsFromDB } from "./database"
+import { BatteryStatusResponse } from "../types/Response"
 
 enum ISP {
   VNPT = "VNPT",
@@ -16,9 +16,15 @@ enum ISP {
 interface Task {
   imei: string
   tasks: {
-    battery: NodeJS.Timeout
-    gateway: NodeJS.Timeout
+    battery: NodeJS.Timeout | null
+    gateway: NodeJS.Timeout | null
+    downtrend: NodeJS.Timeout | null
   }
+  lastBatteryStatus: BatteryStatusResponse | null
+  downtrendDuration: number
+  uptrendDuration: number
+  downtrendInterval: number
+  isDownTrend: boolean
 }
 
 class CronJobService {
@@ -31,38 +37,42 @@ class CronJobService {
   }
 
   async init() {
-    this.devices = await databaseService.getDevices()
+    this.devices = await databaseService.getDevices(undefined)
     let intervals = await databaseService.getDevicesInterval(this.devices)
     this.tasks = this.sendFakeStatus(intervals)
   }
 
-  createFakeBatteryStatusResponse(imei: string) {
+  createFakeBatteryStatusResponse(imei: string): BatteryStatusResponse {
+    let ampereRange: [number, number] = [0, 1]
+    let voltageRange: [number, number] = [53, 54]
+
     return {
       imei,
       operator: "SendBatteryStatus",
       infor: {
         CH1: {
-          Voltage: this.getRandomInRange(30.15, 90.54),
-          Ampere: this.getRandomInRange(13, 123),
+          Voltage: this.getRandomInRange(...voltageRange),
+          Ampere: this.getRandomInRange(...ampereRange),
         },
         CH2: {
-          Voltage: this.getRandomInRange(12.23, 156.87),
-          Ampere: this.getRandomInRange(17.12, 321),
+          Voltage: this.getRandomInRange(...voltageRange),
+          Ampere: this.getRandomInRange(...ampereRange),
         },
         CH3: {
-          Voltage: this.getRandomInRange(135, 500),
-          Ampere: this.getRandomInRange(123, 197),
+          Voltage: this.getRandomInRange(...voltageRange),
+          Ampere: this.getRandomInRange(...ampereRange),
         },
         CH4: {
-          Voltage: this.getRandomInRange(23.21, 78.52),
-          Ampere: this.getRandomInRange(97, 354.52),
+          Voltage: this.getRandomInRange(...voltageRange),
+          Ampere: this.getRandomInRange(...ampereRange),
         },
       },
-      time: `${this.getRandomTime()}`,
+      time: this.getRandomTime(),
     }
   }
 
-  createFakeGatewayStatusResponse(imei: string) {
+  async createFakeGatewayStatusResponse(imei: string) {
+    let channel = await databaseService.getSetupChannel(imei)
     return {
       imei,
       operator: "SendStatus",
@@ -70,7 +80,7 @@ class CronJobService {
         operator: this.getRandomISP(),
         RSSI: this.getRandomInRange(30.15, 90.54),
         IP: this.getRandomIp(),
-        usingChannel: this.getRandomChannel(),
+        usingChannel: channel ? channel : this.getRandomChannel(),
         fwVersion: 1.0,
       },
       time: `${this.getRandomTime()}`,
@@ -82,28 +92,67 @@ class CronJobService {
 
     return intervals.filter(Boolean).map((status) => {
       const { imei, batteryStatusInterval, deviceStatusInterval } = status
+      const taskData: Task = {
+        imei,
+        tasks: {
+          battery: null,
+          gateway: null,
+          downtrend: null,
+        },
+        lastBatteryStatus: null,
+        downtrendDuration: this.getRandomDurationInMinutes(1, 30),
+        uptrendDuration: this.getRandomDurationInMinutes(1, 10),
+        downtrendInterval: this.getRandomDurationInMinutes(5, 7),
+        isDownTrend: false,
+      }
+
       const batteryStatusCronTask = this.schedule(batteryStatusInterval, () => {
-        const message = { topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) }
+        const batteryStatus = this.createFakeBatteryStatusResponse(imei)
+        const message = {
+          topic: Topic.BATTERY_STATUS,
+          message: this.createFakeBatteryStatusResponse(imei),
+        }
+
         this.mqttService?.publish(message)
+        taskData.lastBatteryStatus = batteryStatus
       })
-      const gatewayStatusCronTask = this.schedule(deviceStatusInterval, () => {
-        const message = { topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) }
+      const gatewayStatusCronTask = this.schedule(deviceStatusInterval, async () => {
+        const message = {
+          topic: Topic.GATEWAY_STATUS,
+          message: await this.createFakeGatewayStatusResponse(imei),
+        }
         this.mqttService?.publish(message)
       })
 
-      return {
-        imei,
-        tasks: {
-          battery: batteryStatusCronTask,
-          gateway: gatewayStatusCronTask,
-        },
+      const downtrendCronHandler = () => {
+        if (taskData.isDownTrend) return
+
+        taskData.isDownTrend = true
+        taskData.downtrendDuration = this.getRandomDurationInMinutes(1, 30)
+        taskData.uptrendDuration = this.getRandomDurationInMinutes(1, 10)
+        taskData.downtrendInterval = this.getRandomDurationInMinutes(5, 7)
+
+        if (taskData.tasks.downtrend) {
+          clearInterval(taskData.tasks.downtrend)
+          taskData.tasks.downtrend = this.schedule(taskData.downtrendInterval, downtrendCronHandler)
+        }
       }
+
+      const downtrendCronTask = this.schedule(taskData.downtrendInterval, downtrendCronHandler)
+
+      taskData.tasks.battery = batteryStatusCronTask
+      taskData.tasks.gateway = gatewayStatusCronTask
+      taskData.tasks.downtrend = downtrendCronTask
+
+      return taskData
     })
   }
 
+  createFakeDowntrend() {}
+
   getRandomInRange(min: number, max: number) {
     let randomValue = Math.random() * (max - min) + min
-    return randomValue.toFixed(2)
+    return Number(randomValue.toFixed(2))
   }
 
   getRandomISP(): ISP {
@@ -125,12 +174,17 @@ class CronJobService {
     return Date.now() + Math.floor(Math.random() * 500)
   }
 
+  getRandomDurationInMinutes(min: number, max: number) {
+    return faker.number.int({ min: min * 60 * 1000, max: max * 60 * 1000 })
+  }
+
   updateTask(imei: string, batteryStatusInterval: number, deviceStatusInterval: number) {
     let task = this.tasks.find((task) => task.imei === imei)
 
     if (task) {
-      clearInterval(task.tasks.battery)
-      clearInterval(task.tasks.gateway)
+      task.tasks.battery && clearInterval(task.tasks.battery)
+      task.tasks.gateway && clearInterval(task.tasks.gateway)
+
       task.tasks.battery = this.schedule(batteryStatusInterval, () => {
         this.mqttService?.publish({ topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) })
       })
