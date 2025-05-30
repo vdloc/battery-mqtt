@@ -1,14 +1,12 @@
 import nodemailer from "nodemailer"
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } from "../envConfigs"
 
-export class MailService {
+class MailService {
   private transporter: nodemailer.Transporter
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: false,
+      service: "gmail",
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS,
@@ -18,14 +16,17 @@ export class MailService {
 
   async sendMail(to: string, subject: string, html: string): Promise<void> {
     try {
-      await this.transporter.sendMail({
+      let result = await this.transporter.sendMail({
         from: process.env.SMTP_FROM,
         to,
         subject,
         html,
       })
+      console.log(" result:", result)
     } catch (error) {
       console.error("Error sending email:", error)
     }
   }
 }
+
+export const mailService = new MailService()
