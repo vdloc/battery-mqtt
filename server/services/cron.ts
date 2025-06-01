@@ -142,23 +142,23 @@ export class CronJobService {
 
         if (taskData.tasks.downtrend) {
           clearInterval(taskData.tasks.downtrend)
-          taskData.tasks.downtrend = CronJobService.schedule(taskData.downtrendInterval, downtrendCronHandler)
+          taskData.tasks.downtrend = CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
         }
       }
 
-      CronJobService.schedule(taskData.uptrendDuration, () => {
+      CronJobService.timeout(taskData.uptrendDuration, () => {
         console.log("clear downtrend + start uptrend")
         taskData.isDownTrend = false
         taskData.isUpTrend = true
       })
 
-      CronJobService.schedule(taskData.uptrendDuration + taskData.downtrendDuration, () => {
+      CronJobService.timeout(taskData.uptrendDuration + taskData.downtrendDuration, () => {
         console.log("clear downtrend + uptrend")
         taskData.isDownTrend = false
         taskData.isUpTrend = false
       })
 
-      const downtrendCronTask = CronJobService.schedule(taskData.downtrendInterval, downtrendCronHandler)
+      const downtrendCronTask = CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
 
       taskData.tasks.battery = batteryStatusCronTask
       taskData.tasks.gateway = gatewayStatusCronTask
@@ -205,6 +205,7 @@ export class CronJobService {
       }
     })
 
+    console.log("getDowntrendInfor lastInfor:", lastInfor)
     return lastInfor
   }
 
