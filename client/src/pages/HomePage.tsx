@@ -231,7 +231,7 @@ const HomePage = () => {
             Operator: item.lastGatewayStatus?.operator,
             "Số sim": item.simNumber,
             RSSI: item.lastGatewayStatus?.RSSI,
-            Action: <Button onClick={() => navigate(`/device/${item.imei}`)}>Detail</Button>,
+            Action: <Button onClick={() => navigate(`/device/${item.imei}`)}>Chi tiết</Button>,
           }
         })}
         columns={columns.map((item, index) => ({

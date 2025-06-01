@@ -1,4 +1,15 @@
-import { pgTable, text, integer, uuid, timestamp, varchar, bigserial, jsonb, bigint } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  text,
+  integer,
+  uuid,
+  timestamp,
+  varchar,
+  bigserial,
+  jsonb,
+  bigint,
+  boolean,
+} from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 export const brokerDeviceTable = pgTable("mqtt_device", {
@@ -12,6 +23,7 @@ export const brokerDeviceTable = pgTable("mqtt_device", {
   manageUnitName: varchar({ length: 100 }),
   simNumber: varchar({ length: 15 }),
   time: bigint({ mode: "number" }).notNull(),
+  enableNotification: boolean().notNull().default(true),
 })
 
 export const deviceIntervalTable = pgTable("mqtt_device_interval", {
