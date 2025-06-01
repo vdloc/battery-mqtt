@@ -8,6 +8,7 @@ const inputSchema = z.object({
   aliasName: z.string().optional(),
   stationCode: z.string().optional(),
   simNumber: z.string().optional(),
+  enableNotification: z.boolean().optional(),
 })
 
 export default protectedProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {

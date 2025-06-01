@@ -11,6 +11,7 @@ const inputSchema = z.object({
   batteryStatusInterval: z.number(),
   deviceStatusInterval: z.number(),
   usingChannel: z.string(),
+  enableNotification: z.boolean().optional().default(false),
   time: z.number().optional(),
 })
 
@@ -24,6 +25,7 @@ export default protectedProcedure.input(inputSchema).mutation(async ({ input }) 
     batteryStatusInterval,
     deviceStatusInterval,
     usingChannel,
+    enableNotification,
     time = Date.now(),
   } = input
   let device = await databaseService.createDevice({
@@ -32,6 +34,7 @@ export default protectedProcedure.input(inputSchema).mutation(async ({ input }) 
     aliasName,
     stationCode,
     simNumber,
+    enableNotification,
   })
 
   if (device) {

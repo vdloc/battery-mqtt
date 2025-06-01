@@ -2,7 +2,7 @@ import { TEXT_REQUIRED } from "@/constants"
 import usePostDevices, { DeviceType } from "@/hooks/devices/usePostDevices"
 import useGetManageUnits from "@/hooks/useGetManageUnits"
 import usePostRequest from "@/hooks/usePostRequest"
-import { Button, Input, Select } from "antd"
+import { Button, Checkbox, Input, Select } from "antd"
 import { useEffect, useState } from "react"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
@@ -20,6 +20,7 @@ type Inputs3 = {
   aliasName: string | number
   manageUnitId: string
   simNumber: string
+  enableNotification: boolean
 }
 
 const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
@@ -49,6 +50,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
 
   useEffect(() => {
     if (!!choseItem) {
+      console.log(" choseItem:", choseItem)
       setValue1("BatteryStatusInterval", choseItem?.intervals?.batteryStatusInterval)
       setValue1("DeviceStatusInterval", choseItem?.intervals?.deviceStatusInterval)
       setValue2("usingChannel", choseItem.usingChannel?.usingChannel)
@@ -57,6 +59,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
       setValue3("aliasName", choseItem.aliasName)
       setValue3("manageUnitId", choseItem.manageUnitId)
       setValue3("simNumber", choseItem.simNumber)
+      setValue3("enableNotification", choseItem.enableNotification)
     }
   }, [choseItem])
 
@@ -102,7 +105,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
   }
   const onSubmitInfo: SubmitHandler<Inputs3> = async (data) => {
     setTypeSubmit("channel")
-    const { aliasName, manageUnitName, stationCode, simNumber, manageUnitId } = data
+    const { aliasName, manageUnitName, stationCode, simNumber, manageUnitId, enableNotification } = data
     const bodyData = {
       imei: choseItem.imei,
       aliasName,
@@ -110,6 +113,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
       stationCode,
       simNumber,
       manageUnitId,
+      enableNotification,
       time: Date.now(),
     }
     try {
@@ -181,6 +185,16 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
             control={control3}
             render={({ field }) => <Input {...field} placeholder="Số sim" />}
           />
+        </div>
+        <div className="grid">
+          <label className="font-bold">Nhận cảnh báo qua email</label>
+          <div>
+            <Controller
+              name="enableNotification"
+              control={control3}
+              render={({ field }) => <Checkbox {...field} checked={field.value} />}
+            />
+          </div>
         </div>
         <div className="mt-5">
           <Button

@@ -1,7 +1,7 @@
 import { TEXT_REQUIRED } from "@/constants"
 import usePostDevices, { DeviceType } from "@/hooks/devices/usePostDevices"
 import useGetManageUnits from "@/hooks/useGetManageUnits"
-import { Input, Select, Button } from "antd"
+import { Input, Select, Button, Checkbox } from "antd"
 import { useForm, SubmitHandler, Controller } from "react-hook-form"
 import toast from "react-hot-toast"
 
@@ -14,6 +14,7 @@ type InputsCreate = {
   batteryStatusInterval: number
   deviceStatusInterval: number
   usingChannel: string
+  enableNotification: boolean
 }
 
 const CreateDeviceModal = ({ refetch }: any) => {
@@ -35,6 +36,7 @@ const CreateDeviceModal = ({ refetch }: any) => {
       batteryStatusInterval,
       deviceStatusInterval,
       usingChannel,
+      enableNotification,
     } = data
     const bodyData = {
       imei,
@@ -45,6 +47,7 @@ const CreateDeviceModal = ({ refetch }: any) => {
       batteryStatusInterval: +batteryStatusInterval,
       deviceStatusInterval: +deviceStatusInterval,
       usingChannel,
+      enableNotification,
       time: Date.now(),
     }
     try {
@@ -130,9 +133,7 @@ const CreateDeviceModal = ({ refetch }: any) => {
             rules={{
               required: true,
             }}
-            render={({ field }) => (
-              <Input type="number" {...field} placeholder="Chu kỳ trạng thái thiết bị" />
-            )}
+            render={({ field }) => <Input type="number" {...field} placeholder="Chu kỳ trạng thái thiết bị" />}
           />
 
           {errors.deviceStatusInterval && <span className="text-red-500">{TEXT_REQUIRED}</span>}
@@ -149,6 +150,14 @@ const CreateDeviceModal = ({ refetch }: any) => {
           />
 
           {errors.usingChannel && <span className="text-red-500">{TEXT_REQUIRED}</span>}
+        </div>
+        <div className="space-x-2">
+          <label className="font-bold">Nhận cảnh báo qua email</label>
+          <Controller
+            name="enableNotification"
+            control={control}
+            render={({ field }) => <Checkbox {...field} checked={field.value} style={{ width: "4rem" }} />}
+          />
         </div>
 
         <div className="mt-5 w-full col-span-2">

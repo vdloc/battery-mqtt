@@ -48,6 +48,7 @@ interface DeviceInput {
   aliasName?: string
   stationCode?: string
   simNumber?: string
+  enableNotification?: boolean
 }
 
 interface DeviceIntervalInput {
@@ -135,12 +136,13 @@ class DatabaseService {
     throw new DeviceExistedError(imei)
   }
 
-  async updateDevice({ imei, manageUnitId, aliasName, stationCode, simNumber }: DeviceInput) {
-    const updateData: Record<string, string> = {}
+  async updateDevice({ imei, manageUnitId, aliasName, stationCode, simNumber, enableNotification }: DeviceInput) {
+    const updateData: Record<string, string | boolean> = {}
     if (manageUnitId) updateData.manageUnitId = manageUnitId
     if (aliasName) updateData.aliasName = aliasName
     if (stationCode) updateData.stationCode = stationCode
     if (simNumber) updateData.simNumber = simNumber
+    if (enableNotification) updateData.enableNotification = enableNotification
 
     const result = await db
       .update(brokerDeviceTable)
