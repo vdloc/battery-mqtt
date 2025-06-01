@@ -37,8 +37,8 @@ export class CronJobService {
   mqttService: MqttService = mqttService
   private readonly ampereRange: [number, number] = [0, 1]
   private readonly voltageRange: [number, number] = [53, 54]
-  private readonly downtrendDurationRange: [number, number] = [1, 30]
-  private readonly uptrendDurationRange: [number, number] = [1, 10]
+  private readonly downtrendDurationRange: [number, number] = [1, 3]
+  private readonly uptrendDurationRange: [number, number] = [1, 2]
   private readonly downtrendIntervalRange: [number, number] = [0, 0.01]
   private readonly downtrendAmpereRange: [number, number] = [-50, -20]
   private readonly downtrendVoltageRange: [number, number] = [52, 43]
@@ -136,9 +136,9 @@ export class CronJobService {
         if (taskData.isDownTrend || taskData.isUpTrend) return
         console.log("start downtrend")
         taskData.isDownTrend = true
-        taskData.downtrendDuration = this.getRandomDurationInMinutes(1, 30)
-        taskData.uptrendDuration = this.getRandomDurationInMinutes(1, 10)
-        taskData.downtrendInterval = this.getRandomDurationInMinutes(5, 7)
+        taskData.downtrendDuration = this.getRandomDurationInMinutes(...this.downtrendDurationRange)
+        taskData.uptrendDuration = this.getRandomDurationInMinutes(...this.uptrendDurationRange)
+        taskData.downtrendInterval = this.getRandomDurationInMinutes(...this.downtrendIntervalRange)
 
         if (taskData.tasks.downtrend) {
           clearInterval(taskData.tasks.downtrend)
