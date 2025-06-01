@@ -51,13 +51,12 @@ const CreateDeviceModal = ({ refetch }: any) => {
       await mutateAsync(bodyData)
       refetch()
 
-      toast.success("Tạo device thành công!")
+      toast.success("Tạo thiết bị thành công!")
     } catch (error: any) {
       console.error("error", error?.response)
       toast.error(error?.response?.data?.error?.message)
     }
   }
-  ;``
 
   return (
     <div>
@@ -70,7 +69,7 @@ const CreateDeviceModal = ({ refetch }: any) => {
             rules={{
               required: true,
             }}
-            render={({ field }) => <Input {...field} placeholder="Đơn vị" />}
+            render={({ field }) => <Input {...field} placeholder="Imei" />}
           />
           {errors.imei && <span className="text-red-500">{TEXT_REQUIRED}</span>}
         </div>
@@ -111,27 +110,29 @@ const CreateDeviceModal = ({ refetch }: any) => {
           />
         </div>
         <div>
-          <label className="font-bold">Bat_interval</label>
+          <label className="font-bold">Chu kỳ trạng thái pin</label>
           <Controller
             name="batteryStatusInterval"
             control={control}
             rules={{
               required: true,
             }}
-            render={({ field }) => <Input type="number" {...field} placeholder="Bat_interval" />}
+            render={({ field }) => <Input type="number" {...field} placeholder="Chu kỳ trạng thái pin" />}
           />
 
           {errors.batteryStatusInterval && <span className="text-red-500">{TEXT_REQUIRED}</span>}
         </div>
         <div>
-          <label className="font-bold">Devices_interval</label>
+          <label className="font-bold">Chu kỳ trạng thái thiết bị</label>
           <Controller
             name="deviceStatusInterval"
             control={control}
             rules={{
               required: true,
             }}
-            render={({ field }) => <Input type="number" {...field} placeholder="Devices_interval" />}
+            render={({ field }) => (
+              <Input type="number" {...field} placeholder="Chu kỳ trạng thái thiết bị" />
+            )}
           />
 
           {errors.deviceStatusInterval && <span className="text-red-500">{TEXT_REQUIRED}</span>}
@@ -158,7 +159,7 @@ const CreateDeviceModal = ({ refetch }: any) => {
             type="primary"
             onClick={handleSubmit(onSubmit)}
           >
-            {isPending ? "Creating..." : "Create"}
+            {isPending ? "Đang tạo..." : "Tạo thiết bị"}
           </Button>
         </div>
       </div>

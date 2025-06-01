@@ -1,11 +1,11 @@
 import React, { useState } from "react"
 import {
-  AccountBookFilled,
-  AccountBookOutlined,
   AppstoreOutlined,
   DownOutlined,
-  SendOutlined,
+  MailOutlined,
   SettingOutlined,
+  UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons"
 import type { MenuProps } from "antd"
 import { Button, Dropdown, Layout, Menu, Modal, theme } from "antd"
@@ -138,7 +138,7 @@ const LayoutApp = ({ children }: any) => {
     hasadminPermissionss
       ? {
           key: 2,
-          icon: React.createElement(AccountBookOutlined),
+          icon: React.createElement(UserOutlined),
           label: "Tài khoản",
           onClick: () => navigate("/accounts"),
         }
@@ -146,7 +146,7 @@ const LayoutApp = ({ children }: any) => {
     hasEmployeePermissions
       ? {
           key: 9,
-          icon: React.createElement(AccountBookFilled),
+          icon: React.createElement(UsergroupAddOutlined),
           label: "Nhân viên",
           onClick: () => navigate("/employees"),
         }
@@ -154,7 +154,7 @@ const LayoutApp = ({ children }: any) => {
     hasSendMessagePermissions
       ? {
           key: 6,
-          icon: React.createElement(SendOutlined),
+          icon: React.createElement(MailOutlined),
           label: "Email",
           onClick: () => navigate("/notification"),
         }

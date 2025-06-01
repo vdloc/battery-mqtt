@@ -190,32 +190,32 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
             type="primary"
             onClick={handleSubmit3(onSubmitInfo)}
           >
-            {isPending && typeSubmit === "info" ? "Updating..." : "Update"}
+            {isPending && typeSubmit === "info" ? "Đang cập nhật..." : "Cập nhật"}
           </Button>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3 py-3 my-3 border-y border-gray-200">
         <div>
-          <label className="font-bold">Battery Status Interval</label>
+          <label className="font-bold">Chu kỳ trạng thái pin</label>
           <Controller
             name="BatteryStatusInterval"
             control={control1}
             rules={{
               required: true,
             }}
-            render={({ field }) => <Input {...field} placeholder="Device Status Interval" />}
+            render={({ field }) => <Input {...field} placeholder="Chu kỳ trạng thái pin" />}
           />
           {errors1.BatteryStatusInterval && <span className="text-red-500">{TEXT_REQUIRED}</span>}
         </div>
         <div>
-          <label className="font-bold">Device Status Interval</label>
+          <label className="font-bold">Chu kỳ trạng thái thiết bị</label>
           <Controller
             name="DeviceStatusInterval"
             control={control1}
             rules={{
               required: true,
             }}
-            render={({ field }) => <Input {...field} placeholder="Device Status Interval" />}
+            render={({ field }) => <Input {...field} placeholder="Chu kỳ trạng thái thiết bị" />}
           />
 
           {errors1.DeviceStatusInterval && <span className="text-red-500">{TEXT_REQUIRED}</span>}
@@ -228,7 +228,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
             type="primary"
             onClick={handleSubmit1(onSubmitInterval)}
           >
-            {isPending && typeSubmit === "interval" ? "Updating..." : "Update"}
+            {isPending && typeSubmit === "interval" ? "Đang cập nhật..." : "Cập nhật"}
           </Button>
         </div>
       </div>
@@ -243,7 +243,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
               maxLength: { value: 4, message: "Độ dài tối đa 4 ký tự" },
               minLength: { value: 4, message: "Độ dài tối thiểu 4 ký tự" },
             }}
-            render={({ field }) => <Input {...field} placeholder="Device Status Interval" />}
+            render={({ field }) => <Input {...field} placeholder="Kênh" />}
           />
           {errors2.usingChannel && <span className="text-red-500">{errors2.usingChannel.message}</span>}
         </div>
@@ -255,7 +255,7 @@ const UpdateDeviceModal = ({ choseItem, refetch }: any) => {
             type="primary"
             onClick={handleSubmit2(onSubmitChannel)}
           >
-            {isPending && typeSubmit === "channel" ? "Updating..." : "Update"}
+            {isPending && typeSubmit === "channel" ? "Đang cập nhật..." : "Cập nhật"}
           </Button>
         </div>
       </div>

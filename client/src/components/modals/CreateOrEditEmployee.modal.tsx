@@ -100,7 +100,13 @@ const ModalCreateOrEditEmployee = ({ refetch, choseItem, unit }: any) => {
             type="primary"
             onClick={handleSubmit(onSubmit)}
           >
-            {!choseItem ? (isPending ? "Đang tạo..." : "Tạo") : isPendingUpdate ? "Đang cập nhật..." : "Cập nhật"}
+            {!choseItem
+              ? isPending
+                ? "Đang tạo nhân viên..."
+                : "Tạo mới nhân viên"
+              : isPendingUpdate
+              ? "Đang cập nhật nhân viên..."
+              : "Cập nhật nhân viên"}
           </Button>
         </div>
       </div>

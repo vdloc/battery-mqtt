@@ -161,6 +161,7 @@ const Settings = () => {
         closable
         onCancel={() => setIsModalOpen(false)}
         destroyOnClose
+        width={580}
       >
         {!choseItem ? (
           <CreateDeviceModal
