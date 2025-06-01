@@ -134,7 +134,7 @@ export class CronJobService {
 
       const downtrendCronHandler = () => {
         if (taskData.isDownTrend || taskData.isUpTrend) return
-
+        console.log("start downtrend")
         taskData.isDownTrend = true
         taskData.downtrendDuration = this.getRandomDurationInMinutes(1, 30)
         taskData.uptrendDuration = this.getRandomDurationInMinutes(1, 10)
@@ -147,11 +147,13 @@ export class CronJobService {
       }
 
       CronJobService.schedule(taskData.uptrendDuration, () => {
+        console.log("clear downtrend + start uptrend")
         taskData.isDownTrend = false
         taskData.isUpTrend = true
       })
 
       CronJobService.schedule(taskData.uptrendDuration + taskData.downtrendDuration, () => {
+        console.log("clear downtrend + uptrend")
         taskData.isDownTrend = false
         taskData.isUpTrend = false
       })
