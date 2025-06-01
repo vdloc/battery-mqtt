@@ -23,12 +23,12 @@ class NotificationService {
   async checkAndSendNotification(input: BatteryStatusResponse) {
     if (!this.devices[input.imei]) {
       const device = await databaseService.getDevice(input.imei)
-      const { usingChannel } = await databaseService.getSetupChannel(input.imei)
+      const channel = await databaseService.getSetupChannel(input.imei)
       const { enableNotification, manageUnitName, manageUnitId } = device
 
       this.devices[input.imei] = {
         enableNotification,
-        channel: usingChannel,
+        channel: channel?.usingChannel,
         lastBatteryStatus: input,
         isDownTrend: false,
         isSendDowntrendEmail: false,
