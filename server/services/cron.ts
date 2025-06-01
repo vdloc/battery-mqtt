@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { Topic } from "../types/Topic"
+import { OPERATORS, Topic } from "../types/Topic"
 import { mqttService, MqttService } from "./mqtt"
 import { databaseService, DevicesFromDB, DeviceIntervalsFromDB } from "./database"
 import { BatteryStatusResponse } from "../types/Response"
@@ -24,13 +24,25 @@ interface Task {
   downtrendDuration: number
   uptrendDuration: number
   downtrendInterval: number
+  downtrendAmpereLimit: number
+  downtrendVoltageLimit: number
   isDownTrend: boolean
+  isUpTrend: boolean
+  batteryStatusInterval: number
 }
 
-class CronJobService {
+export class CronJobService {
   devices: DevicesFromDB
   tasks: Task[]
   mqttService: MqttService = mqttService
+  private readonly ampereRange: [number, number] = [0, 1]
+  private readonly voltageRange: [number, number] = [53, 54]
+  private readonly downtrendDurationRange: [number, number] = [1, 30]
+  private readonly uptrendDurationRange: [number, number] = [1, 10]
+  private readonly downtrendIntervalRange: [number, number] = [0, 0.01]
+  private readonly downtrendAmpereRange: [number, number] = [-50, -20]
+  private readonly downtrendVoltageRange: [number, number] = [52, 43]
+
   constructor() {
     this.devices = []
     this.tasks = []
@@ -42,31 +54,23 @@ class CronJobService {
     this.tasks = this.sendFakeStatus(intervals)
   }
 
-  createFakeBatteryStatusResponse(imei: string): BatteryStatusResponse {
-    let ampereRange: [number, number] = [0, 1]
-    let voltageRange: [number, number] = [53, 54]
+  createFakeBatteryStatusResponse(imei: string, taskData: Task): BatteryStatusResponse {
+    let infor = this.getRandomInfor()
+
+    if (taskData.lastBatteryStatus) {
+      if (taskData.isDownTrend) {
+        infor = this.getDowntrendInfor(taskData)
+      }
+
+      if (taskData.isUpTrend) {
+        infor = this.getUptrendInfor(taskData)
+      }
+    }
 
     return {
       imei,
-      operator: "SendBatteryStatus",
-      infor: {
-        CH1: {
-          Voltage: this.getRandomInRange(...voltageRange),
-          Ampere: this.getRandomInRange(...ampereRange),
-        },
-        CH2: {
-          Voltage: this.getRandomInRange(...voltageRange),
-          Ampere: this.getRandomInRange(...ampereRange),
-        },
-        CH3: {
-          Voltage: this.getRandomInRange(...voltageRange),
-          Ampere: this.getRandomInRange(...ampereRange),
-        },
-        CH4: {
-          Voltage: this.getRandomInRange(...voltageRange),
-          Ampere: this.getRandomInRange(...ampereRange),
-        },
-      },
+      operator: OPERATORS.SEND_BATTERY_STATUS,
+      infor,
       time: this.getRandomTime(),
     }
   }
@@ -75,7 +79,7 @@ class CronJobService {
     let channel = await databaseService.getSetupChannel(imei)
     return {
       imei,
-      operator: "SendStatus",
+      operator: OPERATORS.SEND_GATEWAY_STATUS,
       info: {
         operator: this.getRandomISP(),
         RSSI: this.getRandomInRange(30.15, 90.54),
@@ -100,23 +104,27 @@ class CronJobService {
           downtrend: null,
         },
         lastBatteryStatus: null,
-        downtrendDuration: this.getRandomDurationInMinutes(1, 30),
-        uptrendDuration: this.getRandomDurationInMinutes(1, 10),
-        downtrendInterval: this.getRandomDurationInMinutes(5, 7),
+        downtrendDuration: this.getRandomDurationInMinutes(...this.downtrendDurationRange),
+        uptrendDuration: this.getRandomDurationInMinutes(...this.uptrendDurationRange),
+        downtrendInterval: this.getRandomDurationInMinutes(...this.downtrendIntervalRange),
+        downtrendAmpereLimit: this.getRandomInRange(...this.downtrendAmpereRange),
+        downtrendVoltageLimit: this.getRandomInRange(...this.downtrendVoltageRange),
         isDownTrend: false,
+        isUpTrend: false,
+        batteryStatusInterval,
       }
 
-      const batteryStatusCronTask = this.schedule(batteryStatusInterval, () => {
-        const batteryStatus = this.createFakeBatteryStatusResponse(imei)
+      const batteryStatusCronTask = CronJobService.schedule(batteryStatusInterval, () => {
+        const batteryStatus = this.createFakeBatteryStatusResponse(imei, taskData)
         const message = {
           topic: Topic.BATTERY_STATUS,
-          message: this.createFakeBatteryStatusResponse(imei),
+          message: this.createFakeBatteryStatusResponse(imei, taskData),
         }
 
         this.mqttService?.publish(message)
         taskData.lastBatteryStatus = batteryStatus
       })
-      const gatewayStatusCronTask = this.schedule(deviceStatusInterval, async () => {
+      const gatewayStatusCronTask = CronJobService.schedule(deviceStatusInterval, async () => {
         const message = {
           topic: Topic.GATEWAY_STATUS,
           message: await this.createFakeGatewayStatusResponse(imei),
@@ -125,7 +133,7 @@ class CronJobService {
       })
 
       const downtrendCronHandler = () => {
-        if (taskData.isDownTrend) return
+        if (taskData.isDownTrend || taskData.isUpTrend) return
 
         taskData.isDownTrend = true
         taskData.downtrendDuration = this.getRandomDurationInMinutes(1, 30)
@@ -134,11 +142,21 @@ class CronJobService {
 
         if (taskData.tasks.downtrend) {
           clearInterval(taskData.tasks.downtrend)
-          taskData.tasks.downtrend = this.schedule(taskData.downtrendInterval, downtrendCronHandler)
+          taskData.tasks.downtrend = CronJobService.schedule(taskData.downtrendInterval, downtrendCronHandler)
         }
       }
 
-      const downtrendCronTask = this.schedule(taskData.downtrendInterval, downtrendCronHandler)
+      CronJobService.schedule(taskData.uptrendDuration, () => {
+        taskData.isDownTrend = false
+        taskData.isUpTrend = true
+      })
+
+      CronJobService.schedule(taskData.uptrendDuration + taskData.downtrendDuration, () => {
+        taskData.isDownTrend = false
+        taskData.isUpTrend = false
+      })
+
+      const downtrendCronTask = CronJobService.schedule(taskData.downtrendInterval, downtrendCronHandler)
 
       taskData.tasks.battery = batteryStatusCronTask
       taskData.tasks.gateway = gatewayStatusCronTask
@@ -148,7 +166,64 @@ class CronJobService {
     })
   }
 
-  createFakeDowntrend() {}
+  getRandomInfor(): Record<string, { Voltage: number; Ampere: number }> {
+    return {
+      CH1: {
+        Voltage: this.getRandomInRange(...this.voltageRange),
+        Ampere: this.getRandomInRange(...this.ampereRange),
+      },
+      CH2: {
+        Voltage: this.getRandomInRange(...this.voltageRange),
+        Ampere: this.getRandomInRange(...this.ampereRange),
+      },
+      CH3: {
+        Voltage: this.getRandomInRange(...this.voltageRange),
+        Ampere: this.getRandomInRange(...this.ampereRange),
+      },
+      CH4: {
+        Voltage: this.getRandomInRange(...this.voltageRange),
+        Ampere: this.getRandomInRange(...this.ampereRange),
+      },
+    }
+  }
+
+  getDowntrendInfor(taskData: Task) {
+    let { downtrendAmpereLimit, downtrendDuration, downtrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
+      taskData
+    let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
+    let decreaseTime = batteryStatusInterval / downtrendDuration
+    let decreaseAmpere = (lastInfor?.CH1.Ampere || 0 - downtrendAmpereLimit) * decreaseTime
+    let decreaseVoltage = (lastInfor?.CH1.Voltage || 0 - downtrendVoltageLimit) * decreaseTime
+
+    Object.keys(lastInfor ?? {}).forEach((channel) => {
+      let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
+      if (channelInfor) {
+        channelInfor.Ampere = channelInfor.Ampere - decreaseAmpere
+        channelInfor.Voltage = channelInfor.Voltage - decreaseVoltage
+      }
+    })
+
+    return lastInfor
+  }
+
+  getUptrendInfor(taskData: Task) {
+    let { downtrendAmpereLimit, uptrendDuration, downtrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
+      taskData
+    let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
+    let decreaseTime = batteryStatusInterval / uptrendDuration
+    let decreaseAmpere = (lastInfor?.CH1.Ampere || 0 - downtrendAmpereLimit) * decreaseTime
+    let decreaseVoltage = (lastInfor?.CH1.Voltage || 0 - downtrendVoltageLimit) * decreaseTime
+
+    Object.keys(lastInfor ?? {}).forEach((channel) => {
+      let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
+      if (channelInfor) {
+        channelInfor.Ampere = channelInfor.Ampere + decreaseAmpere
+        channelInfor.Voltage = channelInfor.Voltage + decreaseVoltage
+      }
+    })
+
+    return lastInfor
+  }
 
   getRandomInRange(min: number, max: number) {
     let randomValue = Math.random() * (max - min) + min
@@ -185,17 +260,26 @@ class CronJobService {
       task.tasks.battery && clearInterval(task.tasks.battery)
       task.tasks.gateway && clearInterval(task.tasks.gateway)
 
-      task.tasks.battery = this.schedule(batteryStatusInterval, () => {
-        this.mqttService?.publish({ topic: Topic.BATTERY_STATUS, message: this.createFakeBatteryStatusResponse(imei) })
+      task.tasks.battery = CronJobService.schedule(batteryStatusInterval, () => {
+        this.mqttService?.publish({
+          topic: Topic.BATTERY_STATUS,
+          message: this.createFakeBatteryStatusResponse(imei, task),
+        })
       })
-      task.tasks.gateway = this.schedule(deviceStatusInterval, () => {
+      task.tasks.gateway = CronJobService.schedule(deviceStatusInterval, () => {
         this.mqttService?.publish({ topic: Topic.GATEWAY_STATUS, message: this.createFakeGatewayStatusResponse(imei) })
       })
     }
   }
 
-  schedule(seconds: number, callback: () => void): NodeJS.Timeout {
+  static schedule(seconds: number, callback: () => void): NodeJS.Timeout {
     return setInterval(() => {
+      callback()
+    }, seconds * 1000)
+  }
+
+  static timeout(seconds: number, callback: () => void): NodeJS.Timeout {
+    return setTimeout(() => {
       callback()
     }, seconds * 1000)
   }

@@ -3,6 +3,8 @@ import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } from "../envConfigs"
 
 class MailService {
   private transporter: nodemailer.Transporter
+  private static DISCHARGING_SUBJECT = "Cảnh báo trạm mất điện"
+  private static CHARGING_SUBJECT = "Thông báo trạm có điện trở lại"
 
   constructor() {
     this.transporter = nodemailer.createTransport({
@@ -22,7 +24,50 @@ class MailService {
         subject,
         html,
       })
-      console.log(" result:", result)
+    } catch (error) {
+      console.error("Error sending email:", error)
+    }
+  }
+
+  async sendDowntrendEmail({
+    to,
+    manageUnitName,
+    t1,
+    ampere,
+    voltage,
+  }: {
+    to: string
+    manageUnitName: string
+    t1: number
+    ampere: number
+    voltage: number
+  }): Promise<void> {
+    const html = `
+    <p>${new Date().toUTCString()}-${manageUnitName}-discharing in ${t1 * 60 * 1000}s-${voltage}V-${ampere}A}</p>`
+
+    try {
+      await this.sendMail(to, MailService.DISCHARGING_SUBJECT, html)
+    } catch (error) {
+      console.error("Error sending email:", error)
+    }
+  }
+
+  async sendDischarginEmail({
+    to,
+    manageUnitName,
+    ampere,
+    voltage,
+  }: {
+    to: string
+    manageUnitName: string
+    ampere: number
+    voltage: number
+  }): Promise<void> {
+    const html = `
+    <p>${new Date().toUTCString()}-${manageUnitName}-${voltage}V-${ampere}A}</p>`
+
+    try {
+      await this.sendMail(to, MailService.DISCHARGING_SUBJECT, html)
     } catch (error) {
       console.error("Error sending email:", error)
     }

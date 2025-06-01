@@ -8,17 +8,21 @@ import {
 import { OPERATORS } from "../types/Topic"
 import { cronjobService } from "./cron"
 import { databaseService } from "./database"
+import { mailService } from "./mail"
 import { mqttService, MqttService, OnMessageCallback } from "./mqtt"
+import notificationService from "./notification"
 import { webSocketService, WebSocketService } from "./websocket"
 
 class AppService {
   mqttService: MqttService = mqttService
   webSocketService: WebSocketService = webSocketService
 
-  constructor() {}
+  constructor() {
+    // mailService.sendMail("uvcudlco@gmail.com", "Test", "Test").then(console.log)
+  }
 
   init() {
-    mqttService.onMessage(this.handleMqttMessage)
+    // mqttService.onMessage(this.handleMqttMessage)
     // cronjobService.init()
   }
 
@@ -45,6 +49,7 @@ class AppService {
   handleBatteryStatusMessage = (message: BatteryStatusResponse) => {
     databaseService.saveBatteryStatus(message)
     this.sendMessageToClients(message)
+    notificationService.checkAndSendNotification(message)
   }
   handleGatewayStatusMessage = (message: GatewayStatusResponse) => {
     databaseService.saveGatewayStatus(message)

@@ -64,7 +64,7 @@ async function resetData(db: NodePgDatabase<Record<string, never>>) {
 }
 
 async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
-  for await (const user of initUsersData) {
+  for await (const user of initUsersData.slice(0, 10)) {
     let users = await db.insert(userTable).values(user).returning({ id: userTable.id })
     await db.insert(userCredentialTable).values({
       userId: users[0].id,
@@ -72,8 +72,8 @@ async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
     })
   }
 
-  for await (const device of devices) {
-    await db.insert(brokerDeviceTable).values(device)
+  for await (const [index, device] of devices.entries()) {
+    await db.insert(brokerDeviceTable).values({ ...device, enableNotification: index === 0 })
   }
 
   for await (const statusInverval of deviceStatusIntervals) {

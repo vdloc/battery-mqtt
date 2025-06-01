@@ -23,7 +23,7 @@ export const brokerDeviceTable = pgTable("mqtt_device", {
   manageUnitName: varchar({ length: 100 }),
   simNumber: varchar({ length: 15 }),
   time: bigint({ mode: "number" }).notNull(),
-  enableNotification: boolean().notNull().default(true),
+  enableNotification: boolean().notNull().default(false),
 })
 
 export const deviceIntervalTable = pgTable("mqtt_device_interval", {

@@ -118,6 +118,16 @@ class DatabaseService {
     }
   }
 
+  async getDevice(imei: string) {
+    const device = await db.query.brokerDeviceTable.findFirst({
+      where: eq(brokerDeviceTable.imei as any, imei),
+    })
+    if (!device) {
+      throw new DeviceNotFoundError(imei)
+    }
+    return device
+  }
+
   async createDevice(input: DeviceInput) {
     const { imei, manageUnitId } = input
     const existedDevice = await db.query.brokerDeviceTable.findFirst({
