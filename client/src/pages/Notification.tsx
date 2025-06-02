@@ -39,7 +39,7 @@ const ConfigForm = () => {
     const { t1, t2, t3 } = data
     const [t1Value, t2Value, t3Value] = [t1, t2, t3].map((time) => time * 60 * 1000)
 
-    mutateAsync({ t1: t1Value, t2: t2Value, t3: t3Value })
+    mutateAsync({ t1: t1Value, t2: t2Value, t3: t3Value, manageUnitId: unit })
       .then(() => {
         refetch()
         toast.success("Cập nhật thành công!")
@@ -53,17 +53,25 @@ const ConfigForm = () => {
     <Card title={<p className="text-2xl font-bold">Cấu hình email cảnh báo</p>}>
       <Form onFinish={handleSubmit(onSubmit)} layout="vertical" className="w-56 grid grid-cols-1">
         <Form.Item label="Chọn đơn vị">
-          <Select
-            placeholder="Chọn đơn vị"
-            className="w-full"
-            options={manageUnits?.map((item: any) => ({
-              label: item.name,
-              value: item.id,
-            }))}
-            value={unit}
-            onChange={(value) => {
-              setUnit(value)
-            }}
+          <Controller
+            name="manageUnitId"
+            control={control}
+            defaultValue={unit}
+            render={({ field }) => (
+              <Select
+                {...field}
+                placeholder="Chọn đơn vị"
+                className="w-full"
+                options={manageUnits?.map((item: any) => ({
+                  label: item.name,
+                  value: item.id,
+                }))}
+                value={unit}
+                onChange={(value) => {
+                  setUnit(value)
+                }}
+              />
+            )}
           />
         </Form.Item>
         <Form.Item label="T1 (Phút)" validateStatus={errors.t1 ? "error" : ""}>
