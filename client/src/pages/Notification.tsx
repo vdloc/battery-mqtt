@@ -1,20 +1,23 @@
 import useGetNotificationSettings from "@/hooks/notification/useGetNotificationSettings"
 import useUpdateNotificationSettings from "@/hooks/notification/useUpdateNotificationSettings"
+import useGetManageUnits from "@/hooks/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import { Permissions } from "@/types/serverTypes"
-import { Card, Form, InputNumber, Button, Spin } from "antd"
-import { useEffect } from "react"
+import { Card, Form, InputNumber, Button, Spin, Select } from "antd"
+import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 
 const ConfigForm = () => {
+  const [unit, setUnit] = useState<any>(null)
+  const { data: manageUnits } = useGetManageUnits()
   const {
     control,
     handleSubmit,
     formState: { errors },
     setValue,
   } = useForm()
-  const { isLoading, data: settings, refetch } = useGetNotificationSettings()
+  const { isLoading, data: settings, refetch } = useGetNotificationSettings(unit)
   const { mutateAsync } = useUpdateNotificationSettings()
 
   useEffect(() => {
@@ -25,6 +28,10 @@ const ConfigForm = () => {
     setValue("t2", t2Value)
     setValue("t3", t3Value)
   }, [settings])
+
+  useEffect(() => {
+    if (!unit && manageUnits?.length > 0) setUnit(manageUnits?.[0]?.id)
+  }, [unit, manageUnits])
 
   useCheckPermissions([Permissions.SEND_MESSAGE], "/login")
 
@@ -44,56 +51,66 @@ const ConfigForm = () => {
 
   return (
     <Card title={<p className="text-2xl font-bold">Cấu hình email cảnh báo</p>}>
-      {isLoading ? (
-        <Spin />
-      ) : (
-        <Form onFinish={handleSubmit(onSubmit)} layout="vertical" className="w-56 grid grid-cols-1">
-          <Form.Item label="T1 (Phút)" validateStatus={errors.t1 ? "error" : ""}>
-            <Controller
-              name="t1"
-              control={control}
-              defaultValue={1}
-              rules={{
-                required: "T1 là bắt buộc",
-                min: { value: 1, message: "T1 phải ít nhất là 1 phút" },
-              }}
-              render={({ field }) => <InputNumber {...field} min={1} style={{ width: "100%" }} />}
-            />
-          </Form.Item>
+      <Form onFinish={handleSubmit(onSubmit)} layout="vertical" className="w-56 grid grid-cols-1">
+        <Form.Item label="Chọn đơn vị">
+          <Select
+            placeholder="Chọn đơn vị"
+            className="w-full"
+            options={manageUnits?.map((item: any) => ({
+              label: item.name,
+              value: item.id,
+            }))}
+            value={unit}
+            onChange={(value) => {
+              setUnit(value)
+            }}
+          />
+        </Form.Item>
+        <Form.Item label="T1 (Phút)" validateStatus={errors.t1 ? "error" : ""}>
+          <Controller
+            name="t1"
+            control={control}
+            defaultValue={1}
+            rules={{
+              required: "T1 là bắt buộc",
+              min: { value: 1, message: "T1 phải ít nhất là 1 phút" },
+            }}
+            render={({ field }) => <InputNumber {...field} min={1} style={{ width: "100%" }} />}
+          />
+        </Form.Item>
 
-          <Form.Item label="T2 (Phút)" validateStatus={errors.t2 ? "error" : ""}>
-            <Controller
-              name="t2"
-              control={control}
-              defaultValue={1}
-              rules={{
-                required: "T2 là bắt buộc",
-                min: { value: 1, message: "T2 phải ít nhất là 1 phút" },
-              }}
-              render={({ field }) => <InputNumber {...field} min={1} style={{ width: "100%" }} />}
-            />
-          </Form.Item>
+        <Form.Item label="T2 (Phút)" validateStatus={errors.t2 ? "error" : ""}>
+          <Controller
+            name="t2"
+            control={control}
+            defaultValue={1}
+            rules={{
+              required: "T2 là bắt buộc",
+              min: { value: 1, message: "T2 phải ít nhất là 1 phút" },
+            }}
+            render={({ field }) => <InputNumber {...field} min={1} style={{ width: "100%" }} />}
+          />
+        </Form.Item>
 
-          <Form.Item label="T3 (Phút)" validateStatus={errors.t3 ? "error" : ""}>
-            <Controller
-              name="t3"
-              control={control}
-              defaultValue={1}
-              rules={{
-                required: "T3 là bắt buộc",
-                min: { value: 1, message: "T3 phải ít nhất là 1 phút" },
-              }}
-              render={({ field }) => <InputNumber {...field} min={1} style={{ width: "100%" }} />}
-            />
-          </Form.Item>
+        <Form.Item label="T3 (Phút)" validateStatus={errors.t3 ? "error" : ""}>
+          <Controller
+            name="t3"
+            control={control}
+            defaultValue={1}
+            rules={{
+              required: "T3 là bắt buộc",
+              min: { value: 1, message: "T3 phải ít nhất là 1 phút" },
+            }}
+            render={({ field }) => <InputNumber {...field} min={1} style={{ width: "100%" }} />}
+          />
+        </Form.Item>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Lưu
-            </Button>
-          </Form.Item>
-        </Form>
-      )}
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            Lưu
+          </Button>
+        </Form.Item>
+      </Form>
     </Card>
   )
 }

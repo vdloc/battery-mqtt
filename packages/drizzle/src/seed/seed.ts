@@ -83,12 +83,6 @@ async function createUserAndDevice(db: NodePgDatabase<Record<string, never>>) {
   for await (const setupChannel of deviceSetupChannels) {
     await db.insert(setupChannelTable).values(setupChannel)
   }
-
-  await db.insert(notificationSettingTable).values({
-    t1: 5 * 60 * 1000,
-    t2: 10 * 60 * 1000,
-    t3: 15 * 60 * 1000,
-  })
 }
 
 async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
@@ -105,12 +99,24 @@ async function createManageUnits(db: NodePgDatabase<Record<string, never>>) {
       name: manageUnitTable.name,
     })
     .from(manageUnitTable)
+
   let imeis = await db
     .select({
       imei: brokerDeviceTable.imei,
       id: brokerDeviceTable.id,
     })
     .from(brokerDeviceTable)
+
+  for await (const manageUnit of manageUnits) {
+    const manageUnitId = manageUnit.id
+    await db.insert(notificationSettingTable).values({
+      manageUnitId,
+      t1: faker.number.int({ min: 5, max: 10 }) * 60 * 1000,
+      t2: faker.number.int({ min: 5, max: 10 }) * 60 * 1000,
+      t3: faker.number.int({ min: 5, max: 10 }) * 60 * 1000,
+    })
+  }
+
   for (const imei of imeis) {
     const manageUnit = faker.helpers.arrayElement(manageUnits)
     const data = {

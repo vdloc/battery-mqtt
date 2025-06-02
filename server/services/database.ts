@@ -347,7 +347,17 @@ class DatabaseService {
   }
 
   async createManageUnit({ name }: { name: string }) {
-    return await db.insert(manageUnitTable).values({ name })
+    const manageUnit = await db.insert(manageUnitTable).values({ name }).returning({
+      id: manageUnitTable.id,
+    })
+    await db.insert(notificationSettingTable).values({
+      manageUnitId: manageUnit[0].id,
+      t1: 0,
+      t2: 0,
+      t3: 0,
+    })
+
+    return manageUnit
   }
 
   async getRolePermissions(userRoleId: string) {
@@ -486,13 +496,29 @@ class DatabaseService {
     return manageUnit.id
   }
 
-  async getNotificationSetting() {
-    return await db.query.notificationSettingTable.findFirst({})
+  async getNotificationSetting(manageUnitId: string) {
+    const result = await db.query.notificationSettingTable.findFirst({
+      where: eq(notificationSettingTable.manageUnitId as any, manageUnitId),
+    })
+
+    return result
   }
 
-  async updateNotificationSetting({ t1, t2, t3 }: { t1: number; t2: number; t3: number }) {
-    let { id } = await this.getNotificationSetting()
+  async getAllNotificationSetting() {
+    return await db.query.notificationSettingTable.findMany({})
+  }
 
+  async updateNotificationSetting({
+    t1,
+    t2,
+    t3,
+    manageUnitId,
+  }: {
+    t1: number
+    t2: number
+    t3: number
+    manageUnitId: string
+  }) {
     return await db
       .update(notificationSettingTable)
       .set({
@@ -500,7 +526,7 @@ class DatabaseService {
         t2,
         t3,
       })
-      .where(eq(notificationSettingTable.id as any, id))
+      .where(eq(notificationSettingTable.manageUnitId as any, manageUnitId))
   }
 }
 

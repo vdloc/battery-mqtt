@@ -49,6 +49,7 @@ export const setupChannelTable = pgTable("mqtt_setup_channel", {
 
 export const notificationSettingTable = pgTable("mqtt_notification_setting", {
   id: uuid().defaultRandom().primaryKey(),
+  manageUnitId: uuid().references(() => manageUnitTable.id),
   t1: bigint({ mode: "number" }).notNull(),
   t2: bigint({ mode: "number" }).notNull(),
   t3: bigint({ mode: "number" }).notNull(),
