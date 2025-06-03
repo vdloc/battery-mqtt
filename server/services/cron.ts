@@ -3,7 +3,9 @@ import { OPERATORS, Topic } from "../types/Topic"
 import { mqttService, MqttService } from "./mqtt"
 import { databaseService, DevicesFromDB, DeviceIntervalsFromDB } from "./database"
 import { BatteryStatusResponse } from "../types/Response"
+import pino from "pino"
 
+const log = pino({ level: "info" })
 enum ISP {
   VNPT = "VNPT",
   VTC = "VTC",
@@ -37,9 +39,9 @@ export class CronJobService {
   mqttService: MqttService = mqttService
   private readonly ampereRange: [number, number] = [0, 1]
   private readonly voltageRange: [number, number] = [53, 54]
-  private readonly downtrendDurationRange: [number, number] = [1, 3]
+  private readonly downtrendDurationRange: [number, number] = [5, 7]
   private readonly uptrendDurationRange: [number, number] = [1, 2]
-  private readonly downtrendIntervalRange: [number, number] = [0, 0.01]
+  private readonly downtrendIntervalRange: [number, number] = [5, 10]
   private readonly downtrendAmpereRange: [number, number] = [-50, -20]
   private readonly downtrendVoltageRange: [number, number] = [52, 43]
 
@@ -134,11 +136,12 @@ export class CronJobService {
 
       const downtrendCronHandler = () => {
         if (taskData.isDownTrend || taskData.isUpTrend) return
-        console.log("start downtrend")
+        log.info("start downtrend")
         taskData.isDownTrend = true
         taskData.downtrendDuration = this.getRandomDurationInMinutes(...this.downtrendDurationRange)
         taskData.uptrendDuration = this.getRandomDurationInMinutes(...this.uptrendDurationRange)
         taskData.downtrendInterval = this.getRandomDurationInMinutes(...this.downtrendIntervalRange)
+        log.info(JSON.stringify(taskData))
 
         if (taskData.tasks.downtrend) {
           clearInterval(taskData.tasks.downtrend)
@@ -147,13 +150,13 @@ export class CronJobService {
       }
 
       CronJobService.timeout(taskData.uptrendDuration, () => {
-        console.log("clear downtrend + start uptrend")
+        log.info("clear downtrend + start uptrend")
         taskData.isDownTrend = false
         taskData.isUpTrend = true
       })
 
       CronJobService.timeout(taskData.uptrendDuration + taskData.downtrendDuration, () => {
-        console.log("clear downtrend + uptrend")
+        log.info("clear downtrend + uptrend")
         taskData.isDownTrend = false
         taskData.isUpTrend = false
       })
@@ -190,12 +193,13 @@ export class CronJobService {
   }
 
   getDowntrendInfor(taskData: Task) {
+    log.info("get downtrend infor", JSON.stringify(taskData))
     let { downtrendAmpereLimit, downtrendDuration, downtrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
       taskData
     let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
     let decreaseTime = batteryStatusInterval / downtrendDuration
-    let decreaseAmpere = (lastInfor?.CH1.Ampere || 0 - downtrendAmpereLimit) * decreaseTime
-    let decreaseVoltage = (lastInfor?.CH1.Voltage || 0 - downtrendVoltageLimit) * decreaseTime
+    let decreaseAmpere = ((lastInfor?.CH1.Ampere || 0) - downtrendAmpereLimit) * decreaseTime
+    let decreaseVoltage = ((lastInfor?.CH1.Voltage || 0) - downtrendVoltageLimit) * decreaseTime
 
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
@@ -205,7 +209,7 @@ export class CronJobService {
       }
     })
 
-    console.log("getDowntrendInfor lastInfor:", lastInfor)
+    log.info("getDowntrendInfor lastInfor:", JSON.stringify(lastInfor))
     return lastInfor
   }
 

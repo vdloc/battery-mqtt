@@ -2,16 +2,19 @@ import { BatteryStatusResponse } from "../types/Response"
 import { CronJobService } from "./cron"
 import { databaseService } from "./database"
 import { mailService } from "./mail"
+import pino from "pino"
+
+const log = pino({ level: "info" })
 
 class NotificationService {
   private devices: { [key: string]: any } = {}
   private settings: { [key: string]: any } = {}
 
   constructor() {
-    this.updateTimes()
+    this.getSettings()
   }
 
-  async updateTimes() {
+  async getSettings() {
     const settings = await databaseService.getAllNotificationSetting()
     settings.forEach((setting: any) => {
       this.settings[setting.manageUnitId] = setting
@@ -29,6 +32,8 @@ class NotificationService {
     const dischargingChannel = Object.keys(infor).find((channel) => {
       const { Ampere } = infor[channel]
       const { Ampere: lastAmpere } = lastBatteryStatus.infor[channel]
+      log.info(`${Ampere} < ${lastAmpere}`)
+      log.info(JSON.stringify(this.devices[input.imei]))
 
       return Ampere < 0 && lastAmpere < 0 && Ampere < lastAmpere
     })
