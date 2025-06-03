@@ -154,6 +154,10 @@ class DatabaseService {
     if (simNumber) updateData.simNumber = simNumber
     if (enableNotification) updateData.enableNotification = enableNotification
 
+    const manageUnitName = await this.getManageUnitName(manageUnitId ?? "")
+
+    if (manageUnitName) updateData.manageUnitName = manageUnitName
+
     const result = await db
       .update(brokerDeviceTable)
       .set(updateData)
