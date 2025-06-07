@@ -19,4 +19,5 @@ export const {
   SMTP_PORT,
   SMTP_USER,
   SMTP_PASS,
+  HANDLE_FAKE_DATA,
 } = process.env

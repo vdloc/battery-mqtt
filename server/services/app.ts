@@ -1,3 +1,4 @@
+import { HANDLE_FAKE_DATA } from "../envConfigs"
 import {
   BatteryStatusResponse,
   GatewayErrorResponse,
@@ -22,8 +23,10 @@ class AppService {
   }
 
   init() {
-    // mqttService.onMessage(this.handleMqttMessage)
-    // cronjobService.init()
+    if (HANDLE_FAKE_DATA) {
+      mqttService.onMessage(this.handleMqttMessage)
+      cronjobService.init()
+    }
   }
 
   handleMqttMessage: OnMessageCallback = (topic, message) => {

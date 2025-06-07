@@ -1,10 +1,8 @@
 import { BatteryStatusResponse } from "../types/Response"
 import { CronJobService } from "./cron"
 import { databaseService } from "./database"
+import { log } from "./log"
 import { mailService } from "./mail"
-import pino from "pino"
-
-const log = pino({ level: "info" })
 
 class NotificationService {
   private devices: { [key: string]: any } = {}
@@ -32,8 +30,8 @@ class NotificationService {
     const dischargingChannel = Object.keys(infor).find((channel) => {
       const { Ampere } = infor[channel]
       const { Ampere: lastAmpere } = lastBatteryStatus.infor[channel]
-      log.info(`${Ampere} < ${lastAmpere}`)
-      log.info(JSON.stringify(this.devices[input.imei]))
+      log(`${Ampere} < ${lastAmpere}`)
+      log(JSON.stringify(this.devices[input.imei]))
 
       return Ampere < 0 && lastAmpere < 0 && Ampere < lastAmpere
     })
