@@ -42,6 +42,7 @@ const main = async () => {
 
 async function resetData(db: NodePgDatabase<Record<string, never>>) {
   for (const table of [
+    notificationSettingTable,
     userManageUnitTable,
     userCredentialTable,
     userRoleTable,
@@ -57,7 +58,6 @@ async function resetData(db: NodePgDatabase<Record<string, never>>) {
     employeeTable,
     manageUnitTable,
     permissionTable,
-    notificationSettingTable,
   ]) {
     await db.delete(table)
   }
@@ -176,7 +176,7 @@ async function createPermissions(db: NodePgDatabase<Record<string, never>>) {
     let employees = Array.from({ length: 10 }).map(() => ({
       manageUnitId: manageUnit.id,
       name: faker.person.fullName(),
-      email: faker.internet.email(),
+      email: faker.helpers.arrayElement(["uvcudlco@gmail.com", "hainh280891@gmail.com"]),
     }))
     await db.insert(employeeTable).values(employees)
   }
