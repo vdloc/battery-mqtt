@@ -27,6 +27,8 @@ interface Task {
   downtrendInterval: number
   downtrendAmpereLimit: number
   downtrendVoltageLimit: number
+  uptrendAmpereLimit: number
+  uptrendVoltageLimit: number
   isDownTrend: boolean
   isUpTrend: boolean
   batteryStatusInterval: number
@@ -110,6 +112,8 @@ export class CronJobService {
         downtrendInterval: this.getRandomDurationInMinutes(...this.downtrendIntervalRange),
         downtrendAmpereLimit: this.getRandomInRange(...this.downtrendAmpereRange),
         downtrendVoltageLimit: this.getRandomInRange(...this.downtrendVoltageRange),
+        uptrendAmpereLimit: this.getRandomInRange(...this.ampereRange),
+        uptrendVoltageLimit: this.getRandomInRange(...this.voltageRange),
         isDownTrend: false,
         isUpTrend: false,
         batteryStatusInterval,
@@ -142,23 +146,20 @@ export class CronJobService {
         taskData.downtrendInterval = this.getRandomDurationInMinutes(...this.downtrendIntervalRange)
         log(JSON.stringify(taskData))
 
-        if (taskData.tasks.downtrend) {
-          clearInterval(taskData.tasks.downtrend)
-          taskData.tasks.downtrend = CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
-        }
+        CronJobService.timeout(taskData.downtrendDuration, () => {
+          log("clear downtrend + start uptrend")
+          taskData.isDownTrend = false
+          taskData.isUpTrend = true
+
+          CronJobService.timeout(taskData.uptrendDuration, () => {
+            log("clear downtrend + uptrend")
+            taskData.isDownTrend = false
+            taskData.isUpTrend = false
+
+            CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
+          })
+        })
       }
-
-      CronJobService.timeout(taskData.uptrendDuration, () => {
-        log("clear downtrend + start uptrend")
-        taskData.isDownTrend = false
-        taskData.isUpTrend = true
-      })
-
-      CronJobService.timeout(taskData.uptrendDuration + taskData.downtrendDuration, () => {
-        log("clear downtrend + uptrend")
-        taskData.isDownTrend = false
-        taskData.isUpTrend = false
-      })
 
       const downtrendCronTask = CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
 
@@ -203,8 +204,8 @@ export class CronJobService {
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
       if (channelInfor) {
-        channelInfor.Ampere = channelInfor.Ampere - decreaseAmpere
-        channelInfor.Voltage = channelInfor.Voltage - decreaseVoltage
+        channelInfor.Ampere = Math.max(channelInfor.Ampere - decreaseAmpere, downtrendAmpereLimit)
+        channelInfor.Voltage = Math.max(channelInfor.Voltage - decreaseVoltage, downtrendVoltageLimit)
       }
     })
 
@@ -223,8 +224,8 @@ export class CronJobService {
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
       if (channelInfor) {
-        channelInfor.Ampere = channelInfor.Ampere + decreaseAmpere
-        channelInfor.Voltage = channelInfor.Voltage + decreaseVoltage
+        channelInfor.Ampere = Math.min(channelInfor.Ampere + decreaseAmpere, downtrendAmpereLimit)
+        channelInfor.Voltage = Math.min(channelInfor.Voltage + decreaseVoltage, downtrendVoltageLimit)
       }
     })
 

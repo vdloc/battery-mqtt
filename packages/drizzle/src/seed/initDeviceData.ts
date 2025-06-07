@@ -11,7 +11,7 @@ interface DeviceRecord {
   aliasName: string
 }
 
-export const devices: any[] = Array.from({ length: 5 }).map(() => ({
+export const devices: any[] = Array.from({ length: 1 }).map(() => ({
   id: randomUUID(),
   imei: getRandom(),
   time: Date.now(),

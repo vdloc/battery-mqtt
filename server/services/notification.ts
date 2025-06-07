@@ -23,7 +23,7 @@ class NotificationService {
     await this.setDeviceData(input)
     await this.setSettingsData(input)
 
-    const { infor } = input
+    const { infor } = input // Current  battery status information
     const { lastBatteryStatus, manageUnitName, manageUnitId } = this.devices[input.imei]
     const { t1, t2, t3 } = this.settings[manageUnitId]
 
@@ -33,7 +33,7 @@ class NotificationService {
       log(`${Ampere} < ${lastAmpere}`)
       log(JSON.stringify(this.devices[input.imei]))
 
-      return Ampere < 0 && lastAmpere < 0 && Ampere < lastAmpere
+      return Ampere < lastAmpere
     })
 
     this.devices[input.imei].isDownTrend = !!dischargingChannel

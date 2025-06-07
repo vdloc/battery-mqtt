@@ -8,6 +8,7 @@ import {
   EmployeeNotFoundError,
   ManageUnitNotFoundError,
 } from "../helper/errors"
+import { log } from "./log"
 
 const { eq, count, asc, ilike, and, desc, notInArray } = drizzleOrm
 const {
@@ -207,15 +208,19 @@ class DatabaseService {
   }
 
   async getSetupChannel(imei: string) {
-    let result = await db.query.setupChannelTable.findFirst({
-      where: eq(setupChannelTable.imei as any, imei),
-      columns: {
-        usingChannel: true,
-      },
-    })
+    try {
+      let result = await db.query.setupChannelTable.findFirst({
+        where: eq(setupChannelTable.imei as any, imei),
+        columns: {
+          usingChannel: true,
+        },
+      })
 
-    if (result.length) return result?.usingChannel
-    return null
+      if (result.length) return result?.usingChannel
+      return null
+    } catch (error) {
+      log(error)
+    }
   }
 
   async updateSetupChannel({ imei, usingChannel, time }: any) {

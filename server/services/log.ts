@@ -1,26 +1,23 @@
 import pino from "pino"
+import fs from "fs"
 
-class Logger {
-  logger: pino.Logger
-  /**
-   *
-   */
-  constructor() {
-    this.logger = pino(
-      {
-        level: "info",
-        transport: {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            translateTime: "SYS:standard",
-            ignore: "pid,hostname",
-          },
-        },
+const fileStream = fs.createWriteStream("./output.log", { flags: "a" })
+const logger = pino(
+  {
+    level: "info",
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "SYS:standard",
+        ignore: "pid,hostname",
       },
-      pino.destination("./output.log")
-    )
-  }
-}
+    },
+  },
+  pino.multistream([
+    { stream: process.stdout }, // Console output
+    { stream: fileStream }, // File output
+  ])
+)
 
-export const log = new Logger().logger.info
+export const log = logger.info.bind(logger)
