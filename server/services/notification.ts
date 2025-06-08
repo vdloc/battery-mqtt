@@ -20,58 +20,84 @@ class NotificationService {
   }
 
   async checkAndSendNotification(input: BatteryStatusResponse) {
-    await this.setDeviceData(input)
+    if (!this.devices[input.imei]) {
+      await this.setDeviceData(input)
+    } else {
+      this.devices[input.imei].lastBatteryStatus = input
+    }
     await this.setSettingsData(input)
 
-    const { infor } = input // Current  battery status information
-    const { lastBatteryStatus, manageUnitName, manageUnitId } = this.devices[input.imei]
+    const dischargingChannel = await this.getDischargingChannel(input)
+    const deviceData = this.devices[input.imei]
+    deviceData.isDownTrend = !!dischargingChannel
+
+    if (!deviceData.isDownTrend || !dischargingChannel) return
+    const { manageUnitName, manageUnitId } = deviceData
+    const employees = await databaseService.getEmployees(manageUnitId)
     const { t1, t2, t3 } = this.settings[manageUnitId]
 
-    const dischargingChannel = Object.keys(infor).find((channel) => {
-      const { Ampere } = infor[channel]
-      const { Ampere: lastAmpere } = lastBatteryStatus.infor[channel]
-      log(`${Ampere} < ${lastAmpere}`)
-      log(JSON.stringify(this.devices[input.imei]))
-
-      return Ampere < lastAmpere
-    })
-
-    this.devices[input.imei].isDownTrend = !!dischargingChannel
-
-    if (!this.devices[input.imei].isDownTrend || !dischargingChannel) return
-    const employees = await databaseService.getEmployees(manageUnitId)
-
-    if (!this.devices[input.imei].isSendDowntrendEmail) {
+    if (!deviceData.isSendDowntrendEmail) {
       CronJobService.timeout(t1 * 60000, async () => {
         employees.forEach((employee: any) => {
           mailService.sendDowntrendEmail({
             to: employee.email,
             manageUnitName,
             t1: t1,
-            ampere: infor[dischargingChannel].Ampere,
-            voltage: infor[dischargingChannel].Voltage,
+            ampere: input.infor[dischargingChannel].Ampere,
+            voltage: input.infor[dischargingChannel].Voltage,
           })
         })
       })
-      this.devices[input.imei].isSendDowntrendEmail = true
+      deviceData.isSendDowntrendEmail = true
+      return
     }
+
+    if (deviceData.isSendDowntrendEmail && !deviceData.isSendDischargingEmail) {
+      deviceData.dischargingTimeout = CronJobService.schedule(t2 * 60000, async () => {
+        employees.forEach((employee: any) => {
+          mailService.sendDischarginEmail({
+            to: employee.email,
+            manageUnitName,
+            ampere: input.infor[dischargingChannel].Ampere,
+            voltage: input.infor[dischargingChannel].Voltage,
+          })
+        })
+      })
+      deviceData.isSendDischargingEmail = true
+      return
+    }
+
+    clearInterval(deviceData.dischargingTimeout)
+    deviceData.dischargingTimeout = CronJobService.schedule(t3 * 60000, async () => {
+      employees.forEach((employee: any) => {
+        mailService.sendUpTrendEmail({
+          to: employee.email,
+          manageUnitName,
+          ampere: input.infor[dischargingChannel].Ampere,
+          voltage: input.infor[dischargingChannel].Voltage,
+        })
+      })
+    })
+    deviceData.isSendDischargingEmail = false
+    deviceData.isSendDowntrendEmail = false
+    deviceData.isDownTrend = false
   }
 
   async setDeviceData(input: BatteryStatusResponse) {
-    if (!this.devices[input.imei]) {
-      const device = await databaseService.getDevice(input.imei)
-      const channel = await databaseService.getSetupChannel(input.imei)
-      const { enableNotification, manageUnitName, manageUnitId } = device
+    const device = await databaseService.getDevice(input.imei)
+    const channel = await databaseService.getSetupChannel(input.imei)
+    const { enableNotification, manageUnitName, manageUnitId } = device
 
-      this.devices[input.imei] = {
-        enableNotification,
-        channel: channel?.usingChannel,
-        lastBatteryStatus: input,
-        isDownTrend: false,
-        isSendDowntrendEmail: false,
-        manageUnitName,
-        manageUnitId,
-      }
+    this.devices[input.imei] = {
+      enableNotification,
+      channel: channel?.usingChannel,
+      lastBatteryStatus: input,
+      isDownTrend: false,
+      isSendDowntrendEmail: false,
+      isSendDischargingEmail: false,
+      dischargingTimeout: null,
+      manageUnitName,
+      manageUnitId,
     }
   }
 
@@ -84,6 +110,20 @@ class NotificationService {
       const setting = await databaseService.getNotificationSetting(manageUnitId)
       this.settings[manageUnitId] = setting
     }
+  }
+
+  async getDischargingChannel(input: BatteryStatusResponse) {
+    const { infor } = input // Current  battery status information
+    const { lastBatteryStatus } = this.devices[input.imei]
+
+    const dischargingChannel = Object.keys(infor).find((channel) => {
+      const { Ampere } = infor[channel]
+      const { Ampere: lastAmpere } = lastBatteryStatus.infor[channel]
+
+      return lastAmpere < 0 && Ampere < lastAmpere
+    })
+
+    return dischargingChannel
   }
 }
 const notificationService = new NotificationService()

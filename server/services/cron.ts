@@ -107,9 +107,9 @@ export class CronJobService {
           downtrend: null,
         },
         lastBatteryStatus: null,
-        downtrendDuration: this.getRandomDurationInMinutes(...this.downtrendDurationRange),
-        uptrendDuration: this.getRandomDurationInMinutes(...this.uptrendDurationRange),
-        downtrendInterval: this.getRandomDurationInMinutes(...this.downtrendIntervalRange),
+        downtrendDuration: this.getRandomDurationInSecond(...this.downtrendDurationRange),
+        uptrendDuration: this.getRandomDurationInSecond(...this.uptrendDurationRange),
+        downtrendInterval: this.getRandomDurationInSecond(...this.downtrendIntervalRange),
         downtrendAmpereLimit: this.getRandomInRange(...this.downtrendAmpereRange),
         downtrendVoltageLimit: this.getRandomInRange(...this.downtrendVoltageRange),
         uptrendAmpereLimit: this.getRandomInRange(...this.ampereRange),
@@ -139,20 +139,13 @@ export class CronJobService {
 
       const downtrendCronHandler = () => {
         if (taskData.isDownTrend || taskData.isUpTrend) return
-        log("start downtrend")
         taskData.isDownTrend = true
-        taskData.downtrendDuration = this.getRandomDurationInMinutes(...this.downtrendDurationRange)
-        taskData.uptrendDuration = this.getRandomDurationInMinutes(...this.uptrendDurationRange)
-        taskData.downtrendInterval = this.getRandomDurationInMinutes(...this.downtrendIntervalRange)
-        log(JSON.stringify(taskData))
 
         CronJobService.timeout(taskData.downtrendDuration, () => {
-          log("clear downtrend + start uptrend")
           taskData.isDownTrend = false
           taskData.isUpTrend = true
 
           CronJobService.timeout(taskData.uptrendDuration, () => {
-            log("clear downtrend + uptrend")
             taskData.isDownTrend = false
             taskData.isUpTrend = false
 
@@ -162,7 +155,6 @@ export class CronJobService {
       }
 
       const downtrendCronTask = CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
-
       taskData.tasks.battery = batteryStatusCronTask
       taskData.tasks.gateway = gatewayStatusCronTask
       taskData.tasks.downtrend = downtrendCronTask
@@ -193,15 +185,14 @@ export class CronJobService {
   }
 
   getDowntrendInfor(taskData: Task) {
-    log("get downtrend infor", JSON.stringify(taskData))
     let { downtrendAmpereLimit, downtrendDuration, downtrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
       taskData
     let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
     let decreaseTime = batteryStatusInterval / downtrendDuration
-    let decreaseAmpere = ((lastInfor?.CH1.Ampere || 0) - downtrendAmpereLimit) * decreaseTime
-    let decreaseVoltage = ((lastInfor?.CH1.Voltage || 0) - downtrendVoltageLimit) * decreaseTime
 
     Object.keys(lastInfor ?? {}).forEach((channel) => {
+      let decreaseAmpere = ((lastInfor?.[channel].Ampere || 0) - downtrendAmpereLimit) * decreaseTime
+      let decreaseVoltage = ((lastInfor?.[channel].Voltage || 0) - downtrendVoltageLimit) * decreaseTime
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
       if (channelInfor) {
         channelInfor.Ampere = Math.max(channelInfor.Ampere - decreaseAmpere, downtrendAmpereLimit)
@@ -209,23 +200,24 @@ export class CronJobService {
       }
     })
 
-    log("getDowntrendInfor lastInfor:", JSON.stringify(lastInfor))
     return lastInfor
   }
 
   getUptrendInfor(taskData: Task) {
-    let { downtrendAmpereLimit, uptrendDuration, downtrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
+    let { uptrendAmpereLimit, uptrendDuration, uptrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
       taskData
     let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
     let decreaseTime = batteryStatusInterval / uptrendDuration
-    let decreaseAmpere = (lastInfor?.CH1.Ampere || 0 - downtrendAmpereLimit) * decreaseTime
-    let decreaseVoltage = (lastInfor?.CH1.Voltage || 0 - downtrendVoltageLimit) * decreaseTime
 
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
+
+      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * decreaseTime
+      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * decreaseTime
+
       if (channelInfor) {
-        channelInfor.Ampere = Math.min(channelInfor.Ampere + decreaseAmpere, downtrendAmpereLimit)
-        channelInfor.Voltage = Math.min(channelInfor.Voltage + decreaseVoltage, downtrendVoltageLimit)
+        channelInfor.Ampere = Math.min(channelInfor.Ampere + increaseAmpere, uptrendAmpereLimit)
+        channelInfor.Voltage = Math.min(channelInfor.Voltage + increaseVoltage, uptrendVoltageLimit)
       }
     })
 
@@ -258,6 +250,10 @@ export class CronJobService {
 
   getRandomDurationInMinutes(min: number, max: number) {
     return faker.number.int({ min: min * 60 * 1000, max: max * 60 * 1000 })
+  }
+
+  getRandomDurationInSecond(min: number, max: number) {
+    return this.getRandomDurationInMinutes(min, max) / 1000
   }
 
   updateTask(imei: string, batteryStatusInterval: number, deviceStatusInterval: number) {

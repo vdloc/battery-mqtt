@@ -72,6 +72,27 @@ class MailService {
       console.error("Error sending email:", error)
     }
   }
+
+  async sendUpTrendEmail({
+    to,
+    manageUnitName,
+    ampere,
+    voltage,
+  }: {
+    to: string
+    manageUnitName: string
+    ampere: number
+    voltage: number
+  }): Promise<void> {
+    const html = `
+    <p>${new Date().toUTCString()}-${manageUnitName}-${voltage}V-${ampere}A}</p>`
+
+    try {
+      await this.sendMail(to, MailService.CHARGING_SUBJECT, html)
+    } catch (error) {
+      console.error("Error sending email:", error)
+    }
+  }
 }
 
 export const mailService = new MailService()
