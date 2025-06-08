@@ -21,11 +21,18 @@ const useGetDevices = () => {
           const lastBatteryStatus: any = {}
           config = config.map((element: any, index: number) => {
             configObj[element.imei] = element
-            lastGatewayStatus[element.imei] = element.lastGatewayStatus
-            lastBatteryStatus[element.imei] = element.lastBatteryStatus
+            lastGatewayStatus[element.imei] = {
+              ...element.lastGatewayStatus,
+              time: element.time,
+            }
+            lastBatteryStatus[element.imei] = {
+              ...element.lastBatteryStatus,
+              time: element.time,
+            }
             return {
               ...element,
               index,
+              time: element.time,
             }
           })
           return {

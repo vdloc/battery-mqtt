@@ -119,6 +119,7 @@ const Details = () => {
       }))
     }
   }, [messages])
+  console.log("messages", messages)
   useEffect(() => {
     if (
       messages &&
@@ -264,6 +265,16 @@ const Chart = ({ data, newData, interval }: any) => {
   const seriesList = useRef<any>([])
   const intervalRef = useRef<any>(interval || null)
 
+  const disabledChannel = (name: string) => {
+    const resultLocal = localStorage.getItem("disabledChannel")
+    const result = JSON.parse(resultLocal || "[]")
+    if (result.indexOf(name) === -1) {
+      result.push(name)
+    } else {
+      result.splice(result.indexOf(name), 1)
+    }
+    localStorage.setItem("disabledChannel", JSON.stringify(result))
+  }
   useEffect(() => {
     if (interval) {
       intervalRef.current = interval
@@ -319,7 +330,6 @@ const Chart = ({ data, newData, interval }: any) => {
 
     // Create axes
     // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
-
     let xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
         baseInterval: {
@@ -346,6 +356,8 @@ const Chart = ({ data, newData, interval }: any) => {
     yAxis1.get("renderer").grid.template.set("visible", false)
     yAxis2.get("renderer").grid.template.set("visible", false)
 
+    const localState = JSON.parse(localStorage.getItem("disabledChannel") || "[]")
+
     // Add series
     // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
     for (var i = 1; i < 9; i++) {
@@ -369,6 +381,9 @@ const Chart = ({ data, newData, interval }: any) => {
       )
       series.data.setAll(data)
       seriesList.current[i - 1] = series
+      if (localState.indexOf(name) !== -1) {
+        series.hide(0)
+      }
 
       // Make stuff animate on load
       // https://www.amcharts.com/docs/v5/concepts/animations/
@@ -444,7 +459,10 @@ const Chart = ({ data, newData, interval }: any) => {
         })
       })
     })
-
+    legend.itemContainers.template.events.on("click", (ev) => {
+      const series: any = ev.target.dataItem?.dataContext
+      disabledChannel(series.get("name"))
+    })
     legend.itemContainers.template.set("width", am5.p100)
     legend.valueLabels.template.setAll({
       width: am5.p100,

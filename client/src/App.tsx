@@ -196,7 +196,10 @@ const LayoutApp = ({ children }: any) => {
     <>
       <Layout hasSider>
         <Sider style={siderStyle}>
-          <div className="demo-logo-vertical" />
+          <div className="flex items-center gap-2 mb-10">
+            <img className="w-16" src="/logo.jpg" alt="" />
+            <p className="text-2xl font-bold text-white">BMS</p>
+          </div>
           <Menu theme="dark" mode="inline" defaultSelectedKeys={["4"]} items={items} />
         </Sider>
         <Layout>
