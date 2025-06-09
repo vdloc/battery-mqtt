@@ -188,12 +188,15 @@ const HomePage = () => {
             "Đơn vị": item.manageUnitName,
             "Mã trạm": <Link to={`/device/${item.imei}`}>{item.stationCode}</Link>,
             "Tên gợi nhớ": item.aliasName,
-            "Trạng thái gateway":
-              now - lastGatewayStatus[item.imei]?.time > 3 * batInterval[item.imei]?.batteryStatusInterval * 1000 ? (
-                <Tag color="error">Offline</Tag>
-              ) : (
-                <Tag color="success">Online</Tag>
-              ),
+            "Trạng thái gateway": !(
+              !!lastGatewayStatus[item.imei]?.time && !!batInterval[item.imei]?.batteryStatusInterval
+            ) ? (
+              "--"
+            ) : now - lastGatewayStatus[item.imei]?.time < 3 * +batInterval[item.imei]?.batteryStatusInterval * 1000 ? (
+              <Tag color="success">Online</Tag>
+            ) : (
+              <Tag color="error">Offline</Tag>
+            ),
             Volt: (
               <>
                 <p>
@@ -204,7 +207,6 @@ const HomePage = () => {
                   )}
                   {channelsStatus?.[1] === "1" && (
                     <>
-                      {channelsStatus?.[0] === "1" && "/"}{" "}
                       <b className="block">
                         CH2: <Text>{lastBatteryStatus[item.imei]?.CH2?.Voltage?.toFixed(2)}</Text>
                       </b>
@@ -212,7 +214,6 @@ const HomePage = () => {
                   )}
                   {channelsStatus?.[2] === "1" && (
                     <>
-                      {channelsStatus?.[1] === "1" && "/"}
                       <b className="block">
                         CH3: <Text>{lastBatteryStatus[item.imei]?.CH3?.Voltage?.toFixed(2)}</Text>
                       </b>
@@ -220,7 +221,6 @@ const HomePage = () => {
                   )}
                   {channelsStatus?.[3] === "1" && (
                     <>
-                      {channelsStatus?.[2] === "1" && "/"}
                       <b className="block">
                         CH4: <Text>{lastBatteryStatus[item.imei]?.CH4?.Voltage?.toFixed(2)}</Text>
                       </b>
@@ -239,7 +239,6 @@ const HomePage = () => {
                   )}
                   {channelsStatus?.[1] === "1" && (
                     <>
-                      {channelsStatus?.[0] === "1" && "/"}{" "}
                       <b className="block">
                         CH2: <Text>{lastBatteryStatus[item.imei]?.CH2?.Ampere?.toFixed(2)}</Text>
                       </b>
@@ -247,7 +246,6 @@ const HomePage = () => {
                   )}
                   {channelsStatus?.[2] === "1" && (
                     <>
-                      {channelsStatus?.[1] === "1" && "/"}
                       <b className="block">
                         CH3: <Text>{lastBatteryStatus[item.imei]?.CH3?.Ampere?.toFixed(2)}</Text>
                       </b>
@@ -255,7 +253,6 @@ const HomePage = () => {
                   )}
                   {channelsStatus?.[3] === "1" && (
                     <>
-                      {channelsStatus?.[2] === "1" && "/"}
                       <b className="block">
                         CH4: <Text>{lastBatteryStatus[item.imei]?.CH4?.Ampere?.toFixed(2)}</Text>
                       </b>
