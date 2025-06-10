@@ -24,13 +24,17 @@ interface Task {
   lastBatteryStatus: BatteryStatusResponse | null
   downtrendDuration: number
   uptrendDuration: number
+  normalizeDuration: number
   downtrendInterval: number
   downtrendAmpereLimit: number
   downtrendVoltageLimit: number
   uptrendAmpereLimit: number
   uptrendVoltageLimit: number
+  normalizeAmpereLimit: number
+  normalizeVoltageLimit: number
   isDownTrend: boolean
   isUpTrend: boolean
+  isNormalize: boolean
   batteryStatusInterval: number
 }
 
@@ -42,9 +46,12 @@ export class CronJobService {
   private readonly voltageRange: [number, number] = [53, 54]
   private readonly downtrendDurationRange: [number, number] = [5, 7]
   private readonly uptrendDurationRange: [number, number] = [1, 2]
-  private readonly downtrendIntervalRange: [number, number] = [5, 10]
+  private readonly normalizeDurationRange: [number, number] = [1, 2]
+  private readonly downtrendIntervalRange: [number, number] = [0, 1]
   private readonly downtrendAmpereRange: [number, number] = [-50, -20]
-  private readonly downtrendVoltageRange: [number, number] = [52, 43]
+  private readonly uptrendAmpereRange: [number, number] = [50, 20]
+  private readonly uptrendVoltageRange: [number, number] = [50, 54]
+  private readonly downtrendVoltageRange: [number, number] = [43, 45]
 
   constructor() {
     this.devices = []
@@ -67,6 +74,10 @@ export class CronJobService {
 
       if (taskData.isUpTrend) {
         infor = this.getUptrendInfor(taskData)
+      }
+
+      if (taskData.isNormalize) {
+        infor = this.getNormalizeInfor(taskData)
       }
     }
 
@@ -107,15 +118,23 @@ export class CronJobService {
           downtrend: null,
         },
         lastBatteryStatus: null,
+        // Random durations and limits for downtrend, uptrend, and normalization
         downtrendDuration: this.getRandomDurationInSecond(...this.downtrendDurationRange),
         uptrendDuration: this.getRandomDurationInSecond(...this.uptrendDurationRange),
+        normalizeDuration: this.getRandomDurationInSecond(...this.normalizeDurationRange),
+        // Random intervals and limits for downtrend and uptrend
         downtrendInterval: this.getRandomDurationInSecond(...this.downtrendIntervalRange),
         downtrendAmpereLimit: this.getRandomInRange(...this.downtrendAmpereRange),
         downtrendVoltageLimit: this.getRandomInRange(...this.downtrendVoltageRange),
-        uptrendAmpereLimit: this.getRandomInRange(...this.ampereRange),
-        uptrendVoltageLimit: this.getRandomInRange(...this.voltageRange),
+        // Random limits for uptrend
+        uptrendAmpereLimit: this.getRandomInRange(...this.uptrendAmpereRange),
+        uptrendVoltageLimit: this.getRandomInRange(...this.uptrendVoltageRange),
+        // Random limits for normalization
+        normalizeAmpereLimit: this.getRandomInRange(...this.ampereRange),
+        normalizeVoltageLimit: this.getRandomInRange(...this.voltageRange),
         isDownTrend: false,
         isUpTrend: false,
+        isNormalize: false,
         batteryStatusInterval,
       }
 
@@ -140,6 +159,14 @@ export class CronJobService {
       const downtrendCronHandler = () => {
         if (taskData.isDownTrend || taskData.isUpTrend) return
         taskData.isDownTrend = true
+        taskData.isUpTrend = false
+        taskData.isNormalize = false
+
+        taskData.downtrendInterval = this.getRandomDurationInSecond(...this.downtrendIntervalRange)
+        taskData.downtrendAmpereLimit = this.getRandomInRange(...this.downtrendAmpereRange)
+        taskData.downtrendVoltageLimit = this.getRandomInRange(...this.downtrendVoltageRange)
+        taskData.uptrendAmpereLimit = this.getRandomInRange(...this.uptrendAmpereRange)
+        taskData.uptrendVoltageLimit = this.getRandomInRange(...this.uptrendVoltageRange)
 
         CronJobService.timeout(taskData.downtrendDuration, () => {
           taskData.isDownTrend = false
@@ -149,7 +176,13 @@ export class CronJobService {
             taskData.isDownTrend = false
             taskData.isUpTrend = false
 
-            CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
+            CronJobService.timeout(taskData.normalizeDuration, () => {
+              taskData.isNormalize = true
+              taskData.isUpTrend = false
+              taskData.isDownTrend = false
+
+              CronJobService.timeout(taskData.downtrendInterval, downtrendCronHandler)
+            })
           })
         })
       }
@@ -218,6 +251,27 @@ export class CronJobService {
       if (channelInfor) {
         channelInfor.Ampere = Math.min(channelInfor.Ampere + increaseAmpere, uptrendAmpereLimit)
         channelInfor.Voltage = Math.min(channelInfor.Voltage + increaseVoltage, uptrendVoltageLimit)
+      }
+    })
+
+    return lastInfor
+  }
+
+  getNormalizeInfor(taskData: Task) {
+    let { normalizeDuration, lastBatteryStatus, batteryStatusInterval, normalizeAmpereLimit, normalizeVoltageLimit } =
+      taskData
+    let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
+    let decreaseTime = batteryStatusInterval / normalizeDuration
+
+    Object.keys(lastInfor ?? {}).forEach((channel) => {
+      let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
+
+      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - normalizeAmpereLimit) * decreaseTime
+      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - normalizeVoltageLimit) * decreaseTime
+
+      if (channelInfor) {
+        channelInfor.Ampere = Math.min(channelInfor.Ampere - increaseAmpere, normalizeAmpereLimit)
+        channelInfor.Voltage = Math.min(channelInfor.Voltage - increaseVoltage, normalizeVoltageLimit)
       }
     })
 

@@ -120,7 +120,7 @@ class NotificationService {
       const { Ampere } = infor[channel]
       const { Ampere: lastAmpere } = lastBatteryStatus.infor[channel]
 
-      return lastAmpere < 0 && Ampere < lastAmpere
+      return Ampere < 0 && Ampere < lastAmpere
     })
 
     return dischargingChannel
