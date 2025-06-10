@@ -20,6 +20,8 @@ class NotificationService {
   }
 
   async checkAndSendNotification(input: BatteryStatusResponse) {
+    const dischargingChannel = await this.getDischargingChannel(input)
+
     if (!this.devices[input.imei]) {
       await this.setDeviceData(input)
     } else {
@@ -27,7 +29,6 @@ class NotificationService {
     }
     await this.setSettingsData(input)
 
-    const dischargingChannel = await this.getDischargingChannel(input)
     const deviceData = this.devices[input.imei]
     deviceData.isDownTrend = !!dischargingChannel
 
@@ -113,6 +114,8 @@ class NotificationService {
   }
 
   async getDischargingChannel(input: BatteryStatusResponse) {
+    if (!this.devices[input.imei]) return null
+
     const { infor } = input // Current  battery status information
     const { lastBatteryStatus } = this.devices[input.imei]
 

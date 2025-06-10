@@ -45,12 +45,12 @@ export class CronJobService {
   private readonly ampereRange: [number, number] = [0, 1]
   private readonly voltageRange: [number, number] = [53, 54]
   private readonly downtrendDurationRange: [number, number] = [5, 7]
-  private readonly uptrendDurationRange: [number, number] = [1, 2]
-  private readonly normalizeDurationRange: [number, number] = [1, 2]
-  private readonly downtrendIntervalRange: [number, number] = [0, 1]
-  private readonly downtrendAmpereRange: [number, number] = [-50, -20]
-  private readonly uptrendAmpereRange: [number, number] = [50, 20]
-  private readonly uptrendVoltageRange: [number, number] = [50, 54]
+  private readonly uptrendDurationRange: [number, number] = [2, 3]
+  private readonly normalizeDurationRange: [number, number] = [2, 3]
+  private readonly downtrendIntervalRange: [number, number] = [10, 15]
+  private readonly downtrendAmpereRange: [number, number] = [-30, -20]
+  private readonly uptrendAmpereRange: [number, number] = [30, 40]
+  private readonly uptrendVoltageRange: [number, number] = [53, 53]
   private readonly downtrendVoltageRange: [number, number] = [43, 45]
 
   constructor() {
