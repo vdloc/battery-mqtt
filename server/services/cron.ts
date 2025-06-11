@@ -240,13 +240,13 @@ export class CronJobService {
     let { uptrendAmpereLimit, uptrendDuration, uptrendVoltageLimit, lastBatteryStatus, batteryStatusInterval } =
       taskData
     let lastInfor = structuredClone(lastBatteryStatus?.infor || {})
-    let decreaseTime = batteryStatusInterval / uptrendDuration
+    let increaseTime = batteryStatusInterval / uptrendDuration
 
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
 
-      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * decreaseTime
-      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * decreaseTime
+      let increaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * increaseTime
+      let increaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * increaseTime
 
       if (channelInfor) {
         channelInfor.Ampere = Math.min(channelInfor.Ampere + increaseAmpere, uptrendAmpereLimit)
@@ -266,8 +266,8 @@ export class CronJobService {
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
 
-      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - normalizeAmpereLimit) * decreaseTime
-      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - normalizeVoltageLimit) * decreaseTime
+      let increaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - normalizeAmpereLimit) * decreaseTime
+      let increaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - normalizeVoltageLimit) * decreaseTime
 
       if (channelInfor) {
         channelInfor.Ampere = Math.min(channelInfor.Ampere - increaseAmpere, normalizeAmpereLimit)
