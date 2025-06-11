@@ -44,9 +44,9 @@ export class CronJobService {
   mqttService: MqttService = mqttService
   private readonly ampereRange: [number, number] = [0, 1]
   private readonly voltageRange: [number, number] = [53, 54]
-  private readonly downtrendDurationRange: [number, number] = [5, 7]
+  private readonly downtrendDurationRange: [number, number] = [10, 15]
   private readonly uptrendDurationRange: [number, number] = [5, 7]
-  private readonly normalizeDurationRange: [number, number] = [2, 3]
+  private readonly normalizeDurationRange: [number, number] = [5, 7]
   private readonly downtrendIntervalRange: [number, number] = [20, 60]
   private readonly downtrendAmpereRange: [number, number] = [-30, -20]
   private readonly uptrendAmpereRange: [number, number] = [30, 40]
@@ -224,8 +224,8 @@ export class CronJobService {
     let decreaseTime = batteryStatusInterval / downtrendDuration
 
     Object.keys(lastInfor ?? {}).forEach((channel) => {
-      let decreaseAmpere = ((lastInfor?.[channel].Ampere || 0) - downtrendAmpereLimit) * decreaseTime
-      let decreaseVoltage = ((lastInfor?.[channel].Voltage || 0) - downtrendVoltageLimit) * decreaseTime
+      let decreaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - downtrendAmpereLimit) * decreaseTime
+      let decreaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - downtrendVoltageLimit) * decreaseTime
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
       if (channelInfor) {
         channelInfor.Ampere = Math.max(channelInfor.Ampere - decreaseAmpere, downtrendAmpereLimit)
