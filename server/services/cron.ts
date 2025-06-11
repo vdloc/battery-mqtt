@@ -224,8 +224,8 @@ export class CronJobService {
     let decreaseTime = batteryStatusInterval / downtrendDuration
 
     Object.keys(lastInfor ?? {}).forEach((channel) => {
-      let decreaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - downtrendAmpereLimit) * decreaseTime
-      let decreaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - downtrendVoltageLimit) * decreaseTime
+      let decreaseAmpere = ((lastInfor?.[channel].Ampere || 0) - downtrendAmpereLimit) * decreaseTime
+      let decreaseVoltage = ((lastInfor?.[channel].Voltage || 0) - downtrendVoltageLimit) * decreaseTime
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
       if (channelInfor) {
         channelInfor.Ampere = Math.max(channelInfor.Ampere - decreaseAmpere, downtrendAmpereLimit)
@@ -245,8 +245,8 @@ export class CronJobService {
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
 
-      let increaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * increaseTime
-      let increaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * increaseTime
+      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * increaseTime
+      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * increaseTime
 
       if (channelInfor) {
         channelInfor.Ampere = Math.min(channelInfor.Ampere + increaseAmpere, uptrendAmpereLimit)
@@ -266,8 +266,8 @@ export class CronJobService {
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
 
-      let increaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - normalizeAmpereLimit) * decreaseTime
-      let increaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - normalizeVoltageLimit) * decreaseTime
+      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - normalizeAmpereLimit) * decreaseTime
+      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - normalizeVoltageLimit) * decreaseTime
 
       if (channelInfor) {
         channelInfor.Ampere = Math.min(channelInfor.Ampere - increaseAmpere, normalizeAmpereLimit)
