@@ -47,7 +47,7 @@ export class CronJobService {
   private readonly downtrendDurationRange: [number, number] = [5, 7]
   private readonly uptrendDurationRange: [number, number] = [2, 3]
   private readonly normalizeDurationRange: [number, number] = [2, 3]
-  private readonly downtrendIntervalRange: [number, number] = [10, 15]
+  private readonly downtrendIntervalRange: [number, number] = [20, 60]
   private readonly downtrendAmpereRange: [number, number] = [-30, -20]
   private readonly uptrendAmpereRange: [number, number] = [30, 40]
   private readonly uptrendVoltageRange: [number, number] = [53, 53]
