@@ -245,8 +245,8 @@ export class CronJobService {
     Object.keys(lastInfor ?? {}).forEach((channel) => {
       let channelInfor = lastInfor?.[channel as keyof typeof lastInfor]
 
-      let increaseAmpere = ((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * increaseTime
-      let increaseVoltage = ((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * increaseTime
+      let increaseAmpere = Math.abs((lastInfor?.[channel].Ampere || 0) - uptrendAmpereLimit) * increaseTime
+      let increaseVoltage = Math.abs((lastInfor?.[channel].Voltage || 0) - uptrendVoltageLimit) * increaseTime
 
       if (channelInfor) {
         channelInfor.Ampere = Math.min(channelInfor.Ampere + increaseAmpere, uptrendAmpereLimit)
