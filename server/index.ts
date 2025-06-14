@@ -10,10 +10,7 @@ import { appService } from "./services/app"
 
 const fastify = Fastify({
   maxParamLength: 5000,
-  logger: {
-    level: "info",
-    file: "./log.txt", // Will use pino.destination()
-  },
+  logger: false,
 })
 
 const corsOptions = {
