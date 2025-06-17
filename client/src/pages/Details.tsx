@@ -228,7 +228,7 @@ const Details = () => {
             <DatePicker.RangePicker showTime defaultValue={[startTime, endTime]} onChange={onChange} />
 
             <CheckPermisstion permission={Permissions.DEVICE_EXPORT}>
-              <ButtonExportExcel startTime={startTime} endTime={endTime} imei={imei} />
+              <ButtonExportExcel startTime={startTime} endTime={endTime} imei={imei} deviceData={listenDevice} />
             </CheckPermisstion>
           </div>
         }
@@ -506,7 +506,7 @@ const Chart = ({ data, newData, interval }: any) => {
   )
 }
 
-const ButtonExportExcel = ({ startTime, endTime, imei }: any) => {
+const ButtonExportExcel = ({ startTime, endTime, imei, deviceData }: any) => {
   const [loading, setLoading] = useState(false)
   const { mutateAsync } = useGetDeviceStatusToExport()
   const onSubmit = async () => {
@@ -517,9 +517,12 @@ const ButtonExportExcel = ({ startTime, endTime, imei }: any) => {
       timeEnd: endTime.toDate().getTime(),
     })
     if (res) {
+      debugger
       const dataMap = res?.map((item: any) => {
         return {
           "Thời gian": formatDate(item.time),
+          "Mã trạm": deviceData?.stationCode,
+          "Đơn vị": deviceData?.manageUnitName,
           "CH1 Voltage": item.infor?.CH1?.Voltage,
           "CH1 Ampere": item.infor?.CH1?.Ampere,
           "CH2 Voltage": item.infor?.CH2?.Voltage,
