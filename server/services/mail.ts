@@ -46,7 +46,9 @@ class MailService {
     stationCode: string
   }): Promise<void> {
     const html = `
-    <p>${new Date().toUTCString()}-${manageUnitName}-discharing in ${t1 * 60 * 1000}s-${voltage}V-${ampere}A}</p>`
+    <p>${format(new Date(), "h:mma dd/MM/yyyy")}</p>
+    <p>${voltage}V/${ampere}A</p>
+    `
 
     try {
       await this.sendMail(to, `${stationCode} ${MailService.DISCHARGING_SUBJECT}`, html)
