@@ -6,6 +6,7 @@ import {
   SettingOutlined,
   UsergroupAddOutlined,
   UserOutlined,
+  ApartmentOutlined,
 } from "@ant-design/icons"
 import type { MenuProps } from "antd"
 import { Button, Dropdown, Layout, Menu, Modal, theme } from "antd"
@@ -23,6 +24,7 @@ import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import ModalChangePassword from "@/components/modals/ChangePassword.modal"
 import Employee from "./pages/Employee"
 import SendSMS from "./pages/Notification"
+import ManageUnits from "@/pages/ManageUnits"
 
 const { Header, Content, Footer, Sider } = Layout
 const siderStyle: React.CSSProperties = {
@@ -70,6 +72,14 @@ const App = () => {
               element={
                 <LayoutApp>
                   <Employee />
+                </LayoutApp>
+              }
+            />
+            <Route
+              path="manage-units"
+              element={
+                <LayoutApp>
+                  <ManageUnits />
                 </LayoutApp>
               }
             />
@@ -128,6 +138,12 @@ const LayoutApp = ({ children }: any) => {
   const hasDevicePermissions = useCheckPermissions([Permissions.DEVICE_MANAGE])
   const hasEmployeePermissions = useCheckPermissions([Permissions.EMPLOYEE_MANAGE])
   const hasSendMessagePermissions = useCheckPermissions([Permissions.SEND_MESSAGE])
+  const hasManageUnitPermissions = useCheckPermissions([
+    Permissions.MANAGE_UNIT_VIEW,
+    Permissions.MANAGE_UNIT_CREATE,
+    Permissions.MANAGE_UNIT_UPDATE,
+    Permissions.MANAGE_UNIT_DELETE,
+  ])
   const items: MenuProps["items"] = [
     {
       key: 1,
@@ -135,6 +151,14 @@ const LayoutApp = ({ children }: any) => {
       label: "Thiết bị",
       onClick: () => navigate("/"),
     },
+    hasManageUnitPermissions
+      ? {
+          key: 4,
+          icon: React.createElement(ApartmentOutlined),
+          label: "Đơn vị",
+          onClick: () => navigate("/manage-units"),
+        }
+      : null,
     hasadminPermissionss
       ? {
           key: 2,
