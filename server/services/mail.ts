@@ -47,7 +47,7 @@ class MailService {
   }): Promise<void> {
     const html = `
     <p>${format(new Date(), "h:mma dd/MM/yyyy")}</p>
-    <p>${voltage}V/${ampere}A</p>
+    <p>${voltage.toFixed(2)}V/${ampere.toFixed(2)}A</p>
     `
 
     try {
@@ -69,7 +69,7 @@ class MailService {
     voltage: number
   }): Promise<void> {
     const html = `
-    <p>${new Date().toUTCString()}-${manageUnitName}-${voltage}V-${ampere}A}</p>`
+    <p>${new Date().toUTCString()}-${manageUnitName}-${voltage.toFixed(2)}V-${ampere.toFixed(2)}A}</p>`
 
     try {
       await this.sendMail(to, MailService.DISCHARGING_SUBJECT, html)
