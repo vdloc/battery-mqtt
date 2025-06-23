@@ -25,10 +25,11 @@
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'package-lock.json' -type f -delete && find . -name 'dist' -type d -prune -exec rm -rf '{}' +"
   },
   "dependencies": {
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.36.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.50.0",    
+    "@playwright/test": "^1.50.0",
     "@types/node-cron": "^3.0.11",
     "@types/ws": "^8.18.1",
     "npm-run-all": "^4.1.5",

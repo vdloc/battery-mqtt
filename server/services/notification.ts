@@ -33,7 +33,7 @@ class NotificationService {
     deviceData.isDownTrend = !!dischargingChannel
 
     if (!deviceData.isDownTrend || !dischargingChannel) return
-    const { manageUnitName, manageUnitId } = deviceData
+    const { manageUnitName, manageUnitId, stationCode } = deviceData
     const employees = await databaseService.getEmployees(manageUnitId)
     const { t1, t2, t3 } = this.settings[manageUnitId]
 
@@ -43,6 +43,7 @@ class NotificationService {
           mailService.sendDowntrendEmail({
             to: employee.email,
             manageUnitName,
+            stationCode,
             t1: t1,
             ampere: input.infor[dischargingChannel].Ampere,
             voltage: input.infor[dischargingChannel].Voltage,
@@ -87,7 +88,7 @@ class NotificationService {
   async setDeviceData(input: BatteryStatusResponse) {
     const device = await databaseService.getDevice(input.imei)
     const channel = await databaseService.getSetupChannel(input.imei)
-    const { enableNotification, manageUnitName, manageUnitId } = device
+    const { enableNotification, manageUnitName, manageUnitId, stationCode } = device
 
     this.devices[input.imei] = {
       enableNotification,
@@ -99,6 +100,7 @@ class NotificationService {
       dischargingTimeout: null,
       manageUnitName,
       manageUnitId,
+      stationCode,
     }
   }
 

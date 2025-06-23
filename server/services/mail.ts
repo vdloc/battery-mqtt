@@ -1,9 +1,10 @@
 import nodemailer from "nodemailer"
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } from "../envConfigs"
+import { format } from "date-fns"
 
 class MailService {
   private transporter: nodemailer.Transporter
-  private static DISCHARGING_SUBJECT = "Cảnh báo trạm mất điện"
+  private static DISCHARGING_SUBJECT = "ác quy xả"
   private static CHARGING_SUBJECT = "Thông báo trạm có điện trở lại"
 
   constructor() {
@@ -33,6 +34,7 @@ class MailService {
     to,
     manageUnitName,
     t1,
+    stationCode,
     ampere,
     voltage,
   }: {
@@ -41,12 +43,13 @@ class MailService {
     t1: number
     ampere: number
     voltage: number
+    stationCode: string
   }): Promise<void> {
     const html = `
     <p>${new Date().toUTCString()}-${manageUnitName}-discharing in ${t1 * 60 * 1000}s-${voltage}V-${ampere}A}</p>`
 
     try {
-      await this.sendMail(to, MailService.DISCHARGING_SUBJECT, html)
+      await this.sendMail(to, `${stationCode} ${MailService.DISCHARGING_SUBJECT}`, html)
     } catch (error) {
       console.error("Error sending email:", error)
     }
@@ -85,7 +88,9 @@ class MailService {
     voltage: number
   }): Promise<void> {
     const html = `
-    <p>${new Date().toUTCString()}-${manageUnitName}-${voltage}V-${ampere}A}</p>`
+    <p>${format(new Date(), "h:mma dd/MM/yyyy")}-${manageUnitName}</p>
+    <p>${voltage}V/${ampere}A</p>    
+    `
 
     try {
       await this.sendMail(to, MailService.CHARGING_SUBJECT, html)
