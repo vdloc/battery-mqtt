@@ -1,6 +1,6 @@
 import { TEXT_REQUIRED } from "@/constants"
 import usePostDevices, { DeviceType } from "@/hooks/devices/usePostDevices"
-import useGetManageUnits from "@/hooks/useGetManageUnits"
+import useGetManageUnits from "@/hooks/manageUnit/useGetManageUnits"
 import usePostRequest from "@/hooks/usePostRequest"
 import { Button, Checkbox, Input, Select } from "antd"
 import { useEffect, useState } from "react"

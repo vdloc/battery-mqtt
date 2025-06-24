@@ -1,24 +1,24 @@
 import CheckPermisstion from "@/components/CheckPermisstion"
 import ModalCreateOrEditEmployee from "@/components/modals/CreateOrEditEmployee.modal"
+import ModalCreateOrEditManageUnit from "@/components/modals/CreateOrEditManageUnit.modal"
 
 import ModalDeleteEmployee from "@/components/modals/DeleteEmployee.modal"
 import useGetEmployee from "@/hooks/employee/useGetEmployee"
-import useGetManageUnits from "@/hooks/useGetManageUnits"
+import useGetManageUnits from "@/hooks/manageUnit/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import { Permissions } from "@/types/serverTypes"
 import { formatDate } from "@/utils/formatDate"
 import { Button, Card, Input, Modal, Select, Table } from "antd"
 import { useEffect, useState } from "react"
 
-const columns = ["Stt", "Tên tài khoản", "Email", "Ngày tạo", "Hành động"]
+const columns = ["Stt", "Tên đơn vị", "Hành động"]
 const ManageUnits = () => {
   const [unit, setUnit] = useState<any>(null)
   const [search, setSearch] = useState("")
-  const { isLoading, data: employees, refetch } = useGetManageUnits()
+  const { isLoading, data: manageUnits, refetch } = useGetManageUnits()
   const [isModalCreateOrUpdateOpen, setModalCreateOrUpdateOpen] = useState(false)
   const [isModalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [choseItem, setChoseItem] = useState<any>(null)
-  const { data: manageUnits } = useGetManageUnits()
 
   useEffect(() => {
     if (!unit && manageUnits?.length > 0) setUnit(manageUnits?.[0]?.id)
@@ -27,31 +27,7 @@ const ManageUnits = () => {
   useCheckPermissions([Permissions.EMPLOYEE_VIEW], "/login")
   return (
     <>
-      <Card
-        title={<p className="text-2xl font-bold">Danh sách đơn vị</p>}
-        extra={
-          <div className="flex items-center gap-2">
-            <Select
-              placeholder="Chọn đơn vị"
-              className="w-full"
-              options={manageUnits?.map((item: any) => ({
-                label: item.name,
-                value: item.id,
-              }))}
-              value={unit}
-              onChange={(value) => {
-                setUnit(value)
-              }}
-            />
-            <Input
-              placeholder="Từ khóa..."
-              className="!w-[200px]"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        }
-      >
+      <Card title={<p className="text-2xl font-bold">Danh sách đơn vị</p>}>
         <div className="flex mb-3 justify-end">
           <CheckPermisstion permission={Permissions.EMPLOYEE_CREATE}>
             <Button
@@ -66,27 +42,18 @@ const ManageUnits = () => {
           </CheckPermisstion>
         </div>
         <Table
-          // pagination={{
-          //   pageSize: 50,
-          // }}
           loading={isLoading}
-          dataSource={employees
+          dataSource={manageUnits
             ?.filter((item: any) => item.name.toLowerCase().includes(search.toLowerCase()))
             .map((item: any, index: number) => {
-              // const manageUnitName = manageUnits?.find(
-              //   (manageUnit: Record<string, any>) => manageUnit.id === item?.manageUnitId
-              // )?.name
               return {
                 key: index + 1,
                 Stt: index + 1,
-                "Tên tài khoản": (
+                "Tên đơn vị": (
                   <div className="flex items-center gap-2">
                     <img className="max-h-10 max-w-10" src={item.image} alt="" /> {item.name}
                   </div>
                 ),
-                Email: item.email,
-                "Ngày tạo": formatDate(item.createdAt),
-                // "Đơn vị": manageUnitName,
                 "Hành động": (
                   <div className="flex gap-4">
                     <CheckPermisstion permission={Permissions.EMPLOYEE_UPDATE}>
@@ -132,7 +99,7 @@ const ManageUnits = () => {
         onCancel={() => setModalCreateOrUpdateOpen(false)}
         destroyOnClose
       >
-        <ModalCreateOrEditEmployee
+        <ModalCreateOrEditManageUnit
           refetch={() => {
             refetch()
             setModalCreateOrUpdateOpen(false)

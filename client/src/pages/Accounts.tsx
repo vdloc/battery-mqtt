@@ -1,7 +1,7 @@
 import CheckPermisstion from "@/components/CheckPermisstion"
 import ModalCreateOrEditAccount from "@/components/modals/CreateOrEditAccount.modal"
 import ModalDeleteAccount from "@/components/modals/DeleteAccount.modal"
-import useGetManageUnits from "@/hooks/useGetManageUnits"
+import useGetManageUnits from "@/hooks/manageUnit/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import useGetUser from "@/hooks/user/useGetUser"
 import { Permissions } from "@/types/serverTypes"

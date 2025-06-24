@@ -1,6 +1,6 @@
 import { TEXT_REQUIRED } from "@/constants"
 import usePostDevices, { DeviceType } from "@/hooks/devices/usePostDevices"
-import useGetManageUnits from "@/hooks/useGetManageUnits"
+import useGetManageUnits from "@/hooks/manageUnit/useGetManageUnits"
 import { Input, Select, Button, Checkbox } from "antd"
 import { useForm, SubmitHandler, Controller } from "react-hook-form"
 import toast from "react-hot-toast"

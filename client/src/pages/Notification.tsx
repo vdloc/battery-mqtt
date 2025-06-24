@@ -1,6 +1,6 @@
 import useGetNotificationSettings from "@/hooks/notification/useGetNotificationSettings"
 import useUpdateNotificationSettings from "@/hooks/notification/useUpdateNotificationSettings"
-import useGetManageUnits from "@/hooks/useGetManageUnits"
+import useGetManageUnits from "@/hooks/manageUnit/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import { Permissions } from "@/types/serverTypes"
 import { Card, Form, InputNumber, Button, Spin, Select } from "antd"

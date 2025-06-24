@@ -3,7 +3,7 @@ import ModalCreateOrEditEmployee from "@/components/modals/CreateOrEditEmployee.
 
 import ModalDeleteEmployee from "@/components/modals/DeleteEmployee.modal"
 import useGetEmployee from "@/hooks/employee/useGetEmployee"
-import useGetManageUnits from "@/hooks/useGetManageUnits"
+import useGetManageUnits from "@/hooks/manageUnit/useGetManageUnits"
 import useCheckPermissions from "@/hooks/user/useCheckPermissions"
 import { Permissions } from "@/types/serverTypes"
 import { formatDate } from "@/utils/formatDate"
