@@ -44,7 +44,6 @@ class NotificationService {
             to: employee.email,
             manageUnitName,
             stationCode,
-            t1: t1,
             ampere: input.infor[dischargingChannel].Ampere,
             voltage: input.infor[dischargingChannel].Voltage,
           })
@@ -57,11 +56,12 @@ class NotificationService {
     if (deviceData.isSendDowntrendEmail && !deviceData.isSendDischargingEmail) {
       deviceData.dischargingTimeout = CronJobService.schedule(t2 * 60000, async () => {
         employees.forEach((employee: any) => {
-          mailService.sendDischarginEmail({
+          mailService.sendDowntrendEmail({
             to: employee.email,
             manageUnitName,
             ampere: input.infor[dischargingChannel].Ampere,
             voltage: input.infor[dischargingChannel].Voltage,
+            stationCode,
           })
         })
       })

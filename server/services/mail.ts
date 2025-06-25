@@ -5,7 +5,7 @@ import { format } from "date-fns"
 class MailService {
   private transporter: nodemailer.Transporter
   private static DISCHARGING_SUBJECT = "ác quy xả"
-  private static CHARGING_SUBJECT = "Thông báo trạm có điện trở lại"
+  private static CHARGING_SUBJECT = "ác quy nạp"
 
   constructor() {
     this.transporter = nodemailer.createTransport({
@@ -32,15 +32,12 @@ class MailService {
 
   async sendDowntrendEmail({
     to,
-    manageUnitName,
-    t1,
     stationCode,
     ampere,
     voltage,
   }: {
     to: string
     manageUnitName: string
-    t1: number
     ampere: number
     voltage: number
     stationCode: string
@@ -57,30 +54,10 @@ class MailService {
     }
   }
 
-  async sendDischarginEmail({
-    to,
-    manageUnitName,
-    ampere,
-    voltage,
-  }: {
-    to: string
-    manageUnitName: string
-    ampere: number
-    voltage: number
-  }): Promise<void> {
-    const html = `
-    <p>${new Date().toUTCString()}-${manageUnitName}-${voltage.toFixed(2)}V-${ampere.toFixed(2)}A}</p>`
-
-    try {
-      await this.sendMail(to, MailService.DISCHARGING_SUBJECT, html)
-    } catch (error) {
-      console.error("Error sending email:", error)
-    }
-  }
-
   async sendUpTrendEmail({
     to,
     manageUnitName,
+    stationCode,
     ampere,
     voltage,
   }: {
@@ -88,6 +65,7 @@ class MailService {
     manageUnitName: string
     ampere: number
     voltage: number
+    stationCode: string
   }): Promise<void> {
     const html = `
     <p>${format(new Date(), "h:mma dd/MM/yyyy")}-${manageUnitName}</p>
@@ -95,7 +73,7 @@ class MailService {
     `
 
     try {
-      await this.sendMail(to, MailService.CHARGING_SUBJECT, html)
+      await this.sendMail(to, `${stationCode} ${MailService.CHARGING_SUBJECT}`, html)
     } catch (error) {
       console.error("Error sending email:", error)
     }
