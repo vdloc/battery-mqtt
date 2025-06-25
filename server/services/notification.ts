@@ -77,6 +77,7 @@ class NotificationService {
           manageUnitName,
           ampere: input.infor[dischargingChannel].Ampere,
           voltage: input.infor[dischargingChannel].Voltage,
+          stationCode,
         })
       })
     })
